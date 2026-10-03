@@ -104,3 +104,16 @@ Choix faits lors du codage de `src/moteur/readiness.ts`, à valider à l'usage :
 - **R-01, FC de repos présente mais historique FC < 4 mesures** : la FC n'est pas utilisable, donc le signal reste `vert` (la HRV seule ne suffit que si la FC du jour est absente). *Hypothèse à valider.*
 - **R-04** : seuil strict (`< 0,85` rouge ; 0,85 exactement = vert). Reps cibles fournies par l'appelant (clé d'exercice → reps).
 - **R-08** : le texte du cahier (« on allège ») et le tableau ci-dessus (« vigilance au minimum ») ne disent pas la même chose. Le code suit le tableau : ressenti rouge seul = `vigilance`. *À trancher.*
+
+## 11. Précisions d'implémentation (matériel et progression)
+
+Choix faits lors du codage de `src/moteur/materiel.ts` et `src/moteur/progression.ts` :
+
+- **Inventaire = barre + disques**, jamais une liste de charges fixes. Les charges réalisables sont calculées (R-22), arrondies à 0,1 kg, avec un montage toujours **symétrique**. Exercice à deux haltères : les disques sont partagés (4 côtés). Exercice à un seul haltère : tous les disques peuvent servir (2 côtés).
+- **Matériel de l'utilisateur** (barre 1,5978 kg, 4 disques de 1,1 kg et 4 de 2,3 kg) : paire = 1,6 / 3,8 / 6,2 / 8,4 kg ; un seul haltère = jusqu'à 15,2 kg.
+- **R-21 (+2 à 10 %)** sert de repère, pas de blocage : on prend toujours la charge disponible immédiatement supérieure (R-22). Seul R-23 (> 25 %) peut retarder une montée.
+- **R-23** : saut > 25 % → l'exercice passe en « lissage » : même charge, reps visées = cible + 2, tempo plus lent ou repos réduit. Après 2 séances de lissage, la nouvelle charge est proposée. Avec les haltères de l'utilisateur, **toutes les montées passent par ce lissage** (3,8 → 6,2 = +63 %).
+- **R-24 (plafond)** : au-delà de **20 reps** visées, on propose une variante plus difficile. *Hypothèse à valider.*
+- **Première fois** : la plus grande charge disponible ≤ charge conseillée, sinon la plus légère. *Hypothèse à valider* (les charges conseillées du prototype, 2,5 et 5 kg, devront être revues avec ses vrais haltères).
+- **R-25** : après un refus, retour à la charge précédente pendant 2 séances.
+- **R-26** (regrouper les exercices par charge pour limiter les changements de disques) : **pas encore codé**, viendra avec la planification de séance.

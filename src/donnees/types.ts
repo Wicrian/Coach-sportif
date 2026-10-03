@@ -46,3 +46,21 @@ export interface Seance {
   durationMin?: number;
   exercises: ExerciceRealise[];
 }
+
+/** Disques d'un même poids que l'utilisateur possède. */
+export interface LotDisques {
+  /** Poids d'un disque, en kg. */
+  poids: number;
+  /** Nombre total de disques de ce poids (tous haltères confondus). */
+  quantite: number;
+}
+
+/**
+ * Haltères ajustables : une barre + des disques. Les charges possibles sont
+ * calculées par le moteur (jamais saisies à la main, jamais en dur).
+ */
+export interface InventaireHalteres {
+  /** Poids d'une barre seule, en kg. */
+  barre: number;
+  disques: LotDisques[];
+}
