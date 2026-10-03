@@ -1,5 +1,5 @@
 import type { Jour, Seance } from '../donnees/types';
-import { ajouterJours, lundiDeLaSemaine } from './utilitaires';
+import { ajouterJours, jourDe, lundiDeLaSemaine } from './utilitaires';
 
 export interface BilanHabitude {
   /** Semaines réussies consécutives (R-40, R-41). */
@@ -22,10 +22,9 @@ const SEUIL_SEMAINE_REUSSIE = 3; // R-40
 const CIBLE_CONSEILLEE = 4; // R-40, R-43
 
 export function evaluerHabitude(seances: Seance[], aujourdhui: Jour): BilanHabitude {
-  // Une séance est datée par les 10 premiers caractères de sa date ISO ('AAAA-MM-JJ').
   const parSemaine = new Map<Jour, number>();
   for (const s of seances) {
-    const lundi = lundiDeLaSemaine(s.date.slice(0, 10));
+    const lundi = lundiDeLaSemaine(jourDe(s.date));
     parSemaine.set(lundi, (parSemaine.get(lundi) ?? 0) + 1);
   }
 

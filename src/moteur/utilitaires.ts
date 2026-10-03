@@ -32,3 +32,13 @@ export function lundiDeLaSemaine(jour: Jour): Jour {
   const jourSemaine = new Date(Date.UTC(an, mois - 1, j)).getUTCDay(); // 0 = dimanche
   return ajouterJours(jour, -((jourSemaine + 6) % 7));
 }
+
+/**
+ * Jour local ('AAAA-MM-JJ') d'une date de séance. Les séances sont enregistrées en heure universelle
+ * (ISO avec « Z ») : lire les 10 premiers caractères donnerait parfois le lendemain pour une séance du soir.
+ */
+export function jourDe(date: string): Jour {
+  const d = new Date(date);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}

@@ -154,3 +154,12 @@ Choix faits lors du codage de `src/moteur/ordre-seance.ts` :
 - **Le moteur renvoie le nombre de changements** de charge. Il n'y a pas de seuil chiffré de « raisonnable » : demandé par l'utilisateur, il suffit pour l'instant que ce nombre soit minimal. *À revoir à l'usage.*
 - **Limite connue** : le regroupement ignore pour l'instant l'ordre idéal des exercices (gros muscles d'abord, par exemple). *Hypothèse : à contraindre plus tard si besoin.*
 - **Réalisé contre prévu** : chaque série peut garder, en plus de ce qui a été fait (`w`, `reps`), ce qui était prévu (`wPrevu`, `repsPrevus`, facultatifs). Le moteur (R-04, progression) raisonne sur le **réalisé**.
+
+## 15. Précisions d'implémentation (check-in, séances faites ailleurs, jour local)
+
+- **Pas de mesure de nuit** : l'utilisateur n'a pas de montre qui mesure la HRV la nuit. La HRV et la FC de repos sont donc **facultatives** (mesure au réveil avec la ceinture Polar, saisie à la main). Tant qu'il y a moins de 4 mesures HRV sur les 7 jours précédents, le signal physiologique reste `inconnu` (R-02) et la règle « 2 sur 3 » repose sur le ressenti et la performance.
+  - Avec seulement deux signaux connus, il faut que **les deux** soient rouges pour obtenir `allegee`. *À surveiller à l'usage : la règle est alors moins sensible.*
+- **Check-in du jour** : énergie (1 à 5), courbatures (1 à 5), moral (1 à 5), sommeil (heures), poids, HRV, FC de repos. Une seule mesure par jour ; une nouvelle saisie complète ou remplace la précédente sans effacer le reste.
+- **Moral et sommeil sont enregistrés mais ne pilotent pas encore le moteur** : aucun seuil chiffré n'est défini pour eux (R-03 n'utilise que courbatures et énergie). *Règle à définir avec l'utilisateur avant de les utiliser.*
+- **Séance faite ailleurs** (Boxa, Heavybox, marche…) : un type, un jour, une durée, une application facultative et un ressenti facultatif. Elle compte comme une séance de n'importe quel type pour la semaine réussie (R-40) et la planification. Elle n'a pas de volume.
+- **Jour d'une séance** : le moteur lit le **jour local** (`jourDe`), pas les 10 premiers caractères de la date ISO. Une séance du soir enregistrée en heure universelle comptait sinon dans la journée suivante.

@@ -117,3 +117,19 @@ describe('séance en cours (brouillon)', () => {
     expect(await exporterTexte(base, new Date())).not.toContain('exemple');
   });
 });
+
+import { supprimerSeance } from './base';
+
+describe('supprimer une séance', () => {
+  it('retire la séance choisie et garde les autres', async () => {
+    await sauverSeance(base, seance('a', '2026-10-01T10:00:00Z'));
+    await sauverSeance(base, seance('b', '2026-10-02T10:00:00Z'));
+    await supprimerSeance(base, 'a');
+    expect((await chargerDonnees(base)).seances.map((s) => s.id)).toEqual(['b']);
+  });
+
+  it('ne fait rien si la séance n\'existe pas', async () => {
+    await supprimerSeance(base, 'inconnue');
+    expect((await chargerDonnees(base)).seances).toEqual([]);
+  });
+});

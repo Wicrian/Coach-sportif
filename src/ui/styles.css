@@ -135,3 +135,43 @@ h3 { font-weight: 700; font-size: 22px; }
 .champ-fichier { display: block; width: 100%; padding: 14px; border: 2px dashed var(--blush-deep); border-radius: var(--r-md); background: var(--cloud); font-size: 14px; color: var(--plum); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ----- Navigation du bas ----- */
+.avec-nav { padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+.nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); width: min(520px, calc(100% - 28px));
+  background: #fff; border: 1px solid var(--line); border-radius: var(--r-pill); box-shadow: var(--shadow-soft); display: flex; padding: 6px; gap: 4px; z-index: 10; }
+.nav button { flex: 1; border: none; background: none; padding: 12px 4px; border-radius: var(--r-pill); font-size: 14px; font-weight: 700; color: var(--plum); }
+.nav button.on { background: var(--blush); color: var(--hot-pink); }
+
+/* ----- Formulaires ----- */
+.champ { width: 100%; padding: 14px 16px; border-radius: var(--r-sm); border: 1.5px solid var(--line); font-family: inherit; font-size: 16px; background: var(--cloud); color: var(--ink); }
+.champ:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 4px var(--blush); }
+.groupe { margin-top: 16px; }
+.groupe > .etiquette { display: block; margin-bottom: 8px; }
+.choix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.choix button { border: 1.5px solid var(--blush-deep); background: #fff; border-radius: var(--r-sm); padding: 12px 2px; font-weight: 700; font-size: 11.5px; color: var(--ink); line-height: 1.2; }
+.choix button.active { background: var(--grad-punch); color: #fff; border-color: transparent; }
+.ligne-puces { display: flex; gap: 6px; flex-wrap: wrap; }
+details.facultatif { margin-top: 16px; border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; background: var(--cloud); }
+details.facultatif summary { font-weight: 700; font-size: 14px; color: var(--plum); cursor: pointer; }
+.deux-champs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.deux-champs label { font-size: 12.5px; font-weight: 700; color: var(--plum); display: block; margin-bottom: 4px; }
+
+/* ----- Préparation du jour ----- */
+.etat { display: inline-block; padding: 6px 14px; border-radius: var(--r-pill); font-size: 13px; font-weight: 700; }
+.etat.normale { background: #d6f7ec; color: #0f9b74; }
+.etat.vigilance { background: #fff1d6; color: #9a6400; }
+.etat.allegee { background: var(--blush); color: var(--hot-pink); }
+.signaux { list-style: none; margin-top: 12px; }
+.signaux li { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; color: var(--plum); }
+.signaux .point { width: 12px; height: 12px; border-radius: 50%; margin-top: 5px; flex: none; background: var(--mauve); }
+.signaux .point.vert { background: var(--mint); }
+.signaux .point.rouge { background: var(--coral); }
+
+/* ----- Activité ----- */
+.seance { background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; margin-top: 10px; display: flex; gap: 12px; align-items: center; }
+.seance .corps { flex: 1; min-width: 0; }
+.seance b { font-weight: 800; display: block; }
+.seance .sous { font-size: 13px; color: var(--plum); }
+.seance .supprimer { border: none; background: var(--blush); color: var(--hot-pink); font-weight: 700; font-size: 12.5px; padding: 9px 12px; border-radius: var(--r-pill); }
+.jour-titre { font-size: 12.5px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; color: var(--mauve); margin-top: 22px; }

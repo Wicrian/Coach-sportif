@@ -93,3 +93,12 @@ describe('semaines actives', () => {
     expect(h.proposerSiAlors).toBe(false);
   });
 });
+
+describe('séances du soir (fuseau horaire)', () => {
+  it('une séance à 23 h 30 compte dans la bonne semaine, même enregistrée en heure universelle', () => {
+    // Dimanche 11 octobre, 23 h 30 locale : appartient à la semaine du 5, pas à celle du 12.
+    const soir: Seance = { id: 'soir', date: new Date(2026, 9, 11, 23, 30).toISOString(), kind: 'walk', exercises: [] };
+    const s = [...semaine('2026-10-05', 2), soir];
+    expect(evaluerHabitude(s, '2026-10-11').serieActuelle).toBe(1);
+  });
+});

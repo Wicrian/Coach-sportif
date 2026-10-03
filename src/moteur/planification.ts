@@ -1,6 +1,6 @@
 import type { Jour, Seance } from '../donnees/types';
 import type { Verdict } from './readiness';
-import { ajouterJours, joursEntre, lundiDeLaSemaine } from './utilitaires';
+import { ajouterJours, jourDe, joursEntre, lundiDeLaSemaine } from './utilitaires';
 
 export type Moment = 'matin' | 'midi' | 'soir' | 'journee';
 
@@ -76,7 +76,7 @@ export function planifier(e: EntreePlanification): Planification {
     return c;
   };
 
-  const dateDe = (s: Seance) => s.date.slice(0, 10);
+  const dateDe = (s: Seance) => jourDe(s.date);
   let derniereIntense: Jour | null = null;
   for (const s of e.seances) {
     const c = compteur(lundiDeLaSemaine(dateDe(s)));

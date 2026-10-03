@@ -3,9 +3,13 @@ import { MODELES } from '../donnees/exercices';
 import type { Donnees } from '../donnees/types';
 import { curseurAudace } from '../moteur/audace';
 import { evaluerHabitude } from '../moteur/habitude';
-import { chargerBrouillon, chargerDonnees, effacerBrouillon, exporterTexte, importerSauvegarde, sauverBrouillon, sauverProfil, sauverSeance } from '../stockage/base';
+import { chargerBrouillon, chargerDonnees, effacerBrouillon, exporterTexte, importerSauvegarde, sauverBrouillon, sauverMesure, sauverProfil, sauverSeance, supprimerSeance } from '../stockage/base';
 import { base } from '../stockage/instance';
 import { Accueil } from './Accueil';
+import { Activite } from './EcranActivite';
+import { fusionnerCheckin } from './checkin';
+import { Nav, type Onglet } from './Nav';
+import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
 import { demarrer, terminer, type Brouillon } from './seance/deroulement';
 import { preparerSeance } from './seance/preparer';
@@ -15,6 +19,7 @@ export function App() {
   const [donnees, setDonnees] = useState<Donnees | null>(null);
   const [brouillon, setBrouillon] = useState<Brouillon | null>(null);
   const [enSeance, setEnSeance] = useState(false);
+  const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
 
   const recharger = useCallback(async () => setDonnees(await chargerDonnees(base)), []);
 
@@ -44,7 +49,7 @@ export function App() {
       semainesReussiesConsecutives: habitude.serieActuelle,
       semainesActives: habitude.semainesActives,
       ressentisRecents: ressentis,
-      preparation: 'normale',
+      preparation: calculerPreparation(donnees).verdict,
       contestation: donnees.profil.audOverride === 'push' ? 'pousser' : donnees.profil.audOverride === 'safe' ? 'prudent' : null,
     });
     const playlists = donnees.profil.playlists ?? [];
@@ -68,7 +73,13 @@ export function App() {
     );
   }
 
-  return (
+  const ecran = onglet === 'activite' ? (
+    <Activite
+      seances={donnees.seances}
+      onAjouter={async (s) => { await sauverSeance(base, s); await recharger(); }}
+      onSupprimer={async (id) => { await supprimerSeance(base, id); await recharger(); }}
+    />
+  ) : (
     <Accueil
       donnees={donnees}
       seanceEnCours={brouillon !== null}
@@ -76,6 +87,11 @@ export function App() {
         const modele = MODELES.find((m) => m.id === modeleId)!;
         changer(demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil }), new Date()));
         setEnSeance(true);
+      }}
+      onCheckin={async (saisie) => {
+        const jour = jourLocal(new Date());
+        await sauverMesure(base, fusionnerCheckin(donnees.recuperation.find((r) => r.date === jour), jour, saisie));
+        await recharger();
       }}
       onReprendre={() => setEnSeance(true)}
       onAbandonnerEnCours={quitter}
@@ -102,5 +118,12 @@ export function App() {
         URL.revokeObjectURL(lien.href);
       }}
     />
+  );
+
+  return (
+    <>
+      {ecran}
+      <Nav actif={onglet} onChoisir={setOnglet} />
+    </>
   );
 }

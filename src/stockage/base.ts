@@ -88,3 +88,7 @@ export async function chargerBrouillon<T = unknown>(base: BaseBouge): Promise<T 
 export async function effacerBrouillon(base: BaseBouge): Promise<void> {
   await base.brouillon.delete('seance');
 }
+
+export async function supprimerSeance(base: BaseBouge, id: string): Promise<void> {
+  await base.seances.delete(id);
+}

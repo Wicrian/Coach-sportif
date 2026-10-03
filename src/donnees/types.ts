@@ -17,6 +17,8 @@ export interface MesureRecuperation {
   energy?: number | null;
   /** Courbatures, 1 à 5. */
   sore?: number | null;
+  /** Moral / motivation du jour, 1 à 5. Enregistré pour « Ce que je sais de toi » ; pas encore utilisé par le moteur. */
+  mood?: number | null;
 }
 
 export type TypeSerie = 'warmup' | 'normal' | 'drop' | 'failure';
@@ -47,6 +49,8 @@ export interface Seance {
   /** Ressenti de séance, 1 (Pénible) à 5 (Super). */
   feel?: number;
   durationMin?: number;
+  /** Application ou lieu d'une séance faite ailleurs (ex. « Boxa »). */
+  source?: string;
   exercises: ExerciceRealise[];
 }
 

@@ -6,6 +6,10 @@ import { evaluerHabitude } from '../moteur/habitude';
 import { nf } from './format';
 import { jourLocal } from './jour';
 import { chargesDuProfil } from './seance/preparer';
+import { CheckIn } from './FormulaireCheckIn';
+import type { SaisieCheckin } from './checkin';
+import { calculerPreparation } from './preparation';
+import { PreparationDuJour } from './PreparationDuJour';
 
 interface Props {
   donnees: Donnees;
@@ -13,6 +17,7 @@ interface Props {
   onLancer: (modeleId: string) => void;
   onReprendre: () => void;
   onAbandonnerEnCours: () => void;
+  onCheckin: (saisie: SaisieCheckin) => Promise<void>;
   onEnergie: (choix: 'safe' | 'push' | null) => void;
   onImporter: (texte: string) => Promise<string>;
   onExporter: () => void;
@@ -28,13 +33,16 @@ export function Accueil(p: Props) {
   const { donnees } = p;
   const [message, setMessage] = useState<{ texte: string; erreur: boolean } | null>(null);
 
-  const habitude = evaluerHabitude(donnees.seances, jourLocal(new Date()));
+  const aujourdhui = jourLocal(new Date());
+  const habitude = evaluerHabitude(donnees.seances, aujourdhui);
+  const preparation = calculerPreparation(donnees);
+  const mesureDuJour = donnees.recuperation.find((r) => r.date === aujourdhui);
   const ressentis = donnees.seances.filter((s) => s.feel).slice(0, 4).map((s) => s.feel!).reverse();
   const audace = curseurAudace({
     semainesReussiesConsecutives: habitude.serieActuelle,
     semainesActives: habitude.semainesActives,
     ressentisRecents: ressentis,
-    preparation: 'normale',
+    preparation: preparation.verdict,
     contestation: donnees.profil.audOverride === 'push' ? 'pousser' : donnees.profil.audOverride === 'safe' ? 'prudent' : null,
   });
   const charges = chargesDuProfil(donnees.profil);
@@ -53,7 +61,7 @@ export function Accueil(p: Props) {
   };
 
   return (
-    <div class="ecran fond-clair">
+    <div class="ecran fond-clair avec-nav">
       <span class="legende" style="color:var(--mauve)">{date}</span>
       <h1 style="margin-top:6px">Bouge de là !</h1>
 
@@ -62,6 +70,9 @@ export function Accueil(p: Props) {
         <div class="l">séance{habitude.cetteSemaine > 1 ? 's' : ''} cette semaine</div>
         <div style="font-size:14px;margin-top:10px;opacity:.95">{habitude.raison}</div>
       </div>
+
+      <PreparationDuJour preparation={preparation} aDesHrv={donnees.recuperation.some((r) => r.hrv != null)} />
+      <CheckIn mesure={mesureDuJour} onSauver={p.onCheckin} />
 
       {p.seanceEnCours && (
         <div class="carte">
