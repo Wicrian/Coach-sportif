@@ -145,3 +145,12 @@ Choix faits lors du codage de `src/moteur/planification.ts` :
 - **Jours indisponibles** : liste fournie par l'appelant (déclarée à la main pour l'instant ; pourra être alimentée par un agenda plus tard).
 - **Avertissement R-11** : émis pour toute semaine entièrement à venir où les créneaux ne permettent pas 2 séances de force.
 - **R-50** : les séances de boxe sont annoncées « à intensité douce » (repère : pouvoir parler). Le plafond d'intensité lui-même relève de l'écran de séance.
+
+## 14. Précisions d'implémentation (ordre de la séance, R-26)
+
+Choix faits lors du codage de `src/moteur/ordre-seance.ts` :
+
+- **Chaque charge forme un seul bloc** : jamais de va-et-vient du type 2,3 → 1,1 → 2,3. Les blocs suivent l'ordre d'apparition des charges dans la séance ; les exercices au poids du corps gardent leur place et ne comptent pas comme changement.
+- **Le moteur renvoie le nombre de changements** de charge. Il n'y a pas de seuil chiffré de « raisonnable » : demandé par l'utilisateur, il suffit pour l'instant que ce nombre soit minimal. *À revoir à l'usage.*
+- **Limite connue** : le regroupement ignore pour l'instant l'ordre idéal des exercices (gros muscles d'abord, par exemple). *Hypothèse : à contraindre plus tard si besoin.*
+- **Réalisé contre prévu** : chaque série peut garder, en plus de ce qui a été fait (`w`, `reps`), ce qui était prévu (`wPrevu`, `repsPrevus`, facultatifs). Le moteur (R-04, progression) raisonne sur le **réalisé**.

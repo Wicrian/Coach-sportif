@@ -26,6 +26,9 @@ export interface Serie {
   /** Charge en kg (0 pour le poids du corps). */
   w: number;
   reps: number;
+  /** Ce que l'app avait prévu pour cette série (pour comparer au réalisé). Facultatif. */
+  wPrevu?: number;
+  repsPrevus?: number;
 }
 
 export interface ExerciceRealise {
