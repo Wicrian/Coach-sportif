@@ -37,3 +37,26 @@ describe('chargesDisponibles (R-22)', () => {
     expect(charges).toEqual([...charges].sort((a, b) => a - b));
   });
 });
+
+import { decrireMontage } from './materiel';
+
+describe('decrireMontage : quels disques mettre', () => {
+  it.each([
+    [1.6, 'paire', []],
+    [3.8, 'paire', [{ poids: 1.1, quantite: 1 }]],
+    [6.2, 'paire', [{ poids: 2.3, quantite: 1 }]],
+    [8.4, 'paire', [{ poids: 1.1, quantite: 1 }, { poids: 2.3, quantite: 1 }]],
+    [6.0, 'unique', [{ poids: 1.1, quantite: 2 }]],
+    [15.2, 'unique', [{ poids: 1.1, quantite: 2 }, { poids: 2.3, quantite: 2 }]],
+  ] as const)('%s kg (%s) → disques par côté', (charge, mode, attendu) => {
+    expect(decrireMontage(INVENTAIRE, charge, mode)).toEqual(attendu);
+  });
+
+  it('renvoie null pour une charge impossible avec ce matériel', () => {
+    expect(decrireMontage(INVENTAIRE, 5, 'paire')).toBeNull();
+  });
+
+  it('tolère un petit écart d\'arrondi', () => {
+    expect(decrireMontage(INVENTAIRE, 3.79, 'paire')).toEqual([{ poids: 1.1, quantite: 1 }]);
+  });
+});

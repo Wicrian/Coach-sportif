@@ -14,6 +14,7 @@ export class BaseBouge extends Dexie {
   seances!: Table<Seance, string>;
   recuperation!: Table<MesureRecuperation, string>;
   profil!: Table<LigneProfil, string>;
+  brouillon!: Table<{ cle: 'seance'; valeur: unknown }, string>;
 
   constructor(nom = 'bouge-de-la') {
     super(nom);
@@ -22,6 +23,7 @@ export class BaseBouge extends Dexie {
       recuperation: 'date',
       profil: 'cle',
     });
+    this.version(2).stores({ brouillon: 'cle' });
   }
 }
 
@@ -72,4 +74,17 @@ export async function importerSauvegarde(
 /** Texte JSON de la sauvegarde complète, prêt à être téléchargé. */
 export async function exporterTexte(base: BaseBouge, maintenant: Date): Promise<string> {
   return JSON.stringify(exporterSauvegarde(await chargerDonnees(base), maintenant), null, 2);
+}
+
+/** Séance en cours : gardée sur l'appareil pour survivre à un rechargement. Jamais exportée. */
+export async function sauverBrouillon(base: BaseBouge, valeur: unknown): Promise<void> {
+  await base.brouillon.put({ cle: 'seance', valeur });
+}
+
+export async function chargerBrouillon<T = unknown>(base: BaseBouge): Promise<T | null> {
+  return ((await base.brouillon.get('seance'))?.valeur as T | undefined) ?? null;
+}
+
+export async function effacerBrouillon(base: BaseBouge): Promise<void> {
+  await base.brouillon.delete('seance');
 }

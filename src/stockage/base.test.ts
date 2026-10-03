@@ -100,3 +100,20 @@ describe('exporter', () => {
     expect(await chargerDonnees(autre)).toEqual(await chargerDonnees(base));
   });
 });
+
+import { chargerBrouillon, effacerBrouillon, sauverBrouillon } from './base';
+
+describe('séance en cours (brouillon)', () => {
+  it('se sauvegarde, se relit, puis s\'efface', async () => {
+    expect(await chargerBrouillon(base)).toBeNull();
+    await sauverBrouillon(base, { exemple: 1 });
+    expect(await chargerBrouillon(base)).toEqual({ exemple: 1 });
+    await effacerBrouillon(base);
+    expect(await chargerBrouillon(base)).toBeNull();
+  });
+
+  it('n\'apparaît pas dans l\'export', async () => {
+    await sauverBrouillon(base, { exemple: 1 });
+    expect(await exporterTexte(base, new Date())).not.toContain('exemple');
+  });
+});
