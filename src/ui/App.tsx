@@ -9,6 +9,7 @@ import { Accueil } from './Accueil';
 import { Activite } from './EcranActivite';
 import { fusionnerCheckin } from './checkin';
 import { EcranPlan } from './EcranPlan';
+import { EcranToi } from './EcranToi';
 import { Nav, type Onglet } from './Nav';
 import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
@@ -70,8 +71,8 @@ export function App() {
         bonus={bonus}
         onChange={changer}
         onAbandon={quitter}
-        onTerminer={async (feel) => {
-          await sauverSeance(base, terminer(brouillon, feel, new Date()));
+        onTerminer={async (feel, details) => {
+          await sauverSeance(base, terminer(brouillon, feel, new Date(), details));
           await quitter();
           await recharger();
         }}
@@ -79,7 +80,19 @@ export function App() {
     );
   }
 
-  const ecran = onglet === 'plan' ? (
+  const enregistrerMesure = async (saisie: Parameters<typeof fusionnerCheckin>[2]) => {
+    const jour = jourLocal(new Date());
+    await sauverMesure(base, fusionnerCheckin(donnees.recuperation.find((r) => r.date === jour), jour, saisie));
+    await recharger();
+  };
+
+  const ecran = onglet === 'toi' ? (
+    <EcranToi
+      donnees={donnees}
+      onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
+      onMesure={enregistrerMesure}
+    />
+  ) : onglet === 'plan' ? (
     <EcranPlan
       donnees={donnees}
       onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
@@ -96,11 +109,7 @@ export function App() {
       donnees={donnees}
       seanceEnCours={brouillon !== null}
       onLancer={lancer}
-      onCheckin={async (saisie) => {
-        const jour = jourLocal(new Date());
-        await sauverMesure(base, fusionnerCheckin(donnees.recuperation.find((r) => r.date === jour), jour, saisie));
-        await recharger();
-      }}
+      onCheckin={enregistrerMesure}
       onReprendre={() => setEnSeance(true)}
       onAbandonnerEnCours={quitter}
       onEnergie={async (choix) => {

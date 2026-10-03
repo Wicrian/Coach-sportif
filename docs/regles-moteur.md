@@ -172,3 +172,12 @@ Choix faits lors du codage de `src/moteur/ordre-seance.ts` :
 - **Modèle de force conseillé** : le full-body et le poids du corps alternent ; on propose celui qui n'a pas été fait en dernier.
 - **Séance « Force et boxe »** : l'app ne la guide pas encore en entier. Le bouton démarre la partie force ; la boxe se note ensuite dans Activité (« Séance faite ailleurs »).
 - **Avertissement R-11** : affiché pour les semaines entières à venir où les créneaux, les jours indisponibles ou la semaine chargée ne permettent pas 2 séances de force.
+
+## 17. Précisions d'implémentation (écran « Toi » et détails de fin de séance)
+
+- **Détails de fin de séance** (tous facultatifs, repliés par défaut) : effort ressenti (1 à 10), répétitions en réserve (aucune, 1 ou 2, 3 ou plus), gêne ou douleur (légère, à surveiller, avec la zone), données Polar (FC moyenne, FC max, minutes dans chacune des 5 zones) et note libre. Disponibles aussi pour une séance faite ailleurs.
+- **Ce que le moteur en fait aujourd'hui : rien, sauf le ressenti** (R-32, R-51). L'effort, la réserve, la gêne et les données Polar sont **enregistrés**, sans seuil ni décision. *À définir avec l'utilisateur avant de s'en servir.*
+  - **Pistes** (non codées) : la réserve renseignerait R-14 (1 à 3 répétitions en réserve) ; une gêne « à surveiller » pourrait éviter de reprogrammer le muscle concerné ; les zones Polar pourraient éclairer R-50 (intensité sous le seuil ventilatoire) une fois qu'on aura relié zones et seuil.
+- **Question de fin de séance** : « Pendant la séance, tu t'es senti comment ? », parce que le ressenti **pendant** l'effort prédit le retour à l'activité (rapport sur la motivation) davantage que la satisfaction d'avoir fini.
+- **Gêne « à surveiller »** : l'app affiche un rappel de consulter un professionnel de santé ; elle ne pose aucun diagnostic.
+- **Écran « Toi »** (cahier §11, « Ce que je sais de toi ») : matériel (types et haltères barre + disques, avec aperçu des charges réalisables), poids et sa date, dernier ressenti, énergie, moral et courbatures avec leur date, objectif, pourquoi, régime, playlists par type de séance. **Objectif et moral** sont enregistrés mais pas encore utilisés par le moteur.

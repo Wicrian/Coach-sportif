@@ -109,3 +109,11 @@ describe('arrêter avant la fin', () => {
     expect(s.exercises[0]!.sets).toHaveLength(1);
   });
 });
+
+describe('terminer avec des détails', () => {
+  it('garde l\'effort, la FC et la note saisis en fin de séance', () => {
+    const b = valider(demarrer(PLAN, T0), { reps: 10, w: 3.8, type: 'normal' });
+    const s = terminer(b, 4, new Date('2026-10-03T18:30:00Z'), { effort: 7, reserve: '1-2', fc: { moy: 128, max: 171 }, note: 'bien' });
+    expect(s).toMatchObject({ feel: 4, effort: 7, reserve: '1-2', fc: { moy: 128, max: 171 }, note: 'bien' });
+  });
+});

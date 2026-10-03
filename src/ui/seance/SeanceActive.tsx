@@ -5,6 +5,8 @@ import type { InventaireHalteres } from '../../donnees/types';
 import { decrireMontage } from '../../moteur/materiel';
 import type { BonusPoussee } from '../../moteur/audace';
 import { volumeSeance } from '../../moteur/volume';
+import { DetailsSeance } from '../DetailsSeance';
+import type { Details } from '../details';
 import { nf, texteMontage } from '../format';
 import { ajouterSerieBonus, arreter, finDeRepos, saisieInitiale, terminer, valider, type Brouillon } from './deroulement';
 
@@ -16,7 +18,7 @@ interface Props {
   precedente?: Seance;
   bonus: BonusPoussee | null;
   onChange: (b: Brouillon) => void;
-  onTerminer: (feel: number | undefined) => void;
+  onTerminer: (feel: number | undefined, details: Details) => void;
   onAbandon: () => void;
 }
 
@@ -286,6 +288,7 @@ const RESSENTIS = ['Pénible', 'Bof', 'Correct', 'Bien', 'Super'];
 function EcranFin({ b, precedente, bonus, onChange, onTerminer }: Props) {
   const [feel, setFeel] = useState<number | undefined>(undefined);
   const [bonusEcarte, setBonusEcarte] = useState(false);
+  const [details, setDetails] = useState<Details>({});
   const apercu = terminer(b, undefined, new Date());
   const series = apercu.exercises.reduce((n, e) => n + e.sets.filter((s) => s.type !== 'warmup').length, 0);
   const volume = Math.round(volumeSeance(apercu, deuxHalteres));
@@ -319,14 +322,15 @@ function EcranFin({ b, precedente, bonus, onChange, onTerminer }: Props) {
           </div>
         )}
 
-        <h3 style="margin-top:24px">Comment c'était ?</h3>
+        <h3 style="margin-top:24px">Pendant la séance, tu t'es senti comment ?</h3>
         <div class="retour" role="group" aria-label="Ressenti de séance">
           {RESSENTIS.map((nom, i) => (
             <button key={nom} class={feel === i + 1 ? 'active' : ''} aria-pressed={feel === i + 1} onClick={() => setFeel(feel === i + 1 ? undefined : i + 1)}>{nom}</button>
           ))}
         </div>
+        <DetailsSeance onChange={setDetails} />
         <div class="espace" />
-        <button class="btn btn-principal" style="margin-top:18px" onClick={() => onTerminer(feel)}>Terminer</button>
+        <button class="btn btn-principal" style="margin-top:18px" onClick={() => onTerminer(feel, details)}>Terminer</button>
       </div>
     </div>
   );

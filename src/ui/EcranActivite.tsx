@@ -4,6 +4,8 @@ import type { GenreSeance, Seance } from '../donnees/types';
 import { jourDe } from '../moteur/utilitaires';
 import { volumeSeance } from '../moteur/volume';
 import { GENRES, creerSeanceExterne, libelleGenre } from './activite';
+import { DetailsSeance } from './DetailsSeance';
+import { appliquerDetails, type Details } from './details';
 import { jourLocal } from './jour';
 
 const RESSENTIS = ['Pénible', 'Bof', 'Correct', 'Bien', 'Super'];
@@ -20,6 +22,7 @@ function FormulaireExterne({ onAjouter, onFerme }: { onAjouter: Props['onAjouter
   const [duree, setDuree] = useState(30);
   const [source, setSource] = useState('');
   const [feel, setFeel] = useState<number | undefined>(undefined);
+  const [details, setDetails] = useState<Details>({});
 
   return (
     <div class="carte">
@@ -61,9 +64,11 @@ function FormulaireExterne({ onAjouter, onFerme }: { onAjouter: Props['onAjouter
         </div>
       </div>
 
+      <DetailsSeance onChange={setDetails} force={kind === 'strength'} />
+
       <div class="grille2" style="margin-top:18px">
         <button class="btn btn-contour" onClick={onFerme}>Annuler</button>
-        <button class="btn btn-principal" onClick={async () => { await onAjouter(creerSeanceExterne({ jour, kind, durationMin: duree, feel, source: source.trim() || undefined }, new Date())); onFerme(); }}>Enregistrer</button>
+        <button class="btn btn-principal" onClick={async () => { await onAjouter(appliquerDetails(creerSeanceExterne({ jour, kind, durationMin: duree, feel, source: source.trim() || undefined }, new Date()), details)); onFerme(); }}>Enregistrer</button>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 /** Déroulement d'une séance : fonctions pures qui font avancer le brouillon (séance en cours). */
 import type { Serie, Seance, TypeSerie } from '../../donnees/types';
+import { appliquerDetails, type Details } from '../details';
 import type { ExercicePlan, PlanSeance } from './preparer';
 
 export type Phase = 'serie' | 'repos' | 'fin';
@@ -82,7 +83,7 @@ export function arreter(b: Brouillon): Brouillon {
 }
 
 /** Transforme le brouillon en séance enregistrable (même format que le prototype). */
-export function terminer(b: Brouillon, feel: number | undefined, maintenant: Date): Seance {
+export function terminer(b: Brouillon, feel: number | undefined, maintenant: Date, details: Details = {}): Seance {
   const minutes = Math.max(1, Math.round((maintenant.getTime() - new Date(b.debut).getTime()) / 60_000));
   const seance: Seance = {
     id: b.id,
@@ -93,5 +94,5 @@ export function terminer(b: Brouillon, feel: number | undefined, maintenant: Dat
     exercises: b.plan.map((e, i) => ({ key: e.key, sets: b.realisees[i]! })).filter((e) => e.sets.length > 0),
   };
   if (feel !== undefined) seance.feel = feel;
-  return seance;
+  return appliquerDetails(seance, details);
 }

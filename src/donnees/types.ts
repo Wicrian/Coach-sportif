@@ -51,6 +51,16 @@ export interface Seance {
   durationMin?: number;
   /** Application ou lieu d'une séance faite ailleurs (ex. « Boxa »). */
   source?: string;
+  /** Effort ressenti pendant la séance, de 1 (très facile) à 10 (maximal). Enregistré, pas encore utilisé par le moteur. */
+  effort?: number;
+  /** Combien de répétitions il restait en fin de série (R-14). Enregistré, pas encore utilisé par le moteur. */
+  reserve?: 'aucune' | '1-2' | '3-plus';
+  /** Gêne ou douleur signalée pendant la séance. */
+  gene?: { niveau: 'legere' | 'a-surveiller'; zone?: string };
+  /** Données de la ceinture Polar : FC moyenne et maximale (bpm), minutes passées dans chacune des 5 zones. */
+  fc?: { moy?: number; max?: number; zones?: number[] };
+  /** Note libre. */
+  note?: string;
   exercises: ExerciceRealise[];
 }
 
@@ -81,6 +91,8 @@ export interface Profil {
   gear: string[];
   diet?: string;
   why?: string;
+  /** Objectif principal. Enregistré, pas encore utilisé par le moteur. */
+  objectif?: 'perte' | 'muscle' | 'mixte';
   /** Contestation du curseur d'audace : 'push' (prêt à pousser) ou 'safe' (rester prudent). */
   audOverride?: 'push' | 'safe' | null;
   /**
