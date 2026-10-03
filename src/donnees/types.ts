@@ -67,3 +67,31 @@ export interface InventaireHalteres {
   barre: number;
   disques: LotDisques[];
 }
+
+/**
+ * Profil de l'utilisateur. Les noms viennent de l'export du prototype (gear, diet, why,
+ * audOverride, dumbbells). Les champs inconnus sont conservés tels quels (aucune perte).
+ */
+export interface Profil {
+  /** Matériel possédé (noms libres, ex. « Swiss ball »). */
+  gear: string[];
+  diet?: string;
+  why?: string;
+  /** Contestation du curseur d'audace : 'push' (prêt à pousser) ou 'safe' (rester prudent). */
+  audOverride?: 'push' | 'safe' | null;
+  /**
+   * Anciennes charges fixes déclarées avant l'inventaire barre + disques. Le prototype les
+   * stockait en texte (« 2,5 / 5 / 10 ») ; elles sont converties en nombres à l'import.
+   */
+  dumbbells: number[];
+  /** Haltères ajustables : c'est ce qui sert au moteur (voir materiel.ts). */
+  halteres?: InventaireHalteres;
+  [autre: string]: unknown;
+}
+
+/** Tout ce que l'application garde sur l'appareil. */
+export interface Donnees {
+  profil: Profil;
+  seances: Seance[];
+  recuperation: MesureRecuperation[];
+}

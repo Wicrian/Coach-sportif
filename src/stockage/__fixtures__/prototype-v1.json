@@ -1,0 +1,46 @@
+{
+  "app": "bouge-de-la",
+  "v": 1,
+  "exportedAt": "2026-09-30T08:15:00.000Z",
+  "profile": {
+    "gear": ["Haltères", "Swiss ball", "Sac de frappe sur socle"],
+    "dumbbells": "2,5 / 5 / 10",
+    "diet": "Végétarien",
+    "why": "Avoir de l'énergie toute la journée",
+    "audOverride": "push",
+    "champInconnuDuFutur": { "a": 1 }
+  },
+  "sessions": [
+    {
+      "id": "m1abc",
+      "date": "2026-09-28T18:30:00.000Z",
+      "kind": "strength",
+      "tplId": "fb",
+      "feel": 4,
+      "durationMin": 42,
+      "exercises": [
+        { "key": "goblet", "sets": [
+          { "type": "warmup", "w": 2.5, "reps": 10 },
+          { "type": "normal", "w": 5, "reps": 12 },
+          { "type": "normal", "w": 5, "reps": 11 }
+        ] },
+        { "key": "pushup", "sets": [
+          { "type": "normal", "w": 0, "reps": 8 }
+        ] }
+      ]
+    },
+    {
+      "id": "m2def",
+      "date": "2026-09-29T07:10:00.000Z",
+      "kind": "walk",
+      "feel": 3,
+      "durationMin": 25,
+      "exercises": [],
+      "note": "champ ajouté par une version plus récente"
+    }
+  ],
+  "recovery": [
+    { "date": "2026-09-28", "hrv": 58, "rhr": 56, "sleep": 7.2, "weight": 81.4, "energy": 4, "sore": 2 },
+    { "date": "2026-09-29", "hrv": 61, "weight": 81.2, "energy": 3 }
+  ]
+}

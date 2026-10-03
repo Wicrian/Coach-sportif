@@ -49,3 +49,11 @@ Les seuils du prototype qui ne viennent pas du cahier sont marqués « Hypothès
 ```
 
 Attention : `dumbbells` est une **chaîne de texte**. Le nouveau modèle doit la convertir en liste de nombres (`[2.5, 5, 10]`) lors de l'import.
+
+## Import et stockage (session 3)
+
+- **Import** (`src/stockage/sauvegarde.ts`) : accepte le format du prototype (v1). Les haltères en texte (« 2,5 / 5 / 10 ») sont convertis en liste de nombres (`dumbbells: [2.5, 5, 10]`). Les séances et mesures sont conservées à l'identique, champs inconnus compris. Sauvegarde actuelle : **v2** (même enveloppe `{ app, v, exportedAt, profile, sessions, recovery }`).
+- **Fusion** : séances reconnues par leur `id`, mesures par leur date. Importer deux fois le même fichier ne crée aucun doublon. Les données de l'appareil ne sont jamais écrasées. Pour le profil, l'appareil gagne et le fichier comble les trous ; le matériel est réuni.
+- **Ancien `dumbbells`** : conservé tel quel pour mémoire, mais **le moteur n'utilise que `halteres`** (barre + disques). Le prototype contenait une estimation fausse (2,5 / 5 / 10 kg) ; l'inventaire réel se saisit dans le profil.
+- **Stockage** (`src/stockage/base.ts`) : IndexedDB via Dexie, tout reste sur l'appareil. Une seule mesure par jour.
+- **Pas encore fait** : le bouton de téléchargement de l'export et l'écran d'import (session 4, interface).

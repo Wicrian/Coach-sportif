@@ -11,3 +11,6 @@ coverage/
 
 # Fichiers macOS
 Icon?
+
+# Dossier pour tes données personnelles (exports du prototype) : jamais versionné
+donnees-perso/
