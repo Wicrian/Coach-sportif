@@ -86,6 +86,8 @@ export interface Profil {
   dumbbells: number[];
   /** Haltères ajustables : c'est ce qui sert au moteur (voir materiel.ts). */
   halteres?: InventaireHalteres;
+  /** Playlists Apple Music, par type de séance. */
+  playlists?: Playlist[];
   [autre: string]: unknown;
 }
 
@@ -94,4 +96,11 @@ export interface Donnees {
   profil: Profil;
   seances: Seance[];
   recuperation: MesureRecuperation[];
+}
+
+/** Une playlist (lien de partage Apple Music). `pour` vide = proposée pour toutes les séances. */
+export interface Playlist {
+  nom: string;
+  url: string;
+  pour?: GenreSeance[];
 }

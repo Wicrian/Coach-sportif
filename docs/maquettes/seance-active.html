@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette — Séance active</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+  :root{
+    --coral:#ff5a6e; --hot-pink:#ff2d8f; --magenta:#e8228c; --blush:#ffe4ea; --blush-deep:#ffd0dc; --peach:#ff8a6b;
+    --ink:#2b1a2e; --ink-soft:#3d2942; --plum:#6b5570; --mauve:#a892ad; --cloud:#fdf6f8; --line:#f2e3e9;
+    --violet:#7b5cff; --mint:#1fc99a; --amber:#ffb020;
+    --grad-punch:linear-gradient(120deg,#e8228c 0%,#ff5a6e 100%);
+    --grad-dark:linear-gradient(160deg,#3d2942 0%,#2b1a2e 100%);
+    --grad-rest:linear-gradient(160deg,#1fc99a 0%,#12b5c4 100%);
+    --shadow-pink:0 10px 30px rgba(255,45,143,.30);
+    --r-sm:12px; --r-md:18px; --r-lg:26px; --r-pill:999px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:var(--cloud);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;padding:24px 16px 60px}
+  h1{font-family:'Fraunces',serif;font-weight:700;font-size:28px;text-align:center}
+  .intro{text-align:center;color:var(--plum);max-width:640px;margin:8px auto 28px;font-size:15px}
+  .screens{display:flex;flex-wrap:wrap;gap:28px;justify-content:center}
+  .col{width:360px;max-width:100%}
+  .cap{font-size:13px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;color:var(--plum);margin-bottom:10px;text-align:center}
+  .phone{width:360px;max-width:100%;min-height:700px;border-radius:38px;border:8px solid var(--ink);overflow:hidden;position:relative;display:flex;flex-direction:column;box-shadow:0 20px 50px rgba(43,26,46,.25)}
+  .dark{background:var(--grad-dark);color:#fff}
+  .rest{background:var(--grad-rest);color:#fff}
+  .light{background:var(--cloud);color:var(--ink)}
+  .pad{padding:22px 20px;display:flex;flex-direction:column;flex:1}
+  .top{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;letter-spacing:.5px;color:#e6c9ee}
+  .chrono{font-family:'Fraunces',serif;font-weight:900;font-size:18px;color:#fff;background:rgba(123,92,255,.35);padding:4px 12px;border-radius:var(--r-pill)}
+  .icon-btn{background:rgba(255,255,255,.12);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer}
+  h2{font-family:'Fraunces',serif;font-weight:700;font-size:32px;line-height:1.1;letter-spacing:-.5px;margin-top:20px}
+  .badge{display:inline-block;padding:5px 12px;border-radius:var(--r-pill);font-size:12px;font-weight:700;background:var(--blush);color:var(--hot-pink)}
+  .badge.on-dark{background:rgba(255,255,255,.14);color:#ffd0dc}
+  .card-dark{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r-md);padding:14px 16px;margin-top:14px}
+  .card-dark b{font-weight:800}
+  .small{font-size:13px;color:#e6c9ee}
+  .hint{font-size:13px;color:#a8f0d9;margin-top:6px;font-weight:600}
+  .series{display:flex;gap:8px;margin-top:16px}
+  .serie{flex:1;border-radius:var(--r-sm);padding:9px 6px;text-align:center;font-size:12px;font-weight:700;background:rgba(255,255,255,.08);color:#e6c9ee}
+  .serie.ok{background:rgba(31,201,154,.22);color:#a8f0d9}
+  .serie.now{background:#fff;color:var(--ink)}
+  .editor{background:#fff;color:var(--ink);border-radius:var(--r-lg);padding:16px;margin-top:16px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .row + .row{margin-top:12px}
+  .lab{font-size:13px;font-weight:700;color:var(--plum)}
+  .step{display:flex;align-items:center;gap:6px}
+  .step button{width:46px;height:46px;border-radius:50%;border:2px solid var(--blush-deep);background:#fff;color:var(--hot-pink);font-size:22px;font-weight:700;cursor:pointer;font-family:inherit}
+  .step button:active{transform:scale(.94)}
+  .val{min-width:84px;text-align:center;font-family:'Fraunces',serif;font-weight:900;font-size:34px;line-height:1}
+  .val small{font-family:'Plus Jakarta Sans';font-weight:600;font-size:13px;color:var(--plum);display:block;margin-top:2px}
+  .delta{font-size:12.5px;font-weight:700;margin-top:10px;padding:7px 12px;border-radius:var(--r-pill);display:inline-block;background:var(--blush);color:var(--hot-pink)}
+  .delta.same{background:#d6f7ec;color:#0f9b74}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{padding:7px 13px;border-radius:var(--r-pill);font-size:13px;font-weight:600;background:var(--cloud);color:var(--plum);border:1px solid var(--line);cursor:pointer;font-family:inherit}
+  .chip.on{background:var(--grad-punch);color:#fff;border-color:transparent}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;border-radius:var(--r-pill);font-size:16px;padding:16px 26px;width:100%;transition:transform .12s ease}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--grad-punch);color:#fff;box-shadow:var(--shadow-pink)}
+  .btn-ghost{background:rgba(255,255,255,.14);color:#fff}
+  .btn-outline{background:#fff;color:var(--hot-pink);border:2px solid var(--blush-deep)}
+  .btn-dark{background:var(--ink);color:#fff}
+  .spacer{flex:1;min-height:14px}
+  .gap{display:grid;gap:10px;margin-top:14px}
+  .ring{position:relative;width:240px;height:240px;margin:26px auto 0}
+  .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ring .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring .c b{font-family:'Fraunces',serif;font-weight:900;font-size:72px;line-height:1}
+  .ring .c span{font-weight:600;margin-top:6px;color:#e8fff7}
+  .next{background:rgba(255,255,255,.18);border-radius:var(--r-md);padding:14px 16px;margin-top:22px;font-size:14px}
+  .next b{font-weight:800;display:block;font-size:16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .bonus{background:#fff;border-radius:var(--r-lg);padding:20px;margin-top:20px;box-shadow:0 8px 28px rgba(43,26,46,.08);border:1px solid var(--line)}
+  .bonus h3{font-family:'Fraunces',serif;font-size:24px;line-height:1.15}
+  .bonus p{color:var(--plum);margin:10px 0 16px;font-size:15px}
+  .feel{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:12px}
+  .feel button{border:1.5px solid var(--blush-deep);background:#fff;border-radius:var(--r-sm);padding:12px 2px;font-weight:700;font-size:11.5px;color:var(--ink);cursor:pointer;font-family:inherit}
+  .feel button.on{background:var(--grad-punch);color:#fff;border-color:transparent}
+  .music{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.12);border-radius:var(--r-pill);padding:8px 8px 8px 16px;margin-top:14px;font-size:13px;font-weight:700}
+  .music .note{font-size:18px}
+  .music span.t{flex:1;line-height:1.2}
+  .music span.t small{display:block;font-weight:500;opacity:.85;font-size:11.5px}
+  .music button{border:none;background:#fff;color:var(--hot-pink);font-weight:800;font-family:inherit;font-size:13px;border-radius:var(--r-pill);padding:10px 14px;cursor:pointer}
+  .posbtn{margin-top:12px;background:rgba(255,255,255,.14);color:#fff;border:none;border-radius:var(--r-pill);padding:9px 16px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
+  .pos{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .pos[hidden]{display:none}
+  .pos figure{background:rgba(255,255,255,.08);border:1px dashed rgba(255,255,255,.35);border-radius:var(--r-md);padding:10px;text-align:center}
+  .pos .ph{height:92px;border-radius:var(--r-sm);background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:12px;color:#e6c9ee;text-align:center;padding:6px}
+  .pos figcaption{font-size:12px;font-weight:700;margin-top:6px;color:#ffd0dc}
+  .pos-note{grid-column:1/-1;font-size:12.5px;color:#e6c9ee;line-height:1.4}
+  button:focus-visible{outline:3px solid var(--hot-pink);outline-offset:2px}
+  .legend{max-width:760px;margin:34px auto 0;background:#fff;border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 24px;font-size:14.5px;color:var(--plum)}
+  .legend h3{font-family:'Fraunces',serif;color:var(--ink);font-size:20px;margin-bottom:8px}
+  .legend li{margin:6px 0 6px 18px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<h1>Séance active — maquette</h1>
+<p class="intro">Les trois moments d'une série. Les chiffres sont des exemples, rien n'est enregistré. Tu peux toucher les boutons + et − pour voir comment la saisie réagit.</p>
+
+<div class="screens">
+
+  <!-- 1. SÉRIE EN COURS -->
+  <div class="col">
+    <div class="cap">1 · Série en cours</div>
+    <div class="phone dark"><div class="pad">
+      <div class="top"><span>EXERCICE 2 SUR 6</span><span class="chrono" aria-label="Temps de séance">12:34</span><button class="icon-btn" aria-label="Plus d'options : changer d'exercice, ajouter une série, signaler un problème">⋯</button></div>
+      <h2>Squat gobelet</h2>
+      <div style="margin-top:10px"><span class="badge on-dark">Jambes</span> <span class="badge on-dark">3 séries · 12 reps</span></div>
+      <button class="posbtn" id="posbtn" aria-expanded="false" aria-controls="pos">Voir la posture</button>
+      <div class="pos" id="pos" hidden>
+        <figure><div class="ph">Photo : position de départ</div><figcaption>Départ</figcaption></figure>
+        <figure><div class="ph">Photo : position finale</div><figcaption>Fin</figcaption></figure>
+        <p class="pos-note">Haltère contre la poitrine, coudes serrés. Descends en gardant le dos droit, puis remonte en poussant sur les talons.</p>
+      </div>
+
+      <div class="card-dark">
+        <div class="small">À prendre</div>
+        <b style="font-size:18px">1 haltère · 6,2 kg</b>
+        <div class="small" style="margin-top:2px">Barre + 1 disque de 2,3 kg de chaque côté</div>
+        <div class="hint">Même montage que ton exercice précédent : rien à changer.</div>
+      </div>
+      <p class="small" style="margin-top:10px">La dernière fois : 12 / 11 reps à 6,2 kg. On consolide avant de monter.</p>
+
+      <div class="series" aria-label="Avancement des séries">
+        <div class="serie ok">✓ Série 1<br>12 × 6,2</div>
+        <div class="serie now">Série 2<br>en cours</div>
+        <div class="serie">Série 3<br>à venir</div>
+      </div>
+
+      <div class="editor">
+        <div class="row"><span class="lab">Répétitions</span>
+          <div class="step"><button id="rm" aria-label="Une répétition de moins">−</button><div class="val" id="reps">12<small>prévu : 12</small></div><button id="rp" aria-label="Une répétition de plus">+</button></div>
+        </div>
+        <div class="row"><span class="lab">Charge</span>
+          <div class="step"><button id="wm" aria-label="Charge inférieure">−</button><div class="val" id="w">6,2<small>kg · prévu : 6,2</small></div><button id="wp" aria-label="Charge supérieure">+</button></div>
+        </div>
+        <div id="delta" class="delta same">Comme prévu</div>
+        <div class="row" style="margin-top:14px"><span class="lab">Type</span>
+          <div class="chips"><button class="chip">Échauffement</button><button class="chip on">Normale</button><button class="chip">Jusqu'à l'échec</button></div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+      <div class="music"><span class="note" aria-hidden="true">♪</span><span class="t">Ma playlist<small>Apple Music</small></span><button>Ouvrir</button></div>
+      <button class="btn btn-primary" style="margin-top:12px">Valider la série</button>
+    </div></div>
+  </div>
+
+  <!-- 2. REPOS -->
+  <div class="col">
+    <div class="cap">2 · Repos</div>
+    <div class="phone rest"><div class="pad">
+      <div class="top" style="color:#e8fff7"><span>REPOS</span><span class="chrono" style="background:rgba(255,255,255,.22)">13:19</span><span style="width:40px"></span></div>
+      <div class="ring" role="timer" aria-live="off" aria-label="Temps de repos restant">
+        <svg viewBox="0 0 240 240"><circle cx="120" cy="120" r="104" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="14"/><circle id="arc" cx="120" cy="120" r="104" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-dasharray="653.5" stroke-dashoffset="0"/></svg>
+        <div class="c"><b id="sec">45</b><span>secondes</span></div>
+      </div>
+      <div class="next"><span style="font-size:13px;opacity:.9">Ensuite</span><b>Squat gobelet · série 3</b>12 reps · 6,2 kg (comme prévu)</div>
+      <div class="grid2" style="margin-top:18px"><button class="btn btn-ghost" id="m15">− 15 s</button><button class="btn btn-ghost" id="p15">+ 15 s</button></div>
+      <div class="spacer"></div>
+      <div class="music" style="background:rgba(255,255,255,.2)"><span class="note" aria-hidden="true">♪</span><span class="t">Ma playlist<small>Le volume se règle avec les boutons de l'iPhone</small></span><button>Ouvrir</button></div>
+      <div class="gap">
+        <button class="btn btn-dark" id="pause">Pause</button>
+        <button class="btn btn-ghost">Passer le repos</button>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 3. FIN DE SÉANCE -->
+  <div class="col">
+    <div class="cap">3 · Fin de séance</div>
+    <div class="phone light"><div class="pad">
+      <div class="top" style="color:var(--plum)"><span>DERNIÈRE SÉRIE FAITE</span><span></span><span></span></div>
+      <h2 style="color:var(--ink)">Beau travail.</h2>
+      <p style="color:var(--plum);margin-top:8px">38 minutes, 6 exercices. Ton volume : 2 140 kg, comme la semaine dernière.</p>
+
+      <div class="bonus">
+        <h3>Une série de plus ?</h3>
+        <p>Tu avais envie de pousser et ta forme du jour le permet. Une série en plus sur ton dernier exercice. Tu t'arrêtes quand tu veux.</p>
+        <div class="grid2"><button class="btn btn-primary" style="font-size:14px;padding:14px 10px">Oui, une de plus</button><button class="btn btn-outline" style="font-size:14px;padding:14px 10px">Non, c'est bon</button></div>
+      </div>
+
+      <h3 style="font-family:'Fraunces',serif;font-size:20px;margin-top:24px">Comment c'était ?</h3>
+      <div class="feel" role="group" aria-label="Ressenti de séance">
+        <button>Pénible</button><button>Bof</button><button>Correct</button><button class="on">Bien</button><button>Super</button>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-primary">Terminer</button>
+    </div></div>
+  </div>
+</div>
+
+<div class="legend">
+  <h3>Ce que cette maquette montre</h3>
+  <ul>
+    <li><b>Tout est pré-rempli</b> par le moteur (reps et charge prévues) : tu confirmes en un geste, ou tu corriges avec + et −.</li>
+    <li><b>Ta charge suit tes vrais disques</b> : le bouton + passe d'une charge réalisable à l'autre (1,6 · 3,8 · 6,0 · 6,2 · 8,4 …).</li>
+    <li><b>Prévu et réalisé sont comparés</b> en une ligne sobre : « 1 rep de moins que prévu ». Aucun jugement.</li>
+    <li><b>Zéro changement de disque</b> quand c'est possible : l'écran te dit « rien à changer ».</li>
+    <li><b>La poussée douce</b> n'apparaît qu'à la fin, si tu l'as demandée et que ta forme le permet.</li>
+    <li><b>La posture</b> : le bouton « Voir la posture » affiche deux photos (départ et fin) et une consigne courte. Ici, ce sont des emplacements : les vraies photos viendront de la base d'exercices libre.</li>
+    <li><b>La musique</b> : « Ouvrir » lance ta playlist dans Apple Music. Le volume se règle avec les boutons de l'iPhone (une app web ne peut pas le piloter).</li>
+    <li>Fond aubergine pour la concentration, menthe pour le souffle, rose pour l'élan : les trois émotions du design system.</li>
+  </ul>
+</div>
+
+<script>
+  const CHARGES = [1.6, 3.8, 6.0, 6.2, 8.4, 10.6, 10.8, 13.0, 15.2];
+  const PREVU = { reps: 12, w: 6.2 };
+  let reps = 12, wi = CHARGES.indexOf(6.2);
+  const fr = n => String(n).replace('.', ',');
+  function maj() {
+    const w = CHARGES[wi];
+    document.getElementById('reps').innerHTML = reps + '<small>prévu : ' + PREVU.reps + '</small>';
+    document.getElementById('w').innerHTML = fr(w) + '<small>kg · prévu : ' + fr(PREVU.w) + '</small>';
+    const d = [], dr = reps - PREVU.reps;
+    if (dr) d.push(Math.abs(dr) + (Math.abs(dr) > 1 ? ' reps' : ' rep') + (dr > 0 ? ' de plus' : ' de moins'));
+    if (w !== PREVU.w) d.push(w > PREVU.w ? 'charge plus haute' : 'charge plus basse');
+    const el = document.getElementById('delta');
+    el.textContent = d.length ? d.join(', ') + ' que prévu' : 'Comme prévu';
+    el.className = 'delta' + (d.length ? '' : ' same');
+  }
+  document.getElementById('rm').onclick = () => { reps = Math.max(1, reps - 1); maj(); };
+  document.getElementById('rp').onclick = () => { reps = Math.min(40, reps + 1); maj(); };
+  document.getElementById('wm').onclick = () => { wi = Math.max(0, wi - 1); maj(); };
+  document.getElementById('wp').onclick = () => { wi = Math.min(CHARGES.length - 1, wi + 1); maj(); };
+
+  const TOTAL = 45; let reste = TOTAL, enPause = false;
+  const arc = document.getElementById('arc'), sec = document.getElementById('sec'), C = 653.5;
+  function ring() { sec.textContent = reste; arc.style.strokeDashoffset = C * (1 - reste / TOTAL); }
+  document.getElementById('m15').onclick = () => { reste = Math.max(0, reste - 15); ring(); };
+  document.getElementById('p15').onclick = () => { reste = Math.min(TOTAL, reste + 15); ring(); };
+  document.getElementById('pause').onclick = e => { enPause = !enPause; e.target.textContent = enPause ? 'Reprendre' : 'Pause'; };
+  setInterval(() => { if (!enPause) { reste = reste > 0 ? reste - 1 : TOTAL; ring(); } }, 1000);
+  const pb = document.getElementById('posbtn'), pn = document.getElementById('pos');
+  pb.onclick = () => { const ouvert = pn.hidden; pn.hidden = !ouvert; pb.setAttribute('aria-expanded', String(ouvert)); pb.textContent = ouvert ? 'Masquer la posture' : 'Voir la posture'; };
+  ring(); maj();
+</script>
+</body>
+</html>
