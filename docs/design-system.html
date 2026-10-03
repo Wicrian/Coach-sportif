@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design System — App d'entraînement</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    /* ---- Roses & fuchsias : le cœur battant de l'identité ---- */
+    --coral:        #ff5a6e;   /* rose corail — accent principal */
+    --hot-pink:     #ff2d8f;   /* fuchsia électrique — CTA, énergie */
+    --magenta:      #e8228c;   /* magenta profond — dégradés */
+    --blush:        #ffe4ea;   /* rose poudré — fonds doux, badges */
+    --blush-deep:   #ffd0dc;
+    --peach:        #ff8a6b;   /* pêche — dégradés chaleureux */
+
+    /* ---- Neutres chauds (jamais de gris froid) ---- */
+    --ink:          #2b1a2e;   /* aubergine quasi-noir — texte fort */
+    --ink-soft:     #3d2942;   /* surfaces sombres */
+    --plum:         #6b5570;   /* texte secondaire teinté */
+    --mauve:        #a892ad;   /* texte tertiaire */
+    --cloud:        #fdf6f8;   /* fond clair rosé */
+    --line:         #f2e3e9;   /* filets */
+    --white:        #ffffff;
+
+    /* ---- Accents de soutien ---- */
+    --violet:       #7b5cff;   /* violet punch — données, secondaire */
+    --mint:         #1fc99a;   /* menthe — succès, repos */
+    --amber:        #ffb020;   /* ambre — attention douce */
+
+    /* ---- Dégradés signature ---- */
+    --grad-hero:    linear-gradient(135deg, #ff2d8f 0%, #ff5a6e 55%, #ff8a6b 100%);
+    --grad-punch:   linear-gradient(120deg, #e8228c 0%, #ff5a6e 100%);
+    --grad-violet:  linear-gradient(135deg, #7b5cff 0%, #ff2d8f 100%);
+    --grad-dark:    linear-gradient(160deg, #3d2942 0%, #2b1a2e 100%);
+
+    --r-sm: 12px; --r-md: 18px; --r-lg: 26px; --r-xl: 34px; --r-pill: 999px;
+    --shadow-pink: 0 10px 30px rgba(255,45,143,0.30);
+    --shadow-soft: 0 8px 28px rgba(43,26,46,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--cloud);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 120px; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    background: var(--grad-hero);
+    color: #fff;
+    padding: 90px 24px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before, .hero::after {
+    content: ""; position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.14);
+  }
+  .hero::before { width: 340px; height: 340px; top: -120px; right: -80px; }
+  .hero::after  { width: 220px; height: 220px; bottom: -110px; left: -60px; }
+  .hero-inner { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; }
+  .hero .eyebrow {
+    font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+    font-weight: 700; opacity: 0.9; margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: clamp(40px, 7vw, 68px); line-height: 1.02; letter-spacing: -1.5px;
+  }
+  .hero p { font-size: 18px; margin-top: 22px; opacity: 0.95; font-weight: 500; }
+  .hero .pill-row { display: flex; gap: 10px; justify-content: center; margin-top: 34px; flex-wrap: wrap; }
+  .hero .pill {
+    background: rgba(255,255,255,0.2); backdrop-filter: blur(6px);
+    padding: 9px 18px; border-radius: var(--r-pill); font-size: 14px; font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+
+  /* ---------- Sections ---------- */
+  section { margin-top: 72px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 24px; }
+  .sec-num {
+    font-family: 'Fraunces', serif; font-weight: 900; font-size: 20px;
+    color: var(--coral);
+  }
+  .sec-head h2 {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 30px;
+    letter-spacing: -0.5px; color: var(--ink);
+  }
+  .sec-desc { color: var(--plum); max-width: 620px; margin: -12px 0 26px; font-size: 15.5px; }
+
+  /* ---------- Couleurs ---------- */
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 14px; }
+  .swatch {
+    border-radius: var(--r-md); overflow: hidden; background: #fff;
+    box-shadow: var(--shadow-soft); border: 1px solid var(--line);
+  }
+  .swatch .chip { height: 92px; }
+  .swatch .meta { padding: 12px 14px; }
+  .swatch .name { font-weight: 700; font-size: 14px; }
+  .swatch .hex { color: var(--mauve); font-size: 12px; font-family: monospace; margin-top: 2px; text-transform: uppercase; }
+  .swatch .role { color: var(--plum); font-size: 12px; margin-top: 6px; }
+
+  .grad-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px,1fr)); gap: 16px; margin-top: 16px; }
+  .grad-card { border-radius: var(--r-lg); height: 130px; display: flex; align-items: flex-end; padding: 16px; color: #fff; font-weight: 700; box-shadow: var(--shadow-soft); }
+
+  /* ---------- Typo ---------- */
+  .type-row { border-bottom: 1px solid var(--line); padding: 22px 0; }
+  .type-row .label { color: var(--mauve); font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700; }
+  .display-xl { font-family:'Fraunces',serif; font-weight: 900; font-size: 54px; letter-spacing: -1.5px; line-height: 1; }
+  .display-l  { font-family:'Fraunces',serif; font-weight: 700; font-size: 34px; letter-spacing: -0.5px; }
+  .title      { font-weight: 800; font-size: 24px; }
+  .body-l     { font-size: 18px; font-weight: 500; }
+  .body       { font-size: 15.5px; }
+  .caption    { font-size: 13px; color: var(--plum); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+  .data-num   { font-family:'Fraunces',serif; font-weight: 900; font-size: 44px; color: var(--hot-pink); }
+
+  /* ---------- Composants ---------- */
+  .comp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 18px; }
+  .comp-card { background: #fff; border-radius: var(--r-lg); padding: 22px; box-shadow: var(--shadow-soft); border: 1px solid var(--line); }
+  .comp-card h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--mauve); margin-bottom: 16px; font-weight: 700; }
+  .stack > * + * { margin-top: 12px; }
+
+  .btn { border: none; cursor: pointer; font-family: inherit; font-weight: 700; border-radius: var(--r-pill); font-size: 15px; padding: 15px 26px; width: 100%; transition: transform .12s ease; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--grad-punch); color: #fff; box-shadow: var(--shadow-pink); }
+  .btn-solid   { background: var(--coral); color: #fff; }
+  .btn-outline { background: #fff; color: var(--hot-pink); border: 2px solid var(--blush-deep); }
+  .btn-ghost   { background: var(--blush); color: var(--hot-pink); }
+  .btn-dark    { background: var(--ink); color: #fff; }
+
+  .badge { display: inline-block; padding: 6px 14px; border-radius: var(--r-pill); font-size: 13px; font-weight: 700; }
+  .badge-coral { background: var(--blush); color: var(--hot-pink); }
+  .badge-mint  { background: #d6f7ec; color: #0f9b74; }
+  .badge-violet{ background: #ece7ff; color: var(--violet); }
+
+  .chip2 { display:inline-block; padding: 9px 16px; border-radius: var(--r-pill); font-size: 14px; font-weight: 600; background: var(--cloud); color: var(--plum); border: 1px solid var(--line); }
+  .chip2.on { background: var(--grad-punch); color:#fff; border-color: transparent; }
+
+  .input { width:100%; padding: 14px 16px; border-radius: var(--r-sm); border: 1.5px solid var(--line); font-family: inherit; font-size: 15px; background: var(--cloud); }
+  .input:focus { outline: none; border-color: var(--coral); box-shadow: 0 0 0 4px var(--blush); }
+
+  .progress-track { height: 12px; background: var(--blush); border-radius: var(--r-pill); overflow: hidden; }
+  .progress-fill { height: 100%; width: 62%; background: var(--grad-punch); border-radius: var(--r-pill); }
+
+  .stat-card { background: var(--grad-hero); color:#fff; border-radius: var(--r-lg); padding: 22px; box-shadow: var(--shadow-pink); }
+  .stat-card .n { font-family:'Fraunces',serif; font-weight: 900; font-size: 46px; line-height: 1; }
+  .stat-card .l { font-weight: 600; opacity: 0.95; margin-top: 6px; }
+
+  /* ---------- Émotion par écran ---------- */
+  .emo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 16px; }
+  .emo { border-radius: var(--r-lg); padding: 22px; color: #fff; min-height: 150px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: var(--shadow-soft); }
+  .emo .screen { font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; opacity: 0.9; }
+  .emo .feel { font-family:'Fraunces',serif; font-weight: 700; font-size: 22px; margin-top: 8px; }
+  .emo .how { font-size: 13.5px; opacity: 0.95; margin-top: 10px; font-weight: 500; }
+
+  /* ---------- Do / Don't ---------- */
+  .dd { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .dd .box { border-radius: var(--r-md); padding: 20px; }
+  .dd .do { background: #d6f7ec; }
+  .dd .dont { background: var(--blush); }
+  .dd h4 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .dd .do h4 { color: #0f9b74; }
+  .dd .dont h4 { color: var(--hot-pink); }
+  .dd ul { list-style: none; }
+  .dd li { padding: 6px 0 6px 24px; position: relative; font-size: 14.5px; }
+  .dd .do li::before { content:"✓"; position:absolute; left:0; color:#0f9b74; font-weight:800; }
+  .dd .dont li::before { content:"✕"; position:absolute; left:0; color:var(--hot-pink); font-weight:800; }
+
+  @media (max-width: 620px) { .dd { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Design System · v1</div>
+    <h1>Ça pulse.<br>Ça donne envie<br>de bouger.</h1>
+    <p>L'identité visuelle d'une app d'entraînement qui te motive avant même le premier squat. Rose vif, énergie franche, zéro tiédeur.</p>
+    <div class="pill-row">
+      <span class="pill">🌸 Rose corail &amp; fuchsia</span>
+      <span class="pill">⚡ Punchy</span>
+      <span class="pill">💛 Chaleureux</span>
+      <span class="pill">🎯 Honnête</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 01 PRINCIPE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>Le parti pris</h2></div>
+    <p class="sec-desc">Une app de sport à la maison échoue quand elle est tiède. La nôtre assume une identité forte : le rose n'est pas timide, il est le carburant. Chaque écran doit transmettre une émotion — élan, fierté, calme, envie de revenir. Mais l'énergie visuelle ne ment jamais sur les chiffres : on punche sur la forme, on reste sobre sur les données.</p>
+    <div class="comp-grid">
+      <div class="comp-card"><h3>Énergique</h3><p class="body">Dégradés vifs, gros titres, boutons ronds qui donnent envie d'être pressés.</p></div>
+      <div class="comp-card"><h3>Chaleureux</h3><p class="body">Neutres teintés d'aubergine et de mauve, jamais de gris froid. On parle à un humain.</p></div>
+      <div class="comp-card"><h3>Honnête</h3><p class="body">Le punch est dans la couleur et le mouvement, pas dans des « +623 % » trompeurs.</p></div>
+    </div>
+  </section>
+
+  <!-- 02 COULEURS -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Palette</h2></div>
+    <p class="sec-desc">Le rose mène. Corail pour l'accent quotidien, fuchsia électrique pour les moments qui comptent (démarrer, réussir). Les neutres sont chauds — de l'aubergine, pas du gris.</p>
+
+    <h3 style="font-weight:800; margin:8px 0 14px; color:var(--plum); font-size:15px;">Roses &amp; fuchsias</h3>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="chip" style="background:#ff5a6e"></div><div class="meta"><div class="name">Coral</div><div class="hex">#FF5A6E</div><div class="role">Accent principal</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#ff2d8f"></div><div class="meta"><div class="name">Hot Pink</div><div class="hex">#FF2D8F</div><div class="role">CTA, énergie</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#e8228c"></div><div class="meta"><div class="name">Magenta</div><div class="hex">#E8228C</div><div class="role">Dégradés profonds</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#ff8a6b"></div><div class="meta"><div class="name">Peach</div><div class="hex">#FF8A6B</div><div class="role">Chaleur, dégradés</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#ffd0dc"></div><div class="meta"><div class="name">Blush Deep</div><div class="hex">#FFD0DC</div><div class="role">Bordures douces</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#ffe4ea"></div><div class="meta"><div class="name">Blush</div><div class="hex">#FFE4EA</div><div class="role">Fonds, badges</div></div></div>
+    </div>
+
+    <h3 style="font-weight:800; margin:26px 0 14px; color:var(--plum); font-size:15px;">Neutres chauds</h3>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="chip" style="background:#2b1a2e"></div><div class="meta"><div class="name">Ink</div><div class="hex">#2B1A2E</div><div class="role">Texte fort, écran séance</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#3d2942"></div><div class="meta"><div class="name">Ink Soft</div><div class="hex">#3D2942</div><div class="role">Surfaces sombres</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#6b5570"></div><div class="meta"><div class="name">Plum</div><div class="hex">#6B5570</div><div class="role">Texte secondaire</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#a892ad"></div><div class="meta"><div class="name">Mauve</div><div class="hex">#A892AD</div><div class="role">Texte tertiaire</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#fdf6f8;border-bottom:1px solid #eee"></div><div class="meta"><div class="name">Cloud</div><div class="hex">#FDF6F8</div><div class="role">Fond clair rosé</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#ffffff;border-bottom:1px solid #eee"></div><div class="meta"><div class="name">White</div><div class="hex">#FFFFFF</div><div class="role">Cartes</div></div></div>
+    </div>
+
+    <h3 style="font-weight:800; margin:26px 0 14px; color:var(--plum); font-size:15px;">Accents de soutien</h3>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="chip" style="background:#7b5cff"></div><div class="meta"><div class="name">Violet</div><div class="hex">#7B5CFF</div><div class="role">Données, timer</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#1fc99a"></div><div class="meta"><div class="name">Mint</div><div class="hex">#1FC99A</div><div class="role">Succès, repos</div></div></div>
+      <div class="swatch"><div class="chip" style="background:#ffb020"></div><div class="meta"><div class="name">Amber</div><div class="hex">#FFB020</div><div class="role">Attention douce</div></div></div>
+    </div>
+
+    <h3 style="font-weight:800; margin:26px 0 4px; color:var(--plum); font-size:15px;">Dégradés signature</h3>
+    <div class="grad-grid">
+      <div class="grad-card" style="background:linear-gradient(135deg,#ff2d8f,#ff5a6e 55%,#ff8a6b)">Hero — fuchsia → pêche</div>
+      <div class="grad-card" style="background:linear-gradient(120deg,#e8228c,#ff5a6e)">Punch — CTA</div>
+      <div class="grad-card" style="background:linear-gradient(135deg,#7b5cff,#ff2d8f)">Violet — accents data</div>
+      <div class="grad-card" style="background:linear-gradient(160deg,#3d2942,#2b1a2e)">Dark — écran séance</div>
+    </div>
+  </section>
+
+  <!-- 03 TYPO -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Typographie</h2></div>
+    <p class="sec-desc">Deux voix. <b>Fraunces</b> — un serif expressif, rond et confiant — porte les titres et les grands chiffres : c'est la personnalité, l'émotion. <b>Plus Jakarta Sans</b> — géométrique, clair, moderne — porte tout le reste : lisible d'un coup d'œil, même en pleine série.</p>
+    <div class="type-row"><div class="label">Display XL · Fraunces 900 — héros, félicitations</div><div class="display-xl">Beau travail.</div></div>
+    <div class="type-row"><div class="label">Display L · Fraunces 700 — titres d'écran</div><div class="display-l">Ta séance du jour</div></div>
+    <div class="type-row"><div class="label">Chiffre data · Fraunces 900 — records, volume</div><div class="data-num">255 kg</div></div>
+    <div class="type-row"><div class="label">Title · Jakarta 800 — noms d'exercice</div><div class="title">Développé militaire haltères</div></div>
+    <div class="type-row"><div class="label">Body L · Jakarta 500 — texte du coach</div><div class="body-l">Je te sens en forme aujourd'hui — on peut pousser un peu.</div></div>
+    <div class="type-row"><div class="label">Body · Jakarta 400 — texte courant</div><div class="body">Repos 45 secondes, puis on enchaîne sur le squat gobelet.</div></div>
+    <div class="type-row"><div class="label">Caption · Jakarta 700 — étiquettes</div><div class="caption">Cette semaine</div></div>
+  </section>
+
+  <!-- 04 COMPOSANTS -->
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Composants</h2></div>
+    <p class="sec-desc">Tout est rond, généreux, tactile. Les boutons ont la forme de pilules pleines avec une ombre rose qui les fait « flotter ». Rien d'anguleux, rien de froid.</p>
+    <div class="comp-grid">
+
+      <div class="comp-card">
+        <h3>Boutons</h3>
+        <div class="stack">
+          <button class="btn btn-primary">Démarrer la séance</button>
+          <button class="btn btn-solid">Valider la série</button>
+          <button class="btn btn-outline">Reporter sans pénalité</button>
+          <button class="btn btn-ghost">Voir l'exercice</button>
+          <button class="btn btn-dark">Pause</button>
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <h3>Badges &amp; chips</h3>
+        <div class="stack">
+          <div><span class="badge badge-coral">Épaules</span> <span class="badge badge-mint">Repos</span> <span class="badge badge-violet">Nouveau record</span></div>
+          <div style="margin-top:8px;">
+            <span class="chip2 on">Haltères</span>
+            <span class="chip2">Boxe</span>
+            <span class="chip2">Swiss ball</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <h3>Champ de saisie</h3>
+        <div class="stack">
+          <input class="input" placeholder="Ton poids (kg)">
+          <input class="input" placeholder="Écris au coach…">
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <h3>Curseur d'audace</h3>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--plum);font-weight:600;margin-bottom:8px;"><span>Prudent</span><span>Audacieux</span></div>
+        <div class="progress-track"><div class="progress-fill"></div></div>
+        <p class="body" style="margin-top:12px;color:var(--plum);">On peut pousser un peu — tu es régulier depuis 6 semaines.</p>
+      </div>
+
+      <div class="comp-card">
+        <h3>Carte statistique</h3>
+        <div class="stat-card">
+          <div class="n">4</div>
+          <div class="l">séances cette semaine 🔥</div>
+        </div>
+      </div>
+
+      <div class="comp-card">
+        <h3>Bulle du coach</h3>
+        <div class="stack">
+          <div style="background:var(--cloud);padding:13px 16px;border-radius:18px 18px 18px 4px;font-size:15px;">Comment tu te sens aujourd'hui ?</div>
+          <div style="background:var(--grad-punch);color:#fff;padding:13px 16px;border-radius:18px 18px 4px 18px;font-size:15px;max-width:80%;margin-left:auto;">En pleine forme !</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 05 ÉMOTION -->
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>Une émotion par écran</h2></div>
+    <p class="sec-desc">Le design n'est pas décoratif : chaque écran vise un ressenti précis. C'est la boussole qui décide des couleurs, du ton et du mouvement à chaque endroit.</p>
+    <div class="emo-grid">
+      <div class="emo" style="background:var(--grad-punch)">
+        <div class="screen">Plan · Démarrer</div>
+        <div><div class="feel">L'élan</div><div class="how">Fuchsia plein, gros bouton, envie de commencer maintenant. Le moment le plus vif de l'app.</div></div>
+      </div>
+      <div class="emo" style="background:var(--grad-dark)">
+        <div class="screen">Séance active</div>
+        <div><div class="feel">La concentration</div><div class="how">Fond aubergine, une seule couleur d'accent, zéro distraction. On est dans l'effort.</div></div>
+      </div>
+      <div class="emo" style="background:linear-gradient(135deg,#1fc99a,#12b5c4)">
+        <div class="screen">Repos</div>
+        <div><div class="feel">Le souffle</div><div class="how">Menthe apaisante, timer circulaire fluide. On récupère sans culpabilité.</div></div>
+      </div>
+      <div class="emo" style="background:var(--grad-hero)">
+        <div class="screen">Débrief · Félicitations</div>
+        <div><div class="feel">La fierté</div><div class="how">Grand serif chaleureux, chiffres honnêtes. Fier sans être dupé par des pourcentages gonflés.</div></div>
+      </div>
+      <div class="emo" style="background:var(--grad-violet)">
+        <div class="screen">Progrès</div>
+        <div><div class="feel">La clarté</div><div class="how">Violet-rose pour les données. Des tendances lisibles, sobres, jamais spectaculaires.</div></div>
+      </div>
+      <div class="emo" style="background:linear-gradient(135deg,#ff8a6b,#ff5a6e)">
+        <div class="screen">Coach</div>
+        <div><div class="feel">La complicité</div><div class="how">Chaleur pêche-corail, ton « tu peux ». Une présence bienveillante, jamais un juge.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 MOTION -->
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Mouvement</h2></div>
+    <p class="sec-desc">Le mouvement donne la vie, mais reste au service de l'usage. Réglé, jamais gratuit.</p>
+    <div class="comp-grid">
+      <div class="comp-card"><h3>Pression bouton</h3><p class="body">Léger « scale 0.97 » à l'appui — le bouton répond sous le doigt. Réactif, satisfaisant.</p></div>
+      <div class="comp-card"><h3>Timer de repos</h3><p class="body">Anneau qui se vide en douceur, respiration visuelle. Le seul grand mouvement continu de l'app.</p></div>
+      <div class="comp-card"><h3>Validation de série</h3><p class="body">Petit rebond + coche menthe. Micro-récompense honnête, pas de pluie de confettis.</p></div>
+      <div class="comp-card"><h3>Arrivée d'écran</h3><p class="body">Fondu + montée de 8px, rapide (200 ms). Fluide, jamais lent. Respecte « motion réduit ».</p></div>
+    </div>
+  </section>
+
+  <!-- 07 DO / DON'T -->
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>À faire / À éviter</h2></div>
+    <div class="dd">
+      <div class="box do">
+        <h4>On fait</h4>
+        <ul>
+          <li>Assumer le rose partout — c'est l'identité, pas un accent timide</li>
+          <li>De grands chiffres en serif pour la fierté et l'émotion</li>
+          <li>Des dégradés vifs sur les moments forts (démarrer, réussir)</li>
+          <li>Un ton « tu peux », chaleureux et complice</li>
+          <li>Des chiffres honnêtes, en tendance</li>
+          <li>Du blanc et du rose pâle pour respirer entre les zones vives</li>
+        </ul>
+      </div>
+      <div class="box dont">
+        <h4>On évite</h4>
+        <ul>
+          <li>Le gris froid, le bleu corporate, le terne</li>
+          <li>Les « +623 % » et pourcentages spectaculaires trompeurs</li>
+          <li>La gamification criarde (pluie de badges, confettis à outrance)</li>
+          <li>Les angles durs et les interfaces denses type tableur</li>
+          <li>Un ton culpabilisant (« tu as raté ta séance »)</li>
+          <li>Trop de couleurs vives d'un coup — le rose mène, le reste soutient</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 SYNTHÈSE -->
+  <section>
+    <div class="sec-head"><span class="sec-num">08</span><h2>En une phrase</h2></div>
+    <div style="background:var(--grad-hero);color:#fff;border-radius:var(--r-xl);padding:44px;box-shadow:var(--shadow-pink);">
+      <p style="font-family:'Fraunces',serif;font-weight:700;font-size:26px;line-height:1.35;">
+        Une app rose vif qui te donne de l'élan à chaque ouverture, te rend fier à chaque séance, et te dit toujours la vérité sur tes progrès.
+      </p>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
