@@ -94,3 +94,13 @@ Trois signaux, chacun `vert`, `rouge` ou `inconnu`.
 - Volume d'une série : charge × reps (× 2 si exercice unilatéral réalisé des deux côtés). Échauffements exclus.
 - 1RM estimé (Epley) : charge × (1 + reps/30), seulement entre 1 et 10 reps. À usage interne : **jamais affiché comme un record spectaculaire**.
 - Tendances : moyennes mobiles sur 7 jours, au moins 3 valeurs pour afficher une tendance.
+
+## 10. Précisions d'implémentation (readiness)
+
+Choix faits lors du codage de `src/moteur/readiness.ts`, à valider à l'usage :
+
+- **Écart-type** : écart-type de population (division par n), comme le prototype.
+- **« Jour » et « 7 jours précédents »** : la HRV du jour est celle de la mesure datée d'aujourd'hui (pas la dernière mesure connue). L'historique couvre les 7 jours calendaires qui précèdent (J−7 à J−1). Sans mesure aujourd'hui, le signal physiologique est `inconnu`.
+- **R-01, FC de repos présente mais historique FC < 4 mesures** : la FC n'est pas utilisable, donc le signal reste `vert` (la HRV seule ne suffit que si la FC du jour est absente). *Hypothèse à valider.*
+- **R-04** : seuil strict (`< 0,85` rouge ; 0,85 exactement = vert). Reps cibles fournies par l'appelant (clé d'exercice → reps).
+- **R-08** : le texte du cahier (« on allège ») et le tableau ci-dessus (« vigilance au minimum ») ne disent pas la même chose. Le code suit le tableau : ressenti rouge seul = `vigilance`. *À trancher.*
