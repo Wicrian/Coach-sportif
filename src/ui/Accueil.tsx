@@ -6,6 +6,7 @@ import { evaluerHabitude } from '../moteur/habitude';
 import { nf } from './format';
 import { jourLocal } from './jour';
 import { chargesDuProfil } from './seance/preparer';
+import { Avatar } from './BulleProfil';
 import { CheckIn } from './FormulaireCheckIn';
 import type { SaisieCheckin } from './checkin';
 import { calculerPreparation } from './preparation';
@@ -21,6 +22,7 @@ interface Props {
   onEnergie: (choix: 'safe' | 'push' | null) => void;
   onImporter: (texte: string) => Promise<string>;
   onExporter: () => void;
+  onAllerToi: () => void;
 }
 
 const ENERGIES: { choix: 'safe' | 'push' | null; nom: string }[] = [
@@ -62,8 +64,13 @@ export function Accueil(p: Props) {
 
   return (
     <div class="ecran fond-clair avec-nav">
-      <span class="legende" style="color:var(--mauve)">{date}</span>
-      <h1 style="margin-top:6px">Bouge de là !</h1>
+      <div class="en-tete">
+        <div>
+          <span class="legende" style="color:var(--mauve)">{date}</span>
+          <h1 style="margin-top:6px">Bouge de là !</h1>
+        </div>
+        <Avatar src={donnees.profil.avatar} taille={52} onClick={p.onAllerToi} etiquette="Ouvrir mon profil" />
+      </div>
 
       <div class="carte-hero">
         <div class="n">{habitude.cetteSemaine}</div>

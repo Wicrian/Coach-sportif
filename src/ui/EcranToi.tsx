@@ -3,6 +3,8 @@ import type { Donnees, GenreSeance, Playlist, Profil } from '../donnees/types';
 import { chargesDisponibles } from '../moteur/materiel';
 import { jourDe } from '../moteur/utilitaires';
 import { libelleGenre } from './activite';
+import { Avatar } from './BulleProfil';
+import { reduirePhoto } from './avatar';
 import type { SaisieCheckin } from './checkin';
 import { lireNombre } from './checkin';
 import { nf } from './format';
@@ -13,6 +15,7 @@ interface Props {
   donnees: Donnees;
   onProfil: (profil: Profil) => Promise<void>;
   onMesure: (saisie: SaisieCheckin) => Promise<void>;
+  onAllerCreneaux: () => void;
 }
 
 const MATERIEL = ['Haltères', 'Élastiques', 'Swiss ball', 'Reflex bag mural', 'Sac de frappe sur socle', 'Tapis'];
@@ -121,7 +124,7 @@ function Musique({ profil, onProfil }: { profil: Profil; onProfil: Props['onProf
   );
 }
 
-export function EcranToi({ donnees, onProfil, onMesure }: Props) {
+export function EcranToi({ donnees, onProfil, onMesure, onAllerCreneaux }: Props) {
   const { profil } = donnees;
   const aujourdhui = jourLocal(new Date());
   const [why, setWhy] = useState(profil.why ?? '');
@@ -129,6 +132,7 @@ export function EcranToi({ donnees, onProfil, onMesure }: Props) {
   const [poids, setPoids] = useState('');
   const [msgObjectifs, setMsgObjectifs] = useState<{ texte: string; erreur: boolean } | null>(null);
   const [msgPoids, setMsgPoids] = useState<{ texte: string; erreur: boolean } | null>(null);
+  const [msgPhoto, setMsgPhoto] = useState<{ texte: string; erreur: boolean } | null>(null);
 
   const dp = dernierPoids(donnees.recuperation);
   const anciennete = dp ? joursDepuis(dp.date, aujourdhui) : null;
@@ -140,8 +144,32 @@ export function EcranToi({ donnees, onProfil, onMesure }: Props) {
 
   return (
     <div class="ecran fond-clair avec-nav">
-      <h1>Ce que je sais de toi</h1>
-      <p style="color:var(--plum);margin-top:6px">Tout ce que l'app retient, avec sa date. Tu peux tout corriger : ce sont tes informations.</p>
+      <div class="en-tete-toi">
+        <Avatar src={profil.avatar} taille={84} etiquette="Ma photo de profil" />
+        <div>
+          <h1>Ce que je sais de toi</h1>
+        </div>
+      </div>
+      <p style="color:var(--plum);margin-top:10px">Tout ce que l'app retient, avec sa date. Tu peux tout corriger : ce sont tes informations.</p>
+      <div class="ligne-puces" style="margin-top:12px">
+        <label class="mini plein" style="cursor:pointer">
+          {profil.avatar ? 'Changer ma photo' : 'Ajouter ma photo'}
+          <input type="file" accept="image/*" style="display:none" onChange={async (e) => {
+            const input = e.currentTarget as HTMLInputElement;
+            const fichier = input.files?.[0];
+            if (!fichier) return;
+            try {
+              await onProfil({ ...profil, avatar: await reduirePhoto(fichier) });
+              setMsgPhoto({ texte: 'Photo enregistrée sur ton téléphone.', erreur: false });
+            } catch (err) {
+              setMsgPhoto({ texte: err instanceof Error ? err.message : "La photo n'a pas pu être enregistrée.", erreur: true });
+            }
+            input.value = '';
+          }} />
+        </label>
+        {profil.avatar && <button class="mini neutre" onClick={() => onProfil({ ...profil, avatar: undefined })}>Retirer la photo</button>}
+      </div>
+      <Message m={msgPhoto} />
 
       <div class="carte">
         <h3>Ton matériel</h3>
@@ -218,7 +246,8 @@ export function EcranToi({ donnees, onProfil, onMesure }: Props) {
 
       <div class="carte">
         <h3>Tes créneaux</h3>
-        <p>Tu les règles dans l'onglet <b>Plan</b>, sous « Mes créneaux ».</p>
+        <p>Les jours et les moments où tu peux t'entraîner, pour que le plan colle à ta semaine.</p>
+        <div class="pile"><button class="btn btn-contour" onClick={onAllerCreneaux}>Régler mes créneaux</button></div>
       </div>
     </div>
   );

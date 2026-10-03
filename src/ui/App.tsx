@@ -22,6 +22,7 @@ export function App() {
   const [brouillon, setBrouillon] = useState<Brouillon | null>(null);
   const [enSeance, setEnSeance] = useState(false);
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
+  const [ouvrirCreneaux, setOuvrirCreneaux] = useState(false);
 
   const recharger = useCallback(async () => setDonnees(await chargerDonnees(base)), []);
 
@@ -91,12 +92,14 @@ export function App() {
       donnees={donnees}
       onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
       onMesure={enregistrerMesure}
+      onAllerCreneaux={() => { setOuvrirCreneaux(true); setOnglet('plan'); }}
     />
   ) : onglet === 'plan' ? (
     <EcranPlan
       donnees={donnees}
       onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
       onLancer={lancer}
+      ouvrirCreneaux={ouvrirCreneaux}
     />
   ) : onglet === 'activite' ? (
     <Activite
@@ -110,6 +113,7 @@ export function App() {
       seanceEnCours={brouillon !== null}
       onLancer={lancer}
       onCheckin={enregistrerMesure}
+      onAllerToi={() => setOnglet('toi')}
       onReprendre={() => setEnSeance(true)}
       onAbandonnerEnCours={quitter}
       onEnergie={async (choix) => {
@@ -140,7 +144,7 @@ export function App() {
   return (
     <>
       {ecran}
-      <Nav actif={onglet} onChoisir={setOnglet} />
+      <Nav actif={onglet} onChoisir={(o) => { setOuvrirCreneaux(false); setOnglet(o); }} />
     </>
   );
 }

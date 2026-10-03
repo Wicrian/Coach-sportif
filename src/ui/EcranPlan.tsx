@@ -1,3 +1,4 @@
+import { useState } from 'preact/hooks';
 import { MODELES } from '../donnees/exercices';
 import type { Donnees, Moment, Profil } from '../donnees/types';
 import { planifier, type JourPlanifie, type TypePlanifie } from '../moteur/planification';
@@ -10,14 +11,17 @@ interface Props {
   donnees: Donnees;
   onProfil: (profil: Profil) => Promise<void>;
   onLancer: (modeleId: string) => void;
+  /** Ouvre « Mes créneaux » dès l'arrivée sur l'écran. */
+  ouvrirCreneaux?: boolean;
 }
 
 const CLASSE: Record<TypePlanifie, string> = {
   force: 'force', combine: 'combine', boxe: 'boxe', marche: 'legere', mobilite: 'legere', recuperation: 'legere', repos: 'repos', 'deja-fait': 'legere',
 };
 
-export function EcranPlan({ donnees, onProfil, onLancer }: Props) {
+export function EcranPlan({ donnees, onProfil, onLancer, ouvrirCreneaux = false }: Props) {
   const maintenant = new Date();
+  const [creneauxOuverts, setCreneauxOuverts] = useState(ouvrirCreneaux || donnees.profil.creneaux === undefined);
   const aujourdhui = jourLocal(maintenant);
   const { profil } = donnees;
   const creneaux = creneauxDuProfil(profil);
@@ -84,7 +88,7 @@ export function EcranPlan({ donnees, onProfil, onLancer }: Props) {
 
       {plan.jours.map(carte)}
 
-      <details class="facultatif carte" style="padding:16px">
+      <details class="facultatif carte" style="padding:16px" open={creneauxOuverts} onToggle={(e) => setCreneauxOuverts((e.currentTarget as HTMLDetailsElement).open)}>
         <summary>Mes créneaux</summary>
         <p style="margin-top:10px">Choisis, jour par jour, le moment où tu peux t'entraîner. Le midi, je compte 30 minutes pour te laisser le temps de manger.</p>
         {NOMS_JOURS.map((nom, i) => {

@@ -91,6 +91,8 @@ export interface Profil {
   gear: string[];
   diet?: string;
   why?: string;
+  /** Photo de profil, réduite et recadrée en carré (adresse de données « data: »). Reste sur l'appareil. */
+  avatar?: string;
   /** Objectif principal. Enregistré, pas encore utilisé par le moteur. */
   objectif?: 'perte' | 'muscle' | 'mixte';
   /** Contestation du curseur d'audace : 'push' (prêt à pousser) ou 'safe' (rester prudent). */
