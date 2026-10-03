@@ -117,3 +117,16 @@ Choix faits lors du codage de `src/moteur/materiel.ts` et `src/moteur/progressio
 - **Première fois** : la plus grande charge disponible ≤ charge conseillée, sinon la plus légère. *Hypothèse à valider* (les charges conseillées du prototype, 2,5 et 5 kg, devront être revues avec ses vrais haltères).
 - **R-25** : après un refus, retour à la charge précédente pendant 2 séances.
 - **R-26** (regrouper les exercices par charge pour limiter les changements de disques) : **pas encore codé**, viendra avec la planification de séance.
+
+## 12. Précisions d'implémentation (habitude et curseur d'audace)
+
+Choix faits lors du codage de `src/moteur/habitude.ts` et `src/moteur/audace.ts` :
+
+- **Semaines** : du lundi au dimanche. Toutes les séances comptent (force, marche, mobilité, boxe, cardio).
+- **« Semaines d'activité » (R-31)** : nombre de semaines comptant au moins une séance. *Hypothèse à valider.*
+- **R-43** : jugé sur les 2 dernières semaines **complètes** (la semaine en cours n'est jamais jugée), et seulement si l'historique les couvre. Les deux seuils (3 pour réussir une semaine, 4 pour la cible) sont voulus : voir le rapport sur la motivation.
+- **R-30 (formule)** : `(série de semaines réussies + min(semaines actives, 6) / 2) / 8`, reprise du prototype. *Hypothèse.*
+- **R-31** : le plafond de 0,75 est appliqué **avant** les ajustements R-32 à R-34, pour que « allégée » ou un mauvais ressenti baissent toujours vraiment le curseur ; il est aussi réappliqué à la fin, donc la contestation « je me sens prêt » ne le dépasse pas tant que l'habitude n'est pas installée. Au-delà de 6 semaines d'activité, le plafond passe à 1.
+- **Plancher** du curseur : 0,05 (jamais exactement zéro). *Hypothèse.*
+- **R-32** : demande au moins 2 ressentis (un seul mauvais ressenti ne fait pas baisser le curseur), moyenne sur les 4 derniers.
+- **R-36 (nouvelle, hypothèse) — poussée douce** : quand l'utilisateur dit vouloir pousser, le plafond de prudence reste en place, mais si la préparation du jour est `normale` et que les derniers ressentis ne sont pas bas, le moteur propose un petit bonus : une série en plus sur le dernier exercice, arrêt possible à tout moment. Après la séance, le ressenti décide de la suite (R-32 et R-51).
