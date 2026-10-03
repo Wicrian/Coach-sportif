@@ -8,6 +8,7 @@ import { base } from '../stockage/instance';
 import { Accueil } from './Accueil';
 import { Activite } from './EcranActivite';
 import { fusionnerCheckin } from './checkin';
+import { EcranPlan } from './EcranPlan';
 import { Nav, type Onglet } from './Nav';
 import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
@@ -35,6 +36,11 @@ export function App() {
   const changer = (b: Brouillon) => {
     setBrouillon(b);
     void sauverBrouillon(base, b);
+  };
+  const lancer = (modeleId: string) => {
+    const modele = MODELES.find((m) => m.id === modeleId)!;
+    changer(demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil }), new Date()));
+    setEnSeance(true);
   };
   const quitter = async () => {
     await effacerBrouillon(base);
@@ -73,7 +79,13 @@ export function App() {
     );
   }
 
-  const ecran = onglet === 'activite' ? (
+  const ecran = onglet === 'plan' ? (
+    <EcranPlan
+      donnees={donnees}
+      onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
+      onLancer={lancer}
+    />
+  ) : onglet === 'activite' ? (
     <Activite
       seances={donnees.seances}
       onAjouter={async (s) => { await sauverSeance(base, s); await recharger(); }}
@@ -83,11 +95,7 @@ export function App() {
     <Accueil
       donnees={donnees}
       seanceEnCours={brouillon !== null}
-      onLancer={(modeleId) => {
-        const modele = MODELES.find((m) => m.id === modeleId)!;
-        changer(demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil }), new Date()));
-        setEnSeance(true);
-      }}
+      onLancer={lancer}
       onCheckin={async (saisie) => {
         const jour = jourLocal(new Date());
         await sauverMesure(base, fusionnerCheckin(donnees.recuperation.find((r) => r.date === jour), jour, saisie));

@@ -175,3 +175,23 @@ details.facultatif summary { font-weight: 700; font-size: 14px; color: var(--plu
 .seance .sous { font-size: 13px; color: var(--plum); }
 .seance .supprimer { border: none; background: var(--blush); color: var(--hot-pink); font-weight: 700; font-size: 12.5px; padding: 9px 12px; border-radius: var(--r-pill); }
 .jour-titre { font-size: 12.5px; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700; color: var(--mauve); margin-top: 22px; }
+
+/* ----- Plan ----- */
+.jour-plan { background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; margin-top: 10px; }
+.jour-plan.aujourdhui { border: 2px solid var(--blush-deep); }
+.jour-plan .tete { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.jour-plan .quand { font-weight: 800; font-size: 15px; text-transform: capitalize; }
+.jour-plan .quoi { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.jour-plan .pourquoi { font-size: 13.5px; color: var(--plum); margin-top: 6px; }
+.jour-plan .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.mini { border: none; background: var(--blush); color: var(--hot-pink); font-weight: 700; font-size: 12.5px; padding: 9px 13px; border-radius: var(--r-pill); }
+.mini.plein { background: var(--grad-punch); color: #fff; }
+.mini.neutre { background: var(--cloud); color: var(--plum); border: 1px solid var(--line); }
+.badge.force { background: var(--blush); color: var(--hot-pink); }
+.badge.boxe { background: #ece7ff; color: var(--violet); }
+.badge.combine { background: var(--grad-punch); color: #fff; }
+.badge.legere { background: #d6f7ec; color: #0f9b74; }
+.badge.repos { background: var(--cloud); color: var(--plum); border: 1px solid var(--line); }
+.avertissement { margin-top: 12px; padding: 12px 14px; border-radius: var(--r-md); background: #fff1d6; color: #7a5200; font-size: 14px; font-weight: 600; }
+.rangee-creneau { display: grid; grid-template-columns: 92px 1fr; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+.rangee-creneau .jour { font-weight: 700; font-size: 14px; }

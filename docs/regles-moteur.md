@@ -163,3 +163,12 @@ Choix faits lors du codage de `src/moteur/ordre-seance.ts` :
 - **Moral et sommeil sont enregistrés mais ne pilotent pas encore le moteur** : aucun seuil chiffré n'est défini pour eux (R-03 n'utilise que courbatures et énergie). *Règle à définir avec l'utilisateur avant de les utiliser.*
 - **Séance faite ailleurs** (Boxa, Heavybox, marche…) : un type, un jour, une durée, une application facultative et un ressenti facultatif. Elle compte comme une séance de n'importe quel type pour la semaine réussie (R-40) et la planification. Elle n'a pas de volume.
 - **Jour d'une séance** : le moteur lit le **jour local** (`jourDe`), pas les 10 premiers caractères de la date ISO. Une séance du soir enregistrée en heure universelle comptait sinon dans la journée suivante.
+
+## 16. Précisions d'implémentation (écran Plan)
+
+- **Créneaux** (R-61) : un seul créneau par jour dans l'écran, choisi parmi matin (40 min), midi (30 min), soir (60 min), journée (90 min). Ces durées sont des **hypothèses** ; elles servent de temps maximal pour le planificateur. Sans réglage : samedi et dimanche, toute la journée.
+- **« Pas dispo »** : l'utilisateur marque un jour comme indisponible ; le planificateur y met du repos. Les jours passés sont oubliés automatiquement.
+- **R-63, semaine chargée** : activée par l'utilisateur, elle dure **jusqu'au dimanche de la semaine en cours** puis s'éteint toute seule (`semaineChargeeJusquAu`). Les jours suivants redeviennent normaux.
+- **Modèle de force conseillé** : le full-body et le poids du corps alternent ; on propose celui qui n'a pas été fait en dernier.
+- **Séance « Force et boxe »** : l'app ne la guide pas encore en entier. Le bouton démarre la partie force ; la boxe se note ensuite dans Activité (« Séance faite ailleurs »).
+- **Avertissement R-11** : affiché pour les semaines entières à venir où les créneaux, les jours indisponibles ou la semaine chargée ne permettent pas 2 séances de force.

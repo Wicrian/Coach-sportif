@@ -113,6 +113,12 @@ describe('semaine chargée et jours indisponibles', () => {
     expect(regles).toContain('R-63');
   });
 
+  it('semaine chargée jusqu\'à une date : les jours suivants redeviennent normaux', () => {
+    const { jours } = planifier(entree({ semaineChargeeJusquAu: '2026-10-18' }));
+    for (const j of jours.filter((x) => x.jour <= '2026-10-18')) expect(estForce(j)).toBe(false);
+    expect(jours.filter((x) => x.jour > '2026-10-18').some(estForce)).toBe(true);
+  });
+
   it('un jour indisponible reste en repos', () => {
     const { jours } = planifier(entree({ joursIndisponibles: ['2026-10-14', '2026-10-15'] }));
     expect(jours[0]!.type).toBe('repos');

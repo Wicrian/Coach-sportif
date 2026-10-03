@@ -1,17 +1,8 @@
-import type { Jour, Seance } from '../donnees/types';
+import type { Creneau, Jour, Moment, Seance } from '../donnees/types';
 import type { Verdict } from './readiness';
 import { ajouterJours, jourDe, joursEntre, lundiDeLaSemaine } from './utilitaires';
 
-export type Moment = 'matin' | 'midi' | 'soir' | 'journee';
-
-/** Créneau préféré déclaré par l'utilisateur (R-61). */
-export interface Creneau {
-  /** 1 = lundi … 7 = dimanche. */
-  jour: number;
-  moment: Moment;
-  /** Temps disponible dans ce créneau. */
-  dureeMaxMin: number;
-}
+export type { Creneau, Moment };
 
 export type TypePlanifie = 'force' | 'boxe' | 'combine' | 'marche' | 'mobilite' | 'recuperation' | 'repos' | 'deja-fait';
 
@@ -37,8 +28,10 @@ export interface EntreePlanification {
   creneaux: Creneau[];
   /** Préparation du jour (R-62). */
   preparation: Verdict;
-  /** R-63 : l'utilisateur annonce une semaine chargée. */
+  /** R-63 : l'utilisateur annonce une semaine chargée (toute la projection). */
   semaineChargee?: boolean;
+  /** R-63 : semaine chargée jusqu'à ce jour inclus ; les jours suivants redeviennent normaux. */
+  semaineChargeeJusquAu?: Jour;
   /** Jours où l'utilisateur ne peut pas s'entraîner (plus tard : alimenté par l'agenda). */
   joursIndisponibles?: Jour[];
 }
@@ -118,7 +111,8 @@ export function planifier(e: EntreePlanification): Planification {
       continue;
     }
 
-    const dispo = e.semaineChargee ? Math.min(creneau.dureeMaxMin, DUREE_SEMAINE_CHARGEE) : creneau.dureeMaxMin;
+    const chargee = e.semaineChargee === true || (e.semaineChargeeJusquAu !== undefined && jour <= e.semaineChargeeJusquAu);
+    const dispo = chargee ? Math.min(creneau.dureeMaxMin, DUREE_SEMAINE_CHARGEE) : creneau.dureeMaxMin;
     const place = (type: keyof typeof DUREES, regles: string[], raison: string): JourPlanifie => {
       c.total++;
       return { jour, type, moment: creneau.moment, dureeMin: Math.min(DUREES[type].typique, dispo), regles: [...regles, 'R-61'], raison };
@@ -169,6 +163,6 @@ export function planifier(e: EntreePlanification): Planification {
   }
 
   const regles = ['R-60', 'R-61'];
-  if (e.semaineChargee) regles.push('R-63');
+  if (e.semaineChargee || e.semaineChargeeJusquAu !== undefined) regles.push('R-63');
   return { jours, avertissements, regles };
 }

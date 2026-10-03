@@ -92,7 +92,23 @@ export interface Profil {
   halteres?: InventaireHalteres;
   /** Playlists Apple Music, par type de séance. */
   playlists?: Playlist[];
+  /** Créneaux préférés. Sans réglage : samedi et dimanche, toute la journée. */
+  creneaux?: Creneau[];
+  /** Jours où l'utilisateur ne peut pas s'entraîner. */
+  joursIndisponibles?: Jour[];
+  /** « Semaine chargée » : séances courtes jusqu'à cette date incluse. */
+  semaineChargeeJusquAu?: Jour;
   [autre: string]: unknown;
+}
+
+export type Moment = 'matin' | 'midi' | 'soir' | 'journee';
+
+/** Créneau préféré pour s'entraîner (R-61). `jour` : 1 = lundi … 7 = dimanche. */
+export interface Creneau {
+  jour: number;
+  moment: Moment;
+  /** Temps disponible dans ce créneau, en minutes. */
+  dureeMaxMin: number;
 }
 
 /** Tout ce que l'application garde sur l'appareil. */

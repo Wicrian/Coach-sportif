@@ -1,7 +1,8 @@
-export type Onglet = 'aujourdhui' | 'activite';
+export type Onglet = 'aujourdhui' | 'plan' | 'activite';
 
 const ONGLETS: { id: Onglet; nom: string }[] = [
   { id: 'aujourdhui', nom: "Aujourd'hui" },
+  { id: 'plan', nom: 'Plan' },
   { id: 'activite', nom: 'Activité' },
 ];
 
