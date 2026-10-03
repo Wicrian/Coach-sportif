@@ -130,3 +130,18 @@ Choix faits lors du codage de `src/moteur/habitude.ts` et `src/moteur/audace.ts`
 - **Plancher** du curseur : 0,05 (jamais exactement zéro). *Hypothèse.*
 - **R-32** : demande au moins 2 ressentis (un seul mauvais ressenti ne fait pas baisser le curseur), moyenne sur les 4 derniers.
 - **R-36 (nouvelle, hypothèse) — poussée douce** : quand l'utilisateur dit vouloir pousser, le plafond de prudence reste en place, mais si la préparation du jour est `normale` et que les derniers ressentis ne sont pas bas, le moteur propose un petit bonus : une série en plus sur le dernier exercice, arrêt possible à tout moment. Après la séance, le ressenti décide de la suite (R-32 et R-51).
+
+## 13. Précisions d'implémentation (planification)
+
+Choix faits lors du codage de `src/moteur/planification.ts` :
+
+- **Créneaux** : numéro de jour ISO (1 = lundi … 7 = dimanche), moment (`matin`, `midi`, `soir`, `journee`) et durée maximale. Un créneau court (par exemple le midi, pour laisser le temps de manger) est simplement un créneau de 30 min : le moteur n'a pas de règle spéciale pour le midi. S'il y a plusieurs créneaux le même jour, le plus long est utilisé. Une séance par jour au maximum.
+- **Types de séances planifiées** : `force` (40 min), `boxe` (35 min, 30 min minimum), `combine` (force courte + boxe, 45 min), `marche` (25 min), `mobilite` (15 min), `recuperation` (15 min). La durée affichée ne dépasse jamais le créneau.
+- **Objectifs par semaine** : 2 séances de force (R-11), 1 séance de boxe (préférence de l'utilisateur, **pas** une règle scientifique), puis des séances légères. Une séance `combine` compte pour la force **et** pour la boxe.
+- **R-10** : au moins 2 jours calendaires entre deux séances de force, en tenant compte de la dernière séance déjà faite.
+- **Plafond de 4 séances par semaine** (cible conseillée R-40, utilisée ici comme plafond). *Hypothèse à valider.* Les séances déjà faites cette semaine comptent.
+- **R-62** : si la préparation du jour est `allegee`, la séance du jour devient `recuperation` (15 min). La force n'étant pas consommée, la suite se recalcule naturellement.
+- **R-63 (nouvelle, hypothèse) — semaine chargée** : sur demande de l'utilisateur, les séances sont limitées à 30 min : pas de force ni de séance combinée, seulement boxe courte, marche, mobilité. Une semaine réussie reste possible (3 séances de n'importe quel type, R-40).
+- **Jours indisponibles** : liste fournie par l'appelant (déclarée à la main pour l'instant ; pourra être alimentée par un agenda plus tard).
+- **Avertissement R-11** : émis pour toute semaine entièrement à venir où les créneaux ne permettent pas 2 séances de force.
+- **R-50** : les séances de boxe sont annoncées « à intensité douce » (repère : pouvoir parler). Le plafond d'intensité lui-même relève de l'écran de séance.
