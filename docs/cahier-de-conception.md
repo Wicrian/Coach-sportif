@@ -204,7 +204,7 @@ Après chaque séance, court et utile :
 - Menu contextuel : info exercice, historique de performance, **Smart Swap** (changer d'exercice), ajouter/supprimer un set, signaler un problème.
 - Types de set : warm-up / normal / drop set / failure.
 
-### Page « Ce que je sais de toi » (nouvelle — mémoire éditable)
+### Page « Ton profil » (ex-« Ce que je sais de toi » — mémoire éditable)
 Récapitulatif des éléments clés enregistrés, consultables et **rectifiables** :
 - **Matériel** : inventaire (ajouter/retirer du matériel, « au fait j'ai un nouveau… »).
 - **Physique** : poids et sa date (« ça fait un moment que je n'ai pas donné mon poids »), mesures éventuelles.

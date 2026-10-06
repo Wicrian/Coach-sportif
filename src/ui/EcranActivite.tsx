@@ -14,12 +14,14 @@ interface Props {
   seances: Seance[];
   onAjouter: (s: Seance) => Promise<void>;
   onSupprimer: (id: string) => Promise<void>;
+  /** Type et durée à pré-remplir (séance du plan que l'on note). */
+  preselection?: { kind: GenreSeance; dureeMin: number };
 }
 
-function FormulaireExterne({ onAjouter, onFerme }: { onAjouter: Props['onAjouter']; onFerme: () => void }) {
-  const [kind, setKind] = useState<GenreSeance>('box');
+function FormulaireExterne({ onAjouter, onFerme, preselection }: { onAjouter: Props['onAjouter']; onFerme: () => void; preselection?: Props['preselection'] }) {
+  const [kind, setKind] = useState<GenreSeance>(preselection?.kind ?? 'box');
   const [jour, setJour] = useState(jourLocal(new Date()));
-  const [duree, setDuree] = useState(30);
+  const [duree, setDuree] = useState(preselection?.dureeMin ?? 30);
   const [source, setSource] = useState('');
   const [feel, setFeel] = useState<number | undefined>(undefined);
   const [details, setDetails] = useState<Details>({});
@@ -74,8 +76,8 @@ function FormulaireExterne({ onAjouter, onFerme }: { onAjouter: Props['onAjouter
   );
 }
 
-export function Activite({ seances, onAjouter, onSupprimer }: Props) {
-  const [ajout, setAjout] = useState(false);
+export function Activite({ seances, onAjouter, onSupprimer, preselection }: Props) {
+  const [ajout, setAjout] = useState(preselection !== undefined);
   const deux = (cle: string) => EXERCICES[cle]?.deuxHalteres ?? false;
 
   const groupes: { jour: string; seances: Seance[] }[] = [];
@@ -93,7 +95,7 @@ export function Activite({ seances, onAjouter, onSupprimer }: Props) {
       <p style="color:var(--plum);margin-top:6px">Toutes tes séances, de la plus récente à la plus ancienne.</p>
 
       {ajout
-        ? <FormulaireExterne onAjouter={onAjouter} onFerme={() => setAjout(false)} />
+        ? <FormulaireExterne onAjouter={onAjouter} onFerme={() => setAjout(false)} preselection={preselection} />
         : <div class="pile"><button class="btn btn-contour" onClick={() => setAjout(true)}>Ajouter une séance faite ailleurs</button></div>}
 
       {groupes.length === 0 && <div class="carte"><h3>Ta première séance t'attend</h3><p>Elle apparaîtra ici dès que tu auras terminé une séance, ou ajouté une séance faite ailleurs.</p></div>}

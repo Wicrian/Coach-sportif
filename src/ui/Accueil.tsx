@@ -78,9 +78,6 @@ export function Accueil(p: Props) {
         <div style="font-size:14px;margin-top:10px;opacity:.95">{habitude.raison}</div>
       </div>
 
-      <PreparationDuJour preparation={preparation} aDesHrv={donnees.recuperation.some((r) => r.hrv != null)} />
-      <CheckIn mesure={mesureDuJour} onSauver={p.onCheckin} />
-
       {p.seanceEnCours && (
         <div class="carte">
           <h3>Une séance est en cours</h3>
@@ -92,7 +89,7 @@ export function Accueil(p: Props) {
         </div>
       )}
 
-      <div class="carte">
+      <div class="carte" id="commencer">
         <h3>Commencer une séance</h3>
         <div class="pile">
           {MODELES.map((m, i) => (
@@ -102,6 +99,9 @@ export function Accueil(p: Props) {
           ))}
         </div>
       </div>
+
+      <PreparationDuJour preparation={preparation} aDesHrv={donnees.recuperation.some((r) => r.hrv != null)} />
+      <CheckIn key={aujourdhui} mesure={mesureDuJour} onSauver={p.onCheckin} />
 
       <div class="carte">
         <h3>Ton élan en ce moment</h3>

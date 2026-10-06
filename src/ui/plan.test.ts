@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Profil, Seance } from '../donnees/types';
-import { MOMENTS, basculerIndisponible, creneauDuJour, creneauxDuProfil, definirCreneau, libelleJour, libelleType, modeleConseille } from './plan';
+import { MOMENTS, actionPourType, basculerIndisponible, creneauDuJour, creneauxDuProfil, definirCreneau, genrePourType, libelleJour, libelleType, modeleConseille, playlistsPour } from './plan';
 
 const profil = (extra: Partial<Profil> = {}): Profil => ({ gear: [], dumbbells: [], ...extra });
 const force = (tplId: string, jour: string): Seance => ({ id: jour, date: `${jour}T18:00:00`, kind: 'strength', tplId, exercises: [] });
@@ -72,5 +72,39 @@ describe('libellés', () => {
     expect(libelleType('combine')).toBe('Force et boxe');
     expect(libelleType('recuperation')).toBe('Récupération active');
     expect(libelleType('repos')).toBe('Repos');
+  });
+});
+
+describe('que faire de la séance du jour', () => {
+  it('force et force + boxe : on peut les démarrer', () => {
+    expect(actionPourType('force')).toBe('demarrer');
+    expect(actionPourType('combine')).toBe('demarrer');
+  });
+  it('boxe, marche, mobilité, récupération : on peut les noter une fois faites', () => {
+    for (const t of ['boxe', 'marche', 'mobilite', 'recuperation'] as const) expect(actionPourType(t)).toBe('noter');
+  });
+  it('repos et déjà fait : pas d\'action directe', () => {
+    expect(actionPourType('repos')).toBeNull();
+    expect(actionPourType('deja-fait')).toBeNull();
+  });
+  it('type de séance de l\'activité correspondant', () => {
+    expect(genrePourType('boxe')).toEqual({ kind: 'box', dureeMin: 35 });
+    expect(genrePourType('marche')).toEqual({ kind: 'walk', dureeMin: 25 });
+    expect(genrePourType('mobilite')).toEqual({ kind: 'mob', dureeMin: 15 });
+    expect(genrePourType('recuperation')).toEqual({ kind: 'cardio', dureeMin: 15 });
+    expect(genrePourType('force')).toBeNull();
+  });
+});
+
+describe('playlistsPour : celles qui conviennent à une séance', () => {
+  const p = (nom: string, pour?: Array<'strength' | 'box'>) => ({ nom, url: 'https://music.apple.com/x', pour });
+  it('toutes celles du type demandé, plus celles sans type précis', () => {
+    const liste = [p('Force', ['strength']), p('Boxe', ['box']), p('Tout')];
+    expect(playlistsPour(liste, 'strength').map((x) => x.nom)).toEqual(['Force', 'Tout']);
+    expect(playlistsPour(liste, 'box').map((x) => x.nom)).toEqual(['Boxe', 'Tout']);
+  });
+  it('liste vide ou absente : rien', () => {
+    expect(playlistsPour([], 'strength')).toEqual([]);
+    expect(playlistsPour(undefined, 'strength')).toEqual([]);
   });
 });

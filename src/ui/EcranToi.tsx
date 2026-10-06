@@ -147,10 +147,10 @@ export function EcranToi({ donnees, onProfil, onMesure, onAllerCreneaux }: Props
       <div class="en-tete-toi">
         <Avatar src={profil.avatar} taille={84} etiquette="Ma photo de profil" />
         <div>
-          <h1>Ce que je sais de toi</h1>
+          <h1>Ton profil</h1>
         </div>
       </div>
-      <p style="color:var(--plum);margin-top:10px">Tout ce que l'app retient, avec sa date. Tu peux tout corriger : ce sont tes informations.</p>
+      <p style="color:var(--plum);margin-top:10px">Ce que l'app retient de toi, avec sa date. Tu peux tout corriger : ce sont tes informations.</p>
       <div class="ligne-puces" style="margin-top:12px">
         <label class="mini plein" style="cursor:pointer">
           {profil.avatar ? 'Changer ma photo' : 'Ajouter ma photo'}

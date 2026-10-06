@@ -62,3 +62,11 @@ Attention : `dumbbells` est une **chaîne de texte**. Le nouveau modèle doit la
 
 - **Photo de profil** : choisie dans l'onglet « Toi », recadrée en carré et réduite à 256 × 256 pixels sur l'appareil, puis gardée dans le profil (`avatar`, adresse de données). Elle ne quitte jamais le téléphone, sauf si l'utilisateur exporte sa sauvegarde : elle y figure alors (quelques ko). Une bulle apparaît sur l'accueil et ouvre l'onglet « Toi ».
 - **Créneaux** : un bouton dans « Toi » mène à « Mes créneaux » (onglet Plan, section ouverte). La section s'ouvre aussi toute seule tant que les créneaux n'ont jamais été réglés.
+
+## Retours d'usage (6 octobre) et corrections
+
+- **Check-in d'hier encore affiché** : l'app était restée ouverte pendant la nuit. Le formulaire est maintenant lié au jour (il repart à zéro un nouveau jour), et l'app relit ses données et recalcule le jour quand elle revient au premier plan.
+- **Impossible de lancer une séance** : le Plan n'offrait un bouton que pour la force du jour, et « Commencer une séance » était sous la préparation et le check-in. Maintenant : « Commencer une séance » est en haut de l'accueil ; la carte du jour dans le Plan propose toujours une action (démarrer, « Je l'ai faite » qui ouvre la saisie pré-remplie, ou « Choisir une autre séance »), y compris quand la journée est marquée « déjà fait ».
+- **Titre** : « Ce que je sais de toi » devient « Ton profil » (onglet « Profil »).
+- **Musique** : si plusieurs playlists conviennent à la séance, l'utilisateur choisit laquelle ouvrir.
+- **Test de robustesse** : `src/ui/seance/robustesse.test.ts` prépare une séance sur 3 000 historiques aléatoires sans erreur.

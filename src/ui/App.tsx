@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { MODELES } from '../donnees/exercices';
-import type { Donnees } from '../donnees/types';
+import type { Donnees, GenreSeance } from '../donnees/types';
 import { curseurAudace } from '../moteur/audace';
 import { evaluerHabitude } from '../moteur/habitude';
 import { chargerBrouillon, chargerDonnees, effacerBrouillon, exporterTexte, importerSauvegarde, sauverBrouillon, sauverMesure, sauverProfil, sauverSeance, supprimerSeance } from '../stockage/base';
@@ -11,6 +11,7 @@ import { fusionnerCheckin } from './checkin';
 import { EcranPlan } from './EcranPlan';
 import { EcranToi } from './EcranToi';
 import { Nav, type Onglet } from './Nav';
+import { playlistsPour } from './plan';
 import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
 import { demarrer, terminer, type Brouillon } from './seance/deroulement';
@@ -23,6 +24,8 @@ export function App() {
   const [enSeance, setEnSeance] = useState(false);
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
   const [ouvrirCreneaux, setOuvrirCreneaux] = useState(false);
+  const [preselection, setPreselection] = useState<{ kind: GenreSeance; dureeMin: number } | undefined>(undefined);
+  const [, setRafraichir] = useState(0);
 
   const recharger = useCallback(async () => setDonnees(await chargerDonnees(base)), []);
 
@@ -31,6 +34,18 @@ export function App() {
       await recharger();
       setBrouillon(await chargerBrouillon<Brouillon>(base));
     })();
+  }, [recharger]);
+
+  // Quand l'app revient au premier plan (par exemple le lendemain), on recalcule le jour et on relit les données.
+  useEffect(() => {
+    const auRetour = () => {
+      if (document.visibilityState === 'visible') {
+        setRafraichir((n) => n + 1);
+        void recharger();
+      }
+    };
+    document.addEventListener('visibilitychange', auRetour);
+    return () => document.removeEventListener('visibilitychange', auRetour);
   }, [recharger]);
 
   if (!donnees) return <div class="ecran fond-clair"><p class="discret" style="margin-top:40vh;text-align:center">Chargement…</p></div>;
@@ -60,14 +75,13 @@ export function App() {
       preparation: calculerPreparation(donnees).verdict,
       contestation: donnees.profil.audOverride === 'push' ? 'pousser' : donnees.profil.audOverride === 'safe' ? 'prudent' : null,
     });
-    const playlists = donnees.profil.playlists ?? [];
-    const playlist = playlists.find((p) => !p.pour || p.pour.length === 0 || p.pour.includes('strength'));
+    const playlists = playlistsPour(donnees.profil.playlists, 'strength');
     const precedente = donnees.seances.find((s) => s.kind === 'strength' && s.tplId === brouillon.modeleId);
     return (
       <SeanceActive
         b={brouillon}
         inventaire={donnees.profil.halteres}
-        playlist={playlist}
+        playlists={playlists}
         precedente={precedente}
         bonus={bonus}
         onChange={changer}
@@ -99,12 +113,15 @@ export function App() {
       donnees={donnees}
       onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
       onLancer={lancer}
+      onNoter={(pref) => { setPreselection(pref); setOnglet('activite'); }}
+      onAutreSeance={() => { setOnglet('aujourdhui'); setTimeout(() => document.getElementById('commencer')?.scrollIntoView(), 80); }}
       ouvrirCreneaux={ouvrirCreneaux}
     />
   ) : onglet === 'activite' ? (
     <Activite
       seances={donnees.seances}
-      onAjouter={async (s) => { await sauverSeance(base, s); await recharger(); }}
+      preselection={preselection}
+      onAjouter={async (s) => { await sauverSeance(base, s); setPreselection(undefined); await recharger(); }}
       onSupprimer={async (id) => { await supprimerSeance(base, id); await recharger(); }}
     />
   ) : (
@@ -144,7 +161,7 @@ export function App() {
   return (
     <>
       {ecran}
-      <Nav actif={onglet} onChoisir={(o) => { setOuvrirCreneaux(false); setOnglet(o); }} />
+      <Nav actif={onglet} onChoisir={(o) => { setOuvrirCreneaux(false); setPreselection(undefined); setOnglet(o); }} />
     </>
   );
 }

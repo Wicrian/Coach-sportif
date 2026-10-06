@@ -13,7 +13,8 @@ import { ajouterSerieBonus, arreter, finDeRepos, saisieInitiale, terminer, valid
 interface Props {
   b: Brouillon;
   inventaire?: InventaireHalteres;
-  playlist?: Playlist;
+  /** Playlists qui conviennent à cette séance. */
+  playlists: Playlist[];
   /** Séance précédente du même modèle, pour une comparaison sobre. */
   precedente?: Seance;
   bonus: BonusPoussee | null;
@@ -37,14 +38,25 @@ function Chrono({ debut }: { debut: string }) {
   return <span class="chrono" aria-label="Temps de séance">{mmss(Date.now() - new Date(debut).getTime())}</span>;
 }
 
-function Musique({ playlist }: { playlist?: Playlist }) {
-  if (!playlist) return null;
+function Musique({ playlists }: { playlists: Playlist[] }) {
+  const [choix, setChoix] = useState(0);
+  if (playlists.length === 0) return null;
+  const playlist = playlists[Math.min(choix, playlists.length - 1)]!;
   return (
-    <div class="musique">
-      <span aria-hidden="true">♪</span>
-      <span class="titre">{playlist.nom}<small>Apple Music · volume avec les boutons de l'iPhone</small></span>
-      <a href={playlist.url} target="_blank" rel="noopener">Ouvrir</a>
-    </div>
+    <>
+      {playlists.length > 1 && (
+        <div class="musique-choix" role="group" aria-label="Choisir une playlist">
+          {playlists.map((p, i) => (
+            <button key={`${p.nom}-${i}`} class={i === choix ? 'active' : ''} aria-pressed={i === choix} onClick={() => setChoix(i)}>{p.nom}</button>
+          ))}
+        </div>
+      )}
+      <div class="musique" style={playlists.length > 1 ? 'margin-top:8px' : undefined}>
+        <span aria-hidden="true">♪</span>
+        <span class="titre">{playlist.nom}<small>Apple Music · volume avec les boutons de l'iPhone</small></span>
+        <a href={playlist.url} target="_blank" rel="noopener">Ouvrir</a>
+      </div>
+    </>
   );
 }
 
@@ -89,7 +101,7 @@ export function SeanceActive(p: Props) {
   return <EcranFin {...p} />;
 }
 
-function EcranSerie({ b, inventaire, playlist, onChange, onAbandon }: Props) {
+function EcranSerie({ b, inventaire, playlists, onChange, onAbandon }: Props) {
   const ex = b.plan[b.ei]!;
   const prevue = ex.series[b.si]!;
   const depart = saisieInitiale(b);
@@ -190,7 +202,7 @@ function EcranSerie({ b, inventaire, playlist, onChange, onAbandon }: Props) {
         </div>
 
         <div class="espace" />
-        <Musique playlist={playlist} />
+        <Musique playlists={playlists} />
         <button class="btn btn-principal" style="margin-top:12px" onClick={() => onChange(valider(b, { reps, w: ex.poidsDuCorps ? 0 : w, type }))}>
           {type === 'warmup' ? "Valider l'échauffement" : 'Valider la série'}
         </button>
@@ -199,7 +211,7 @@ function EcranSerie({ b, inventaire, playlist, onChange, onAbandon }: Props) {
   );
 }
 
-function EcranRepos({ b, inventaire, playlist, onChange }: Props) {
+function EcranRepos({ b, inventaire, playlists, onChange }: Props) {
   const ex = b.plan[b.ei]!;
   const suivante = { reps: ex.series[b.si]!.reps, w: saisieInitiale(b).w };
   const precedent = b.si === 0 && b.ei > 0 ? b.plan[b.ei - 1]! : null;
@@ -271,7 +283,7 @@ function EcranRepos({ b, inventaire, playlist, onChange }: Props) {
           <button class="btn btn-voile" onClick={() => ajuster(15)}>+ 15 s</button>
         </div>
         <div class="espace" />
-        <Musique playlist={playlist} />
+        <Musique playlists={playlists} />
         <div class="pile">
           {reste > 0 && <button class="btn btn-sombre" onClick={basculerPause}>{enPause ? 'Reprendre' : 'Pause'}</button>}
           <button class={`btn ${reste === 0 ? 'btn-sombre' : 'btn-voile'}`} onClick={() => onChange(finDeRepos(b))}>

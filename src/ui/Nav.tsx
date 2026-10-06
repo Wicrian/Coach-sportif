@@ -4,7 +4,7 @@ const ONGLETS: { id: Onglet; nom: string }[] = [
   { id: 'aujourdhui', nom: "Aujourd'hui" },
   { id: 'plan', nom: 'Plan' },
   { id: 'activite', nom: 'Activité' },
-  { id: 'toi', nom: 'Toi' },
+  { id: 'toi', nom: 'Profil' },
 ];
 
 export function Nav({ actif, onChoisir }: { actif: Onglet; onChoisir: (o: Onglet) => void }) {

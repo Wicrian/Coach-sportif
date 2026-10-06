@@ -1,4 +1,4 @@
-import type { Creneau, Jour, Moment, Profil, Seance } from '../donnees/types';
+import type { Creneau, GenreSeance, Jour, Moment, Playlist, Profil, Seance } from '../donnees/types';
 import type { TypePlanifie } from '../moteur/planification';
 
 /** Durée disponible associée à chaque moment (hypothèses, réglables plus tard dans le profil). */
@@ -60,3 +60,26 @@ const TYPES: Record<TypePlanifie, string> = {
 };
 export const libelleType = (type: TypePlanifie): string => TYPES[type];
 
+
+/** Ce que l'utilisateur peut faire directement depuis la séance du jour dans le Plan. */
+export function actionPourType(type: TypePlanifie): 'demarrer' | 'noter' | null {
+  if (type === 'force' || type === 'combine') return 'demarrer';
+  if (type === 'repos' || type === 'deja-fait') return null;
+  return 'noter';
+}
+
+/** Type d'activité et durée à pré-remplir quand on note une séance prévue au plan. */
+export function genrePourType(type: TypePlanifie): { kind: GenreSeance; dureeMin: number } | null {
+  switch (type) {
+    case 'boxe': return { kind: 'box', dureeMin: 35 };
+    case 'marche': return { kind: 'walk', dureeMin: 25 };
+    case 'mobilite': return { kind: 'mob', dureeMin: 15 };
+    case 'recuperation': return { kind: 'cardio', dureeMin: 15 };
+    default: return null;
+  }
+}
+
+/** Playlists qui conviennent à un type de séance : celles choisies pour ce type, et celles valables pour toutes. */
+export function playlistsPour(playlists: Playlist[] | undefined, kind: GenreSeance): Playlist[] {
+  return (playlists ?? []).filter((p) => !p.pour || p.pour.length === 0 || p.pour.includes(kind));
+}
