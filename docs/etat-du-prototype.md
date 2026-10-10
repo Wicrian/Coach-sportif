@@ -105,3 +105,10 @@ Retours d'usage : « j'aimerais un feedback après mes séances », « j'ai du m
 ## Défaut corrigé : import des sons (10 octobre)
 
 L'import ignorait **tout** le bloc `sons` du fichier dès que l'appareil avait déjà un seul réglage de son (par exemple après avoir touché « Ding doux »), car la fusion du profil raisonne champ par champ. Les sons sont maintenant fusionnés moment par moment (voir « Fusion » ci-dessus). Il suffit de **ré-importer** le fichier : aucun doublon n'est créé.
+
+## Défaut corrigé : son d'ouverture (10 octobre)
+
+Sur iPhone, l'audio n'est débloqué qu'à la **fin** d'un toucher (le doigt se relève), pas à son début. Le son d'ouverture, demandé au début du toucher, restait en attente puis partait au toucher suivant, parfois en même temps que le son de séance.
+- Le déblocage et le son d'ouverture se font maintenant au **premier toucher terminé** (`touchend`, `click` ou une touche du clavier).
+- **Le dernier son demandé gagne** : une demande de son annule celles qui attendent encore. Si le premier toucher lance une séance, seul le son de séance se joue (le son d'ouverture attend 150 ms pour lui laisser la priorité).
+- Les sons personnels sont **décodés à l'avance** (au démarrage et après un import) pour partir sans attendre.

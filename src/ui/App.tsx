@@ -14,7 +14,7 @@ import { EcranBilan } from './EcranBilan';
 import { Nav, type Onglet } from './Nav';
 import { preparerBilan } from './seance/bilan';
 import { playlistsPour } from './plan';
-import { arreterSon, debloquerAudio, jouerSon, sonPour } from './son';
+import { arreterSon, debloquerAudio, jouerSon, numeroDemande, prechargerSons, sonPour } from './son';
 import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
 import { demarrer, terminer, type Brouillon } from './seance/deroulement';
@@ -46,19 +46,39 @@ export function App() {
     })();
   }, [recharger]);
 
-  // Sur iPhone, le son n'est autorisé qu'après un premier appui : on le débloque au premier toucher,
-  // et c'est à ce moment que le son d'ouverture peut se jouer.
+  // Sur iPhone, le son n'est autorisé qu'à la FIN d'un premier toucher (quand le doigt se relève), pas à son
+  // début : on débloque donc l'audio à ce moment-là, et c'est là que le son d'ouverture peut se jouer.
+  // Si ce premier toucher lance aussitôt une séance, le son de séance remplace celui d'ouverture.
   useEffect(() => {
-    const debloquer = () => {
+    const evenements = ['touchend', 'click', 'keydown'];
+    let fait = false;
+    const retirer = () => evenements.forEach((e) => window.removeEventListener(e, premier, true));
+    function premier() {
+      if (fait) return;
+      fait = true;
+      retirer();
       debloquerAudio();
-      if (profilRef.current) {
-        const son = sonPour(profilRef.current, 'ouverture');
-        void jouerSon(son.choix, son.perso).catch(() => undefined);
+      const profil = profilRef.current;
+      if (profil) {
+        const son = sonPour(profil, 'ouverture');
+        // On attend un instant : si ce toucher lance aussitôt une séance, son propre son passe avant.
+        const numero = numeroDemande();
+        setTimeout(() => {
+          if (numeroDemande() === numero) void jouerSon(son.choix, son.perso).catch(() => undefined);
+        }, 150);
       }
-    };
-    window.addEventListener('pointerdown', debloquer, { once: true });
-    return () => window.removeEventListener('pointerdown', debloquer);
+    }
+    evenements.forEach((e) => window.addEventListener(e, premier, true));
+    return retirer;
   }, []);
+
+  // Décode à l'avance les sons personnels pour qu'ils partent sans attendre.
+  const sonsDuProfil = donnees?.profil.sons;
+  useEffect(() => {
+    if (!sonsDuProfil) return;
+    const adresses = Object.values(sonsDuProfil).map((x) => x?.perso).filter((x): x is string => typeof x === 'string');
+    if (adresses.length) void prechargerSons(adresses);
+  }, [sonsDuProfil]);
 
   // Quand l'app revient au premier plan (par exemple le lendemain), on recalcule le jour et on relit les données.
   useEffect(() => {

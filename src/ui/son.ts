@@ -87,6 +87,8 @@ export function definirSon(profil: Profil, evenement: EvenementSon, son: SonChoi
 // ---- Partie navigateur (non testée en Node) ----
 
 let contexte: AudioContext | null = null;
+/** Numéro de la dernière demande de son : une demande plus récente annule celles qui attendent encore. */
+let demande = 0;
 let enCours: { stop: () => void }[] = [];
 const tampons = new Map<string, AudioBuffer>();
 
@@ -112,27 +114,48 @@ export function debloquerAudio(): void {
 
 /** Coupe le son en cours (un nouveau son remplace le précédent). */
 export function arreterSon(): void {
+  demande++; // annule aussi un son qui serait encore en cours de préparation
   for (const source of enCours) {
     try { source.stop(); } catch { /* déjà terminé */ }
   }
   enCours = [];
 }
 
+/** Numéro de la dernière demande de son : permet de savoir si un autre son a été demandé depuis. */
+export const numeroDemande = (): number => demande;
+
+/** Décode à l'avance des sons personnels pour qu'ils se jouent sans attendre au bon moment. */
+export async function prechargerSons(adresses: string[]): Promise<void> {
+  const ctx = obtenirContexte();
+  if (!ctx) return;
+  for (const adresse of adresses) {
+    if (tampons.has(adresse)) continue;
+    try {
+      const donnees = await (await fetch(adresse)).arrayBuffer();
+      tampons.set(adresse, await ctx.decodeAudioData(donnees));
+    } catch { /* un son illisible ne doit rien casser */ }
+  }
+}
+
 export async function jouerSon(choix: ChoixSon, perso?: string): Promise<void> {
   arreterSon();
+  const moi = demande;
   if (choix === 'aucun') return;
   const ctx = obtenirContexte();
   if (!ctx) return;
   if (ctx.state === 'suspended') await ctx.resume();
+  if (moi !== demande) return;
 
   if (choix === 'perso') {
     if (!perso) return;
     let tampon = tampons.get(perso);
     if (!tampon) {
       const donnees = await (await fetch(perso)).arrayBuffer();
+      if (moi !== demande) return;
       tampon = await ctx.decodeAudioData(donnees);
       tampons.set(perso, tampon);
     }
+    if (moi !== demande) return;
     const source = ctx.createBufferSource();
     source.buffer = tampon;
     source.connect(ctx.destination);
