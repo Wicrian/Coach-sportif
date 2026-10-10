@@ -89,6 +89,9 @@ function SonsCard({ profil, onProfil }: { profil: Profil; onProfil: Props['onPro
     <div class="carte">
       <h3>Tes sons</h3>
       <p>Un son pour chaque moment, ou aucun. Tu peux choisir un son maison ou l'un de tes fichiers : il reste sur ton téléphone.</p>
+      {!EVENEMENTS.some((ev) => sonPour(profil, ev.id).perso) && (
+        <p style="margin-top:6px">Tu as un fichier de sauvegarde qui contient tes sons ? Importe-le depuis l'accueil, tout en bas : tes sons apparaîtront ici.</p>
+      )}
       {EVENEMENTS.map((ev) => {
         const actuel = sonPour(profil, ev.id);
         const options = actuel.perso ? [...SONS.slice(0, 3), { id: 'perso' as const, nom: actuel.nom ?? 'Mon son' }, SONS[3]!] : SONS;

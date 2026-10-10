@@ -127,13 +127,35 @@ export function fusionner(existant: Donnees, importees: Donnees): { donnees: Don
   const profil: Profil = { ...existant.profil };
   const profilCompleteChamps: string[] = [];
   for (const [cle, valeur] of Object.entries(importees.profil)) {
-    if (cle === 'gear') continue;
+    if (cle === 'gear' || cle === 'sons') continue;
     if (estVide(profil[cle]) && !estVide(valeur)) {
       profil[cle] = valeur;
       profilCompleteChamps.push(cle);
     }
   }
   profil.gear = [...new Set([...existant.profil.gear, ...importees.profil.gear])];
+
+  // Sons : fusionnés moment par moment. Un son personnel du fichier remplace un son maison ou « aucun »
+  // de l'appareil (importer un fichier de sons est un geste voulu), mais ne remplace jamais un son
+  // personnel déjà présent sur l'appareil.
+  const sonsFichier = importees.profil.sons;
+  if (sonsFichier) {
+    const sons: NonNullable<Profil['sons']> = { ...(existant.profil.sons ?? {}) };
+    let ajoutes = false;
+    for (const [moment, son] of Object.entries(sonsFichier) as [keyof typeof sons, NonNullable<Profil['sons']>[keyof NonNullable<Profil['sons']>]][]) {
+      if (!son) continue;
+      const present = sons[moment];
+      const presentEstPerso = present?.perso !== undefined;
+      if (!present || (!presentEstPerso && son.perso !== undefined)) {
+        sons[moment] = son;
+        ajoutes = true;
+      }
+    }
+    if (ajoutes) {
+      profil.sons = sons;
+      profilCompleteChamps.push('sons');
+    }
+  }
 
   return {
     donnees: {

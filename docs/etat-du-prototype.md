@@ -53,7 +53,7 @@ Attention : `dumbbells` est une **chaîne de texte**. Le nouveau modèle doit la
 ## Import et stockage (session 3)
 
 - **Import** (`src/stockage/sauvegarde.ts`) : accepte le format du prototype (v1). Les haltères en texte (« 2,5 / 5 / 10 ») sont convertis en liste de nombres (`dumbbells: [2.5, 5, 10]`). Les séances et mesures sont conservées à l'identique, champs inconnus compris. Sauvegarde actuelle : **v2** (même enveloppe `{ app, v, exportedAt, profile, sessions, recovery }`).
-- **Fusion** : séances reconnues par leur `id`, mesures par leur date. Importer deux fois le même fichier ne crée aucun doublon. Les données de l'appareil ne sont jamais écrasées. Pour le profil, l'appareil gagne et le fichier comble les trous ; le matériel est réuni.
+- **Fusion** : séances reconnues par leur `id`, mesures par leur date. Importer deux fois le même fichier ne crée aucun doublon. Les données de l'appareil ne sont jamais écrasées. Pour le profil, l'appareil gagne et le fichier comble les trous ; le matériel est réuni. **Exception, les sons** : fusionnés moment par moment ; un son personnel du fichier remplace un son maison ou « aucun » de l'appareil, mais jamais un son personnel déjà présent.
 - **Ancien `dumbbells`** : conservé tel quel pour mémoire, mais **le moteur n'utilise que `halteres`** (barre + disques). Le prototype contenait une estimation fausse (2,5 / 5 / 10 kg) ; l'inventaire réel se saisit dans le profil.
 - **Stockage** (`src/stockage/base.ts`) : IndexedDB via Dexie, tout reste sur l'appareil. Une seule mesure par jour.
 - **Pas encore fait** : le bouton de téléchargement de l'export et l'écran d'import (session 4, interface).
@@ -101,3 +101,7 @@ Retours d'usage : « j'aimerais un feedback après mes séances », « j'ai du m
 - **« Force et boxe » incompréhensible** : la fiche n'affichait que la partie force. Elle montre maintenant deux parties ; démarrer la force propose ensuite la boxe dans le bilan.
 - **Bilan « scientifique »** : une séance seule ne permet pas de dire « ton cardio s'est amélioré ». Le bilan montre à la place le cumul de la semaine face aux repères du projet (séries par muscle, fréquence, temps d'activité).
 - **Pas de son dans le navigateur** : les sons personnels n'étaient pas importés (le fichier `sauvegarde-avec-sons.json` n'avait pas été importé dans ce navigateur) ; seul le « ding » de fin de repos est actif par défaut. Les données du navigateur et celles de l'app installée sur l'iPhone sont **séparées**.
+
+## Défaut corrigé : import des sons (10 octobre)
+
+L'import ignorait **tout** le bloc `sons` du fichier dès que l'appareil avait déjà un seul réglage de son (par exemple après avoir touché « Ding doux »), car la fusion du profil raisonne champ par champ. Les sons sont maintenant fusionnés moment par moment (voir « Fusion » ci-dessus). Il suffit de **ré-importer** le fichier : aucun doublon n'est créé.

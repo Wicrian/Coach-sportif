@@ -153,3 +153,46 @@ describe('fusionner des données importées avec celles de l\'appareil', () => {
     expect(fusionner(existant, importees).donnees.profil.halteres).toEqual(halteres);
   });
 });
+
+describe('fusion des sons personnels (un par moment de l\'application)', () => {
+  const perso = (nom: string) => ({ choix: 'perso' as const, nom, perso: `data:audio/mpeg;base64,${nom}` });
+  const fichier = (sons: Record<string, unknown>): Donnees => ({ profil: { gear: [], dumbbells: [], sons } as Donnees['profil'], seances: [], recuperation: [] });
+  const appareil = (sons: Record<string, unknown>): Donnees => ({ profil: { gear: [], dumbbells: [], sons } as Donnees['profil'], seances: [], recuperation: [] });
+  const sonsDe = (d: Donnees) => (d.profil.sons ?? {}) as Record<string, { choix: string; nom?: string }>;
+
+  const importes = fichier({ ouverture: perso('Ouverture'), debutSeance: perso('Lancement'), debutBoxe: perso('Boxe'), finSeance: perso('Fin'), finRepos: perso('Repos') });
+
+  it('sur un appareil sans réglage, tous les sons du fichier sont repris', () => {
+    const { donnees } = fusionner(VIDE, importes);
+    expect(Object.keys(sonsDe(donnees)).sort()).toEqual(['debutBoxe', 'debutSeance', 'finRepos', 'finSeance', 'ouverture']);
+  });
+
+  it('un réglage déjà présent sur l\'appareil (même un simple « ding ») n\'empêche pas d\'importer les autres sons', () => {
+    const { donnees } = fusionner(appareil({ finRepos: { choix: 'ding' } }), importes);
+    const sons = sonsDe(donnees);
+    expect(sons.ouverture!.choix).toBe('perso');
+    expect(sons.debutBoxe!.nom).toBe('Boxe');
+    expect(sons.finSeance!.choix).toBe('perso');
+  });
+
+  it('un son personnel du fichier remplace un son maison ou « aucun » de l\'appareil', () => {
+    const { donnees } = fusionner(appareil({ ouverture: { choix: 'aucun' }, finRepos: { choix: 'cloche' } }), importes);
+    expect(sonsDe(donnees).ouverture!.choix).toBe('perso');
+    expect(sonsDe(donnees).finRepos!.nom).toBe('Repos');
+  });
+
+  it('mais un son personnel déjà présent sur l\'appareil n\'est jamais écrasé', () => {
+    const { donnees } = fusionner(appareil({ finRepos: perso('Mon choix') }), importes);
+    expect(sonsDe(donnees).finRepos!.nom).toBe('Mon choix');
+    expect(sonsDe(donnees).ouverture!.nom).toBe('Ouverture');
+  });
+
+  it('un fichier sans sons ne change rien aux sons de l\'appareil', () => {
+    const existant = appareil({ finRepos: { choix: 'cloche' } });
+    expect(sonsDe(fusionner(existant, VIDE).donnees)).toEqual({ finRepos: { choix: 'cloche' } });
+  });
+
+  it('le rapport signale que les sons ont été ajoutés', () => {
+    expect(fusionner(appareil({ finRepos: { choix: 'ding' } }), importes).rapport.profilCompleteChamps).toContain('sons');
+  });
+});
