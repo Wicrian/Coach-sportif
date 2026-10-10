@@ -4,6 +4,7 @@
  */
 import type { Seance } from '../donnees/types';
 import type { FaitsSeance } from '../moteur/debrief';
+import type { ReperesSemaine } from '../moteur/reperes';
 
 export interface EntreeBilan {
   seance: Seance;
@@ -16,6 +17,8 @@ export interface EntreeBilan {
   suite: { nom: string; raison: string }[];
   /** R-51 : la prochaine séance du même type sera allégée. */
   prochaineAllegee: boolean;
+  /** La semaine comparée aux repères du projet ; null si on ne la connaît pas. */
+  reperes: ReperesSemaine | null;
 }
 
 export interface Bilan {
@@ -24,6 +27,8 @@ export interface Bilan {
   suite: string[];
   ressenti: string[];
   polar: string[];
+  /** Où en est la semaine par rapport aux repères : le cumul, pas « l'effet » d'une séance. */
+  semaine: string[];
   conseil: string;
 }
 
@@ -97,6 +102,27 @@ export function redigerBilan(e: EntreeBilan): Bilan {
     polar.push(`Temps par zone : ${fc.zones.map((z, i) => `zone ${i + 1} ${z} min`).filter((_, i) => fc.zones![i]! > 0).join(', ')}.`);
   }
 
+  // --- La semaine, comparée aux repères (jamais « l'effet » d'une séance seule)
+  const semaine: string[] = [];
+  const r = e.reperes;
+  if (r && (r.muscles.length > 0 || r.minutes > 0)) {
+    semaine.push("Une seule séance ne change pas ton cardio ni ta force : ça se construit sur des semaines. Voici donc où tu en es cette semaine.");
+    for (const m of r.muscles) {
+      const fois = m.seances === 1 ? '1 fois' : `${m.seances} fois`;
+      const serie = m.series > 1 ? 'séries' : 'série';
+      const fin = m.etat === 'dans'
+        ? 'dans le repère pour débuter (4 à 10 séries par semaine).'
+        : m.etat === 'sous'
+          ? 'un peu en dessous du repère de 4 à 10 séries : la prochaine séance les complètera.'
+          : 'au-dessus du repère de 4 à 10 séries pour débuter : tu peux lui laisser un peu de récupération.';
+      semaine.push(`${m.muscle} : ${m.series} ${serie}, ${fois} dans la semaine — ${fin}`);
+    }
+    if (r.muscles.some((m) => m.seances === 1)) semaine.push("Repère : chaque muscle au moins 2 fois par semaine, avec 48 h entre deux séances.");
+    if (r.minutes > 0) {
+      semaine.push(`Temps d'activité : ${r.minutes} min sur ${r.minutesRepere} min par semaine (repère de l'OMS et de l'ACSM pour une activité modérée). Je ne mesure pas ton intensité, c'est donc un repère, pas un verdict.`);
+    }
+  }
+
   // --- Un seul conseil
   let conseil: string;
   if ((feel !== undefined && feel <= 2) || (seance.effort !== undefined && seance.effort >= 9)) {
@@ -107,5 +133,5 @@ export function redigerBilan(e: EntreeBilan): Bilan {
     conseil = "Pour la suite : un petit check-in demain matin m'aidera à ajuster ta prochaine séance.";
   }
 
-  return { accompli, modifications, suite, ressenti, polar, conseil };
+  return { accompli, modifications, suite, ressenti, polar, semaine, conseil };
 }

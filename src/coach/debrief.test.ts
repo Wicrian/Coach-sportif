@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Seance } from '../donnees/types';
 import type { FaitsSeance } from '../moteur/debrief';
+import type { ReperesSemaine } from '../moteur/reperes';
 import { redigerBilan } from './debrief';
 
 const NOMS = { goblet: 'Squat gobelet', row: 'Rowing unilatéral' };
@@ -10,7 +11,7 @@ const faits = (extra: Partial<FaitsSeance> = {}): FaitsSeance => ({
   series: 3, volume: 1368, volumePrecedent: null, tendanceVolume: null, ...extra,
 });
 const bilan = (f: FaitsSeance, s: Seance = seance(), suite = [{ nom: 'Squat gobelet', raison: 'La dernière fois : 12 / 12 / 12 reps à 3,8 kg. On consolide avant de monter.' }], allegee = false) =>
-  redigerBilan({ seance: s, typeSeance: 'Force', faits: f, noms: NOMS, suite, prochaineAllegee: allegee });
+  redigerBilan({ seance: s, typeSeance: 'Force', faits: f, noms: NOMS, suite, prochaineAllegee: allegee, reperes: null });
 const tout = (b: ReturnType<typeof bilan>) => [...b.accompli, ...b.modifications, ...b.suite, ...b.ressenti, ...b.polar, b.conseil].join(' ');
 
 describe('bilan d\'une séance qui n\'est pas de force', () => {
@@ -19,7 +20,7 @@ describe('bilan d\'une séance qui n\'est pas de force', () => {
       seance: seance({ kind: 'box', durationMin: 35, source: 'Boxa', feel: 4 }),
       typeSeance: 'Boxe',
       faits: { exercices: [], series: 0, volume: 0, volumePrecedent: null, tendanceVolume: null },
-      noms: {}, suite: [], prochaineAllegee: false,
+      noms: {}, suite: [], prochaineAllegee: false, reperes: null,
     });
     expect(b.accompli.join(' ')).toMatch(/Boxe, 35 min \(Boxa\)/);
     expect(b.accompli.join(' ')).not.toMatch(/volume/);
@@ -112,5 +113,41 @@ describe('bilan de séance', () => {
       expect(tout(b)).not.toMatch(/tu dois|il faut/i);
       expect(b.conseil.length).toBeGreaterThan(10);
     }
+  });
+});
+
+describe('« où tu en es cette semaine » : des repères, pas un effet promis', () => {
+  const reperes = (extra: Partial<ReperesSemaine> = {}): ReperesSemaine => ({
+    muscles: [
+      { muscle: 'Jambes', series: 6, seances: 2, etat: 'dans' },
+      { muscle: 'Épaules', series: 3, seances: 1, etat: 'sous' },
+    ],
+    minutes: 95, minutesRepere: 150, ...extra,
+  });
+  const avec = (r: ReperesSemaine | null) =>
+    redigerBilan({ seance: seance(), typeSeance: 'Force', faits: faits(), noms: NOMS, suite: [], prochaineAllegee: false, reperes: r });
+
+  it('dit honnêtement qu\'une séance seule ne change pas le cardio ni la force', () => {
+    const t = avec(reperes()).semaine.join(' ');
+    expect(t).toMatch(/une seule séance/i);
+    expect(t).toMatch(/semaines/);
+  });
+
+  it('place chaque muscle par rapport au repère, sans jugement', () => {
+    const t = avec(reperes()).semaine.join(' ');
+    expect(t).toMatch(/Jambes : 6 séries/);
+    expect(t).toMatch(/2 fois/);
+    expect(t).toMatch(/Épaules : 3 séries/);
+    expect(t).not.toMatch(/tu dois|il faut|raté/i);
+  });
+
+  it('cite le repère de temps d\'activité et précise que l\'intensité n\'est pas mesurée', () => {
+    const t = avec(reperes()).semaine.join(' ');
+    expect(t).toMatch(/95 min sur 150/);
+    expect(t).toMatch(/intensité/);
+  });
+
+  it('rien du tout sans repères', () => {
+    expect(avec(null).semaine).toEqual([]);
   });
 });

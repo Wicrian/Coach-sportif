@@ -14,7 +14,7 @@ interface Props {
   aujourdhui: string;
   donnees: Donnees;
   onRetour: () => void;
-  onLancer: (modeleId: string) => void;
+  onLancer: (modeleId: string, enchainerBoxe?: boolean) => void;
   onLancerLibre: (kind: GenreLibre) => void;
   onAjouter: (s: Seance) => Promise<void>;
   onProfil: (profil: Profil) => Promise<void>;
@@ -51,34 +51,56 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
         {jour.dureeMin && <span class="discret" style="margin-left:10px">{jour.dureeMin} min</span>}
       </div>
 
-      <div class="carte">
-        <h3>{type === 'repos' ? 'Jour de repos' : type === 'deja-fait' ? "Déjà bougé aujourd'hui" : 'Ce qui est prévu'}</h3>
-        <p>{descriptionType(type)}</p>
-        <p style="margin-top:8px"><b>Pourquoi :</b> {jour.raison}</p>
-
-        {prevu && (
-          <ul class="signaux">
-            {prevu.map((l) => <li key={l.nom}><span><b>{l.nom}</b> — {l.detail}</span></li>)}
-          </ul>
-        )}
-        {prevu && <p style="margin-top:8px;font-size:13px">{modele.nom}. Les charges sont recalculées au moment où tu démarres, selon ta forme.</p>}
-
-        {faitsAujourdhui.length > 0 && type === 'deja-fait' && (
-          <ul class="signaux">
-            {faitsAujourdhui.map((s) => <li key={s.id}><span><b>{libelleGenre(s.kind)}</b>{s.durationMin ? ` — ${s.durationMin} min` : ''}</span></li>)}
-          </ul>
-        )}
-
-        {estAujourdhui && prevu && (
-          <div class="pile"><button class="btn btn-principal" onClick={() => onLancer(modeleId)}>{type === 'combine' ? 'Démarrer la partie force' : 'Démarrer la séance'}</button></div>
-        )}
-        {estAujourdhui && preselection && !formulaire && (
-          <div class="pile">
-            <button class="btn btn-principal" onClick={() => onLancerLibre(preselection.kind as GenreLibre)}>Démarrer : {libelleGenre(preselection.kind).toLowerCase()}</button>
-            <button class="btn btn-contour" onClick={() => ouvrirForm(preselection.kind)}>Je l'ai déjà faite</button>
+      {type === 'combine' ? (
+        <>
+          <div class="carte">
+            <h3>Partie 1 : la force</h3>
+            <p>Une force courte avec tes haltères ou ton poids du corps, avec peu de changements de disques.</p>
+            <p style="margin-top:8px"><b>Pourquoi :</b> {jour.raison}</p>
+            {prevu && <ul class="signaux">{prevu.map((l) => <li key={l.nom}><span><b>{l.nom}</b> — {l.detail}</span></li>)}</ul>}
+            {prevu && <p style="margin-top:8px;font-size:13px">{modele.nom}. Les charges sont recalculées au moment où tu démarres, selon ta forme.</p>}
+            {estAujourdhui && (
+              <div class="pile"><button class="btn btn-principal" onClick={() => onLancer(modeleId, true)}>Démarrer la force, puis la boxe</button></div>
+            )}
           </div>
-        )}
-      </div>
+          <div class="carte">
+            <h3>Partie 2 : la boxe</h3>
+            <p>{descriptionType('boxe')} À la fin de ta force, je te propose de l'enchaîner d'un geste.</p>
+            {estAujourdhui && (
+              <div class="pile"><button class="btn btn-contour" onClick={() => onLancerLibre('box')}>Démarrer la boxe seule</button></div>
+            )}
+          </div>
+        </>
+      ) : (
+        <div class="carte">
+          <h3>{type === 'repos' ? 'Jour de repos' : type === 'deja-fait' ? "Déjà bougé aujourd'hui" : 'Ce qui est prévu'}</h3>
+          <p>{descriptionType(type)}</p>
+          <p style="margin-top:8px"><b>Pourquoi :</b> {jour.raison}</p>
+
+          {prevu && (
+            <ul class="signaux">
+              {prevu.map((l) => <li key={l.nom}><span><b>{l.nom}</b> — {l.detail}</span></li>)}
+            </ul>
+          )}
+          {prevu && <p style="margin-top:8px;font-size:13px">{modele.nom}. Les charges sont recalculées au moment où tu démarres, selon ta forme.</p>}
+
+          {faitsAujourdhui.length > 0 && type === 'deja-fait' && (
+            <ul class="signaux">
+              {faitsAujourdhui.map((s) => <li key={s.id}><span><b>{libelleGenre(s.kind)}</b>{s.durationMin ? ` — ${s.durationMin} min` : ''}</span></li>)}
+            </ul>
+          )}
+
+          {estAujourdhui && prevu && (
+            <div class="pile"><button class="btn btn-principal" onClick={() => onLancer(modeleId)}>Démarrer la séance</button></div>
+          )}
+          {estAujourdhui && preselection && !formulaire && (
+            <div class="pile">
+              <button class="btn btn-principal" onClick={() => onLancerLibre(preselection.kind as GenreLibre)}>Démarrer : {libelleGenre(preselection.kind).toLowerCase()}</button>
+              <button class="btn btn-contour" onClick={() => ouvrirForm(preselection.kind)}>Je l'ai déjà faite</button>
+            </div>
+          )}
+        </div>
+      )}
 
       {formulaire && (
         <div id="formulaire-fiche">

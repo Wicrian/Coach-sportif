@@ -191,3 +191,14 @@ Choix faits lors du codage de `src/moteur/ordre-seance.ts` :
   - Les réponses « répétitions en réserve », « effort » et « gêne » sont **commentées** mais ne pilotent aucune règle.
 - **Son de fin de repos** : trois sons synthétisés (ding doux, cloche, double ding), aucun, ou un fichier audio de l'utilisateur (1 Mo maximum, gardé dans le profil). Sur iPhone, l'audio est débloqué au premier appui. Le son ne se joue que si l'écran reste allumé (la séance garde l'écran allumé).
 - **Check-in du jour** : trois touches (énergie, courbatures, moral) ; sommeil, poids, HRV et FC de repos sont repliés. Une fois fait, la carte se replie.
+
+## 19. Précisions d'implémentation (repères de la semaine, séance « force et boxe »)
+
+- **« Où tu en es cette semaine »** (`src/moteur/reperes.ts`) : au lieu de prétendre mesurer « l'effet » d'une séance (une séance isolée ne change rien de mesurable au cardio ni à la force ; les adaptations se construisent sur des semaines), le bilan compare le **cumul de la semaine** à des repères des rapports :
+  - **séries par muscle et par semaine** : repère débutant de **4 à 10** (R-12) ; ni jugement ni obligation ;
+  - **fréquence** : chaque muscle au moins **2 fois** par semaine, 48 h entre deux séances (R-11, R-10) ;
+  - **temps d'activité** : **150 minutes** par semaine (OMS 2020, ACSM 2009, rapport de progression). L'intensité n'étant pas mesurée (sauf données Polar saisies), c'est présenté comme un repère, pas un verdict. *Le seuil de 150 min n'est pas une règle du moteur : c'est un repère d'affichage.*
+  - **Statut débutant** : R-13 (passage à intermédiaire) n'est pas défini ; le repère 4 à 10 est donc appliqué à tous. *À revoir quand R-13 sera tranché.*
+  - **Périmètre** : les séances de la semaine (lundi au dimanche) jusqu'à la séance du bilan incluse ; les séances postérieures ne comptent pas, pour que le bilan reste le même quand on le rouvre.
+  - **Muscles** : ceux de la fiche de l'exercice (muscle principal). Un exercice qui travaille deux muscles compte pour les deux.
+- **Séance « force et boxe »** : la fiche montre deux parties. « Démarrer la force, puis la boxe » marque la séance de force (`enchainerBoxe`) ; son bilan propose alors « Démarrer la boxe » (séance libre, avec le son de lancement de boxe). La boxe peut aussi être démarrée seule. Les deux parties sont enregistrées comme **deux séances** (force, puis boxe), ce qui est plus clair dans l'Activité.

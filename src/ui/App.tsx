@@ -30,6 +30,7 @@ export function App() {
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
   const [ouvrirCreneaux, setOuvrirCreneaux] = useState(false);
   const [bilanId, setBilanId] = useState<string | null>(null);
+  const [boxeApresBilan, setBoxeApresBilan] = useState(false);
   const [libre, setLibre] = useState<BrouillonLibre | null>(null);
   const [enLibre, setEnLibre] = useState(false);
   const profilRef = useRef<Profil | undefined>(undefined);
@@ -95,10 +96,11 @@ export function App() {
     setLibre(null);
     setEnLibre(false);
   };
-  const lancer = (modeleId: string) => {
+  const lancer = (modeleId: string, enchainerBoxe = false) => {
     jouer('debutSeance');
     const modele = MODELES.find((m) => m.id === modeleId)!;
-    changer(demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil }), new Date()));
+    const nouvelle = demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil }), new Date());
+    changer(enchainerBoxe ? { ...nouvelle, enchainerBoxe: true } : nouvelle);
     setEnSeance(true);
   };
   const quitter = async () => {
@@ -136,6 +138,7 @@ export function App() {
           await sauverSeance(base, terminee);
           await quitter();
           await recharger();
+          setBoxeApresBilan(brouillon.enchainerBoxe === true);
           setBilanId(terminee.id);
         }}
       />
@@ -164,7 +167,14 @@ export function App() {
   const seanceBilan = bilanId ? donnees.seances.find((s) => s.id === bilanId) : undefined;
   const bilan = seanceBilan ? preparerBilan(seanceBilan, donnees) : null;
   if (seanceBilan && bilan) {
-    return <EcranBilan seance={seanceBilan} bilan={bilan} onFermer={() => { arreterSon(); setBilanId(null); window.scrollTo(0, 0); }} />;
+    return (
+      <EcranBilan
+        seance={seanceBilan}
+        bilan={bilan}
+        onFermer={() => { arreterSon(); setBilanId(null); setBoxeApresBilan(false); window.scrollTo(0, 0); }}
+        onEnchainerBoxe={boxeApresBilan ? () => { arreterSon(); setBilanId(null); setBoxeApresBilan(false); lancerLibre('box'); } : undefined}
+      />
+    );
   }
 
   const enregistrerMesure = async (saisie: Parameters<typeof fusionnerCheckin>[2]) => {

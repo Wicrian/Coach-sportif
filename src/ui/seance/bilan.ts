@@ -2,6 +2,7 @@ import { redigerBilan, type Bilan } from '../../coach/debrief';
 import { EXERCICES, MODELES } from '../../donnees/exercices';
 import type { Donnees, Seance } from '../../donnees/types';
 import { analyserSeance } from '../../moteur/debrief';
+import { reperesDeLaSemaine } from '../../moteur/reperes';
 import { libelleGenre } from '../activite';
 import { preparerSeance } from './preparer';
 
@@ -31,6 +32,9 @@ export function preparerBilan(seance: Seance, donnees: Donnees): Bilan | null {
     prochaineAllegee = plan.allegee;
   }
 
+  const muscleDe = (cle: string) => (EXERCICES[cle]?.muscle ?? '').split(',').map((m) => m.trim()).filter(Boolean).map((m) => m.charAt(0).toUpperCase() + m.slice(1));
+  const reperes = reperesDeLaSemaine(histoire, seance, muscleDe);
+
   const noms = Object.fromEntries(Object.entries(EXERCICES).map(([cle, e]) => [cle, e.nom]));
-  return redigerBilan({ seance, typeSeance: libelleGenre(seance.kind), faits, noms, suite, prochaineAllegee });
+  return redigerBilan({ seance, typeSeance: libelleGenre(seance.kind), faits, noms, suite, prochaineAllegee, reperes });
 }

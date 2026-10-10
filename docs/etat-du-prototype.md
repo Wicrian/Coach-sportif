@@ -95,3 +95,9 @@ Retours d'usage : « j'aimerais un feedback après mes séances », « j'ai du m
 - **Limite de l'iPhone** : un son ne peut pas se jouer avant un premier toucher de l'écran. Le son d'ouverture se joue donc au premier appui.
 - **Séances libres** (`src/ui/seance/libre.ts`, `SeanceLibre.tsx`) : boxe, marche, mobilité, cardio léger se lancent depuis la fiche du jour : chronomètre, playlist du type, bouton « Terminer », ressenti et détails, bilan. La séance en cours survit à un rechargement (brouillon `libre`). La boxe reste à faire dans Boxa, Heavybox ou au sac : l'app tient le temps, la musique et le bilan.
 - **Moteur de décision** : inchangé. Une séance libre compte dans la semaine réussie et dans la planification.
+
+## Retours d'usage (10 octobre, soir)
+
+- **« Force et boxe » incompréhensible** : la fiche n'affichait que la partie force. Elle montre maintenant deux parties ; démarrer la force propose ensuite la boxe dans le bilan.
+- **Bilan « scientifique »** : une séance seule ne permet pas de dire « ton cardio s'est amélioré ». Le bilan montre à la place le cumul de la semaine face aux repères du projet (séries par muscle, fréquence, temps d'activité).
+- **Pas de son dans le navigateur** : les sons personnels n'étaient pas importés (le fichier `sauvegarde-avec-sons.json` n'avait pas été importé dans ce navigateur) ; seul le « ding » de fin de repos est actif par défaut. Les données du navigateur et celles de l'app installée sur l'iPhone sont **séparées**.

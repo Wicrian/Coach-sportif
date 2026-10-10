@@ -18,6 +18,8 @@ export interface Brouillon {
   phase: Phase;
   /** Séries réalisées, par exercice (même ordre que le plan). */
   realisees: Serie[][];
+  /** Séance « force et boxe » : le bilan proposera d'enchaîner avec la boxe. */
+  enchainerBoxe?: boolean;
 }
 
 export interface Saisie {

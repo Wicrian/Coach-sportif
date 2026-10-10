@@ -11,7 +11,7 @@ import { calculerPreparation } from './preparation';
 interface Props {
   donnees: Donnees;
   onProfil: (profil: Profil) => Promise<void>;
-  onLancer: (modeleId: string) => void;
+  onLancer: (modeleId: string, enchainerBoxe?: boolean) => void;
   onLancerLibre: (kind: GenreLibre) => void;
   /** Enregistrer une séance faite ailleurs (depuis la fiche d'un jour). */
   onAjouter: (s: Seance) => Promise<void>;

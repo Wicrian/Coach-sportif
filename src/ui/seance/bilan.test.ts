@@ -39,6 +39,18 @@ describe('preparerBilan', () => {
     expect(b.ressenti.join(' ')).toMatch(/allégée d'un cran/);
   });
 
+  it('présente la semaine avec les muscles en majuscule initiale et fusionnés', () => {
+    const s: Seance = { id: 'r', date: '2026-10-13T18:00:00', kind: 'strength', tplId: 'fb', durationMin: 40, exercises: [
+      { key: 'rdl', sets: [serie(3.8, 10, 3.8, 10), serie(3.8, 10, 3.8, 10), serie(3.8, 10, 3.8, 10)] },
+      { key: 'bug', sets: [serie(0, 10, 0, 10)] },
+    ] };
+    const b = preparerBilan(s, donnees([s]))!;
+    const texte = b.semaine.join(' ');
+    expect(texte).toMatch(/Fessiers : 3 séries/);
+    expect(texte).not.toMatch(/fessiers :/);
+    expect(texte).toMatch(/une seule séance/i);
+  });
+
   it('une séance faite ailleurs a un bilan court', () => {
     const s: Seance = { id: 'x', date: '2026-10-10T12:00:00', kind: 'box', durationMin: 35, source: 'Boxa', feel: 4, exercises: [] };
     const b = preparerBilan(s, donnees([s]))!;
