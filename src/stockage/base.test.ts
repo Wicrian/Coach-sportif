@@ -133,3 +133,15 @@ describe('supprimer une séance', () => {
     expect((await chargerDonnees(base)).seances).toEqual([]);
   });
 });
+
+describe('deux séances en cours possibles : force guidée et séance libre', () => {
+  it('les deux brouillons ne se mélangent pas', async () => {
+    await sauverBrouillon(base, { type: 'force' });
+    await sauverBrouillon(base, { type: 'libre' }, 'libre');
+    expect(await chargerBrouillon(base)).toEqual({ type: 'force' });
+    expect(await chargerBrouillon(base, 'libre')).toEqual({ type: 'libre' });
+    await effacerBrouillon(base, 'libre');
+    expect(await chargerBrouillon(base, 'libre')).toBeNull();
+    expect(await chargerBrouillon(base)).toEqual({ type: 'force' });
+  });
+});

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { MODELES } from '../donnees/exercices';
-import type { Donnees, GenreSeance } from '../donnees/types';
+import type { Donnees, EvenementSon, Profil } from '../donnees/types';
 import { curseurAudace } from '../moteur/audace';
 import { evaluerHabitude } from '../moteur/habitude';
 import { chargerBrouillon, chargerDonnees, effacerBrouillon, exporterTexte, importerSauvegarde, sauverBrouillon, sauverMesure, sauverProfil, sauverSeance, supprimerSeance } from '../stockage/base';
@@ -10,13 +10,18 @@ import { Activite } from './EcranActivite';
 import { fusionnerCheckin } from './checkin';
 import { EcranPlan } from './EcranPlan';
 import { EcranToi } from './EcranToi';
+import { EcranBilan } from './EcranBilan';
 import { Nav, type Onglet } from './Nav';
+import { preparerBilan } from './seance/bilan';
 import { playlistsPour } from './plan';
+import { arreterSon, debloquerAudio, jouerSon, sonPour } from './son';
 import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
 import { demarrer, terminer, type Brouillon } from './seance/deroulement';
 import { preparerSeance } from './seance/preparer';
+import { demarrerLibre, terminerLibre, type BrouillonLibre, type GenreLibre } from './seance/libre';
 import { SeanceActive } from './seance/SeanceActive';
+import { SeanceLibre } from './seance/SeanceLibre';
 
 export function App() {
   const [donnees, setDonnees] = useState<Donnees | null>(null);
@@ -24,7 +29,10 @@ export function App() {
   const [enSeance, setEnSeance] = useState(false);
   const [onglet, setOnglet] = useState<Onglet>('aujourdhui');
   const [ouvrirCreneaux, setOuvrirCreneaux] = useState(false);
-  const [preselection, setPreselection] = useState<{ kind: GenreSeance; dureeMin: number } | undefined>(undefined);
+  const [bilanId, setBilanId] = useState<string | null>(null);
+  const [libre, setLibre] = useState<BrouillonLibre | null>(null);
+  const [enLibre, setEnLibre] = useState(false);
+  const profilRef = useRef<Profil | undefined>(undefined);
   const [, setRafraichir] = useState(0);
 
   const recharger = useCallback(async () => setDonnees(await chargerDonnees(base)), []);
@@ -33,8 +41,23 @@ export function App() {
     void (async () => {
       await recharger();
       setBrouillon(await chargerBrouillon<Brouillon>(base));
+      setLibre(await chargerBrouillon<BrouillonLibre>(base, 'libre'));
     })();
   }, [recharger]);
+
+  // Sur iPhone, le son n'est autorisé qu'après un premier appui : on le débloque au premier toucher,
+  // et c'est à ce moment que le son d'ouverture peut se jouer.
+  useEffect(() => {
+    const debloquer = () => {
+      debloquerAudio();
+      if (profilRef.current) {
+        const son = sonPour(profilRef.current, 'ouverture');
+        void jouerSon(son.choix, son.perso).catch(() => undefined);
+      }
+    };
+    window.addEventListener('pointerdown', debloquer, { once: true });
+    return () => window.removeEventListener('pointerdown', debloquer);
+  }, []);
 
   // Quand l'app revient au premier plan (par exemple le lendemain), on recalcule le jour et on relit les données.
   useEffect(() => {
@@ -48,13 +71,32 @@ export function App() {
     return () => document.removeEventListener('visibilitychange', auRetour);
   }, [recharger]);
 
+  profilRef.current = donnees?.profil;
+
   if (!donnees) return <div class="ecran fond-clair"><p class="discret" style="margin-top:40vh;text-align:center">Chargement…</p></div>;
 
   const changer = (b: Brouillon) => {
     setBrouillon(b);
     void sauverBrouillon(base, b);
   };
+  const jouer = (evenement: EvenementSon) => {
+    const son = sonPour(donnees.profil, evenement);
+    void jouerSon(son.choix, son.perso).catch(() => undefined);
+  };
+  const lancerLibre = (kind: GenreLibre) => {
+    jouer(kind === 'box' ? 'debutBoxe' : 'debutSeance');
+    const b = demarrerLibre(kind, new Date());
+    setLibre(b);
+    setEnLibre(true);
+    void sauverBrouillon(base, b, 'libre');
+  };
+  const quitterLibre = async () => {
+    await effacerBrouillon(base, 'libre');
+    setLibre(null);
+    setEnLibre(false);
+  };
   const lancer = (modeleId: string) => {
+    jouer('debutSeance');
     const modele = MODELES.find((m) => m.id === modeleId)!;
     changer(demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil }), new Date()));
     setEnSeance(true);
@@ -82,17 +124,47 @@ export function App() {
         b={brouillon}
         inventaire={donnees.profil.halteres}
         playlists={playlists}
+        son={sonPour(donnees.profil, 'finRepos')}
+        onFinAffichee={() => jouer('finSeance')}
         precedente={precedente}
         bonus={bonus}
         onChange={changer}
         onAbandon={quitter}
         onTerminer={async (feel, details) => {
-          await sauverSeance(base, terminer(brouillon, feel, new Date(), details));
+          arreterSon();
+          const terminee = terminer(brouillon, feel, new Date(), details);
+          await sauverSeance(base, terminee);
           await quitter();
           await recharger();
+          setBilanId(terminee.id);
         }}
       />
     );
+  }
+
+  if (enLibre && libre) {
+    return (
+      <SeanceLibre
+        b={libre}
+        playlists={playlistsPour(donnees.profil.playlists, libre.kind)}
+        onFinAffichee={() => jouer('finSeance')}
+        onAbandon={quitterLibre}
+        onTerminer={async (feel, details) => {
+          arreterSon();
+          const terminee = terminerLibre(libre, feel, new Date(), details);
+          await sauverSeance(base, terminee);
+          await quitterLibre();
+          await recharger();
+          setBilanId(terminee.id);
+        }}
+      />
+    );
+  }
+
+  const seanceBilan = bilanId ? donnees.seances.find((s) => s.id === bilanId) : undefined;
+  const bilan = seanceBilan ? preparerBilan(seanceBilan, donnees) : null;
+  if (seanceBilan && bilan) {
+    return <EcranBilan seance={seanceBilan} bilan={bilan} onFermer={() => { arreterSon(); setBilanId(null); window.scrollTo(0, 0); }} />;
   }
 
   const enregistrerMesure = async (saisie: Parameters<typeof fusionnerCheckin>[2]) => {
@@ -113,16 +185,16 @@ export function App() {
       donnees={donnees}
       onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
       onLancer={lancer}
-      onNoter={(pref) => { setPreselection(pref); setOnglet('activite'); }}
-      onAutreSeance={() => { setOnglet('aujourdhui'); setTimeout(() => document.getElementById('commencer')?.scrollIntoView(), 80); }}
+      onLancerLibre={lancerLibre}
+      onAjouter={async (s) => { await sauverSeance(base, s); await recharger(); }}
       ouvrirCreneaux={ouvrirCreneaux}
     />
   ) : onglet === 'activite' ? (
     <Activite
       seances={donnees.seances}
-      preselection={preselection}
-      onAjouter={async (s) => { await sauverSeance(base, s); setPreselection(undefined); await recharger(); }}
+      onAjouter={async (s) => { await sauverSeance(base, s); await recharger(); }}
       onSupprimer={async (id) => { await supprimerSeance(base, id); await recharger(); }}
+      onBilan={(id) => { setBilanId(id); window.scrollTo(0, 0); }}
     />
   ) : (
     <Accueil
@@ -131,6 +203,9 @@ export function App() {
       onLancer={lancer}
       onCheckin={enregistrerMesure}
       onAllerToi={() => setOnglet('toi')}
+      libreEnCours={libre?.kind ?? null}
+      onReprendreLibre={() => setEnLibre(true)}
+      onAbandonnerLibre={quitterLibre}
       onReprendre={() => setEnSeance(true)}
       onAbandonnerEnCours={quitter}
       onEnergie={async (choix) => {
@@ -161,7 +236,7 @@ export function App() {
   return (
     <>
       {ecran}
-      <Nav actif={onglet} onChoisir={(o) => { setOuvrirCreneaux(false); setPreselection(undefined); setOnglet(o); }} />
+      <Nav actif={onglet} onChoisir={(o) => { setOuvrirCreneaux(false); setOnglet(o); }} />
     </>
   );
 }

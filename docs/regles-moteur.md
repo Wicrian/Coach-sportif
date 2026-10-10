@@ -71,7 +71,7 @@ Trois signaux, chacun `vert`, `rouge` ou `inconnu`.
 | ID | Règle | Source | Statut |
 |---|---|---|---|
 | R-50 | Pour débutant : intensité plafonnée sous le seuil ventilatoire (repère : capable de parler ; effort perçu ≤ 4/10 en cardio). | Ekkekakis | Validée |
-| R-51 | Ressenti de séance « Pénible » ou « Bof » → la séance suivante du même type est allégée d'un cran (moins de séries ou d'intensité), et le curseur baisse (R-32). | Cahier §8 | Validée |
+| R-51 | Ressenti de séance « Pénible » ou « Bof » → la séance suivante du même type est allégée d'un cran (moins de séries ou d'intensité), et le curseur baisse (R-32). | Cahier §8 | Validée (codée : une série de moins par exercice, minimum 2) |
 
 ## 7. Planification
 
@@ -181,3 +181,13 @@ Choix faits lors du codage de `src/moteur/ordre-seance.ts` :
 - **Question de fin de séance** : « Pendant la séance, tu t'es senti comment ? », parce que le ressenti **pendant** l'effort prédit le retour à l'activité (rapport sur la motivation) davantage que la satisfaction d'avoir fini.
 - **Gêne « à surveiller »** : l'app affiche un rappel de consulter un professionnel de santé ; elle ne pose aucun diagnostic.
 - **Écran « Toi »** (cahier §11, « Ce que je sais de toi ») : matériel (types et haltères barre + disques, avec aperçu des charges réalisables), poids et sa date, dernier ressenti, énergie, moral et courbatures avec leur date, objectif, pourquoi, régime, playlists par type de séance. **Objectif et moral** sont enregistrés mais pas encore utilisés par le moteur.
+
+## 18. Précisions d'implémentation (R-51, bilan de séance, son, check-in)
+
+- **R-51 codée** (`src/ui/seance/preparer.ts`) : si la dernière séance de force **du même modèle** a un ressenti de 1 (pénible) ou 2 (bof), la suivante a **une série de moins par exercice** (jamais moins de 2). « Un cran » = une série : *hypothèse de réalisation*. L'intensité (charge) n'est pas touchée. Le curseur baisse déjà par R-32.
+- **Bilan de séance** (`src/moteur/debrief.ts` pour les faits, `src/coach/debrief.ts` pour les phrases) : ce qui a été fait, ce qui a été modifié par rapport au prévu (charge, répétitions), ce que le moteur proposera la prochaine fois (c'est le même calcul que pour préparer la séance, avec l'histoire jusqu'à cette séance incluse), le ressenti, les données Polar telles quelles, et un seul conseil.
+  - Le volume est comparé à la séance précédente du même modèle avec une marge de **5 %** pour dire « à peu près pareil » : *seuil de présentation, hypothèse*. Aucun pourcentage n'est affiché.
+  - Le bilan **ne juge pas** : une charge baissée est présentée comme une bonne décision, des répétitions en moins comme une information.
+  - Les réponses « répétitions en réserve », « effort » et « gêne » sont **commentées** mais ne pilotent aucune règle.
+- **Son de fin de repos** : trois sons synthétisés (ding doux, cloche, double ding), aucun, ou un fichier audio de l'utilisateur (1 Mo maximum, gardé dans le profil). Sur iPhone, l'audio est débloqué au premier appui. Le son ne se joue que si l'écran reste allumé (la séance garde l'écran allumé).
+- **Check-in du jour** : trois touches (énergie, courbatures, moral) ; sommeil, poids, HRV et FC de repos sont repliés. Une fois fait, la carte se replie.

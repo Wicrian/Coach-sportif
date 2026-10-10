@@ -6,7 +6,7 @@ const exo = (key: string, w: number, reps: number, series = 2): ExercicePlan => 
   key, nom: key, muscle: 'm', mode: 'paire', poidsDuCorps: w === 0, reposSec: 60, deuxHalteres: false,
   series: Array.from({ length: series }, () => ({ w, reps })), raison: 'ok', regles: ['R-22'], montage: null, chargesDispo: [],
 });
-const PLAN: PlanSeance = { modeleId: 'fb', nom: 'Test', exercices: [exo('a', 3.8, 10), exo('b', 6.2, 12)], changements: 1, regles: ['R-26'] };
+const PLAN: PlanSeance = { modeleId: 'fb', nom: 'Test', exercices: [exo('a', 3.8, 10), exo('b', 6.2, 12)], changements: 1, allegee: false, regles: ['R-26'] };
 const T0 = new Date('2026-10-03T18:00:00Z');
 
 const jouer = (b: Brouillon, nb: number): Brouillon => {

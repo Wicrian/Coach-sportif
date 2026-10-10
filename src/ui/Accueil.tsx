@@ -3,6 +3,7 @@ import { MODELES } from '../donnees/exercices';
 import type { Donnees } from '../donnees/types';
 import { curseurAudace } from '../moteur/audace';
 import { evaluerHabitude } from '../moteur/habitude';
+import { libelleGenre } from './activite';
 import { nf } from './format';
 import { jourLocal } from './jour';
 import { chargesDuProfil } from './seance/preparer';
@@ -15,6 +16,10 @@ import { PreparationDuJour } from './PreparationDuJour';
 interface Props {
   donnees: Donnees;
   seanceEnCours: boolean;
+  /** Type de la séance libre (boxe, marche…) en cours, s'il y en a une. */
+  libreEnCours: 'box' | 'walk' | 'mob' | 'cardio' | null;
+  onReprendreLibre: () => void;
+  onAbandonnerLibre: () => void;
   onLancer: (modeleId: string) => void;
   onReprendre: () => void;
   onAbandonnerEnCours: () => void;
@@ -78,6 +83,19 @@ export function Accueil(p: Props) {
         <div style="font-size:14px;margin-top:10px;opacity:.95">{habitude.raison}</div>
       </div>
 
+      <CheckIn key={aujourdhui} mesure={mesureDuJour} onSauver={p.onCheckin} />
+
+      {p.libreEnCours && (
+        <div class="carte">
+          <h3>Une séance de {libelleGenre(p.libreEnCours).toLowerCase()} est en cours</h3>
+          <p>Reviens-y quand tu veux pour la terminer et voir ton bilan.</p>
+          <div class="pile">
+            <button class="btn btn-principal" onClick={p.onReprendreLibre}>Reprendre la séance</button>
+            <button class="btn btn-contour" onClick={() => { if (confirm('Abandonner cette séance sans l\'enregistrer ?')) p.onAbandonnerLibre(); }}>Abandonner</button>
+          </div>
+        </div>
+      )}
+
       {p.seanceEnCours && (
         <div class="carte">
           <h3>Une séance est en cours</h3>
@@ -101,7 +119,6 @@ export function Accueil(p: Props) {
       </div>
 
       <PreparationDuJour preparation={preparation} aDesHrv={donnees.recuperation.some((r) => r.hrv != null)} />
-      <CheckIn key={aujourdhui} mesure={mesureDuJour} onSauver={p.onCheckin} />
 
       <div class="carte">
         <h3>Ton élan en ce moment</h3>

@@ -6,8 +6,11 @@ import { decrireMontage } from '../../moteur/materiel';
 import type { BonusPoussee } from '../../moteur/audace';
 import { volumeSeance } from '../../moteur/volume';
 import { DetailsSeance } from '../DetailsSeance';
+import { Musique } from '../Musique';
 import type { Details } from '../details';
 import { nf, texteMontage } from '../format';
+import { jouerSon, type ChoixSon } from '../son';
+import { voisine } from './charges';
 import { ajouterSerieBonus, arreter, finDeRepos, saisieInitiale, terminer, valider, type Brouillon } from './deroulement';
 
 interface Props {
@@ -15,6 +18,10 @@ interface Props {
   inventaire?: InventaireHalteres;
   /** Playlists qui conviennent à cette séance. */
   playlists: Playlist[];
+  /** Appelé quand l'écran de fin s'affiche (son de fin de séance). */
+  onFinAffichee: () => void;
+  /** Son joué à la fin du repos. */
+  son: { choix: ChoixSon; perso?: string };
   /** Séance précédente du même modèle, pour une comparaison sobre. */
   precedente?: Seance;
   bonus: BonusPoussee | null;
@@ -38,28 +45,6 @@ function Chrono({ debut }: { debut: string }) {
   return <span class="chrono" aria-label="Temps de séance">{mmss(Date.now() - new Date(debut).getTime())}</span>;
 }
 
-function Musique({ playlists }: { playlists: Playlist[] }) {
-  const [choix, setChoix] = useState(0);
-  if (playlists.length === 0) return null;
-  const playlist = playlists[Math.min(choix, playlists.length - 1)]!;
-  return (
-    <>
-      {playlists.length > 1 && (
-        <div class="musique-choix" role="group" aria-label="Choisir une playlist">
-          {playlists.map((p, i) => (
-            <button key={`${p.nom}-${i}`} class={i === choix ? 'active' : ''} aria-pressed={i === choix} onClick={() => setChoix(i)}>{p.nom}</button>
-          ))}
-        </div>
-      )}
-      <div class="musique" style={playlists.length > 1 ? 'margin-top:8px' : undefined}>
-        <span aria-hidden="true">♪</span>
-        <span class="titre">{playlist.nom}<small>Apple Music · volume avec les boutons de l'iPhone</small></span>
-        <a href={playlist.url} target="_blank" rel="noopener">Ouvrir</a>
-      </div>
-    </>
-  );
-}
-
 /** Garde l'écran allumé pendant la séance (si l'appareil le permet). */
 function useEcranAllume() {
   useEffect(() => {
@@ -80,11 +65,6 @@ function useEcranAllume() {
 function chargeDe(b: Brouillon, i: number): number {
   const faites = b.realisees[i]!.filter((s) => s.type !== 'warmup');
   return faites.length ? faites[faites.length - 1]!.w : b.plan[i]!.series[0]!.w;
-}
-
-function voisine(liste: number[], w: number, sens: -1 | 1): number {
-  if (sens === -1) return [...liste].reverse().find((c) => c < w - 0.05) ?? w;
-  return liste.find((c) => c > w + 0.05) ?? w;
 }
 
 const TYPES: { type: TypeSerie; nom: string }[] = [
@@ -163,7 +143,7 @@ function EcranSerie({ b, inventaire, playlists, onChange, onAbandon }: Props) {
           {montage && <span class="discret">{montage}</span>}
           {memeCharge && <div class="indice">Même charge que l'exercice précédent : rien à changer.</div>}
         </div>
-        <p class="discret" style="margin-top:10px">{ex.raison}</p>
+        <p class="discret" style="margin-top:10px">{ex.raison}{ex.noteAllegee ? ` ${ex.noteAllegee}` : ''}</p>
 
         <div class="series" aria-label="Avancement des séries">
           {ex.series.map((_, i) => (
@@ -211,7 +191,7 @@ function EcranSerie({ b, inventaire, playlists, onChange, onAbandon }: Props) {
   );
 }
 
-function EcranRepos({ b, inventaire, playlists, onChange }: Props) {
+function EcranRepos({ b, inventaire, playlists, son, onChange }: Props) {
   const ex = b.plan[b.ei]!;
   const suivante = { reps: ex.series[b.si]!.reps, w: saisieInitiale(b).w };
   const precedent = b.si === 0 && b.ei > 0 ? b.plan[b.ei - 1]! : null;
@@ -232,6 +212,7 @@ function EcranRepos({ b, inventaire, playlists, onChange }: Props) {
       if (r === 0 && !termine.current) {
         termine.current = true;
         navigator.vibrate?.(250);
+        void jouerSon(son.choix, son.perso).catch(() => { /* le son est un confort : on n'interrompt rien */ });
       }
     }, 250);
     return () => clearInterval(t);
@@ -243,7 +224,7 @@ function EcranRepos({ b, inventaire, playlists, onChange }: Props) {
     const r = pause.current !== null ? Math.ceil(pause.current / 1000) : Math.max(0, Math.ceil((fin.current - Date.now()) / 1000));
     setReste(r);
     setDuree((d) => Math.max(d, r));
-    termine.current = r === 0;
+    termine.current = false; // si on arrive à 0, la minuterie jouera le son
   };
   const basculerPause = () => {
     if (pause.current === null) { pause.current = Math.max(0, fin.current - Date.now()); setEnPause(true); }
@@ -297,7 +278,8 @@ function EcranRepos({ b, inventaire, playlists, onChange }: Props) {
 
 const RESSENTIS = ['Pénible', 'Bof', 'Correct', 'Bien', 'Super'];
 
-function EcranFin({ b, precedente, bonus, onChange, onTerminer }: Props) {
+function EcranFin({ b, precedente, bonus, onChange, onTerminer, onFinAffichee }: Props) {
+  useEffect(() => { onFinAffichee(); }, []);
   const [feel, setFeel] = useState<number | undefined>(undefined);
   const [bonusEcarte, setBonusEcarte] = useState(false);
   const [details, setDetails] = useState<Details>({});

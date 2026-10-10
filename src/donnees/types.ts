@@ -93,6 +93,12 @@ export interface Profil {
   why?: string;
   /** Photo de profil, réduite et recadrée en carré (adresse de données « data: »). Reste sur l'appareil. */
   avatar?: string;
+  /** Sons par moment de l'application. */
+  sons?: Partial<Record<EvenementSon, SonChoisi>>;
+  /** Ancien réglage (son de fin de repos), lu s'il n'y a pas de `sons`. */
+  sonRepos?: ChoixSon;
+  sonPerso?: string;
+  sonPersoNom?: string;
   /** Objectif principal. Enregistré, pas encore utilisé par le moteur. */
   objectif?: 'perte' | 'muscle' | 'mixte';
   /** Contestation du curseur d'audace : 'push' (prêt à pousser) ou 'safe' (rester prudent). */
@@ -123,6 +129,20 @@ export interface Creneau {
   moment: Moment;
   /** Temps disponible dans ce créneau, en minutes. */
   dureeMaxMin: number;
+}
+
+/** Sons disponibles : trois sons synthétisés, un son choisi par l'utilisateur, ou aucun. */
+export type ChoixSon = 'ding' | 'cloche' | 'double' | 'perso' | 'aucun';
+
+/** Les moments de l'application qui peuvent jouer un son. */
+export type EvenementSon = 'ouverture' | 'debutSeance' | 'debutBoxe' | 'finSeance' | 'finRepos';
+
+export interface SonChoisi {
+  choix: ChoixSon;
+  /** Son de l'utilisateur (adresse de données), gardé sur l'appareil. */
+  perso?: string;
+  /** Nom du fichier, pour l'affichage. */
+  nom?: string;
 }
 
 /** Tout ce que l'application garde sur l'appareil. */

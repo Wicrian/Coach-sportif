@@ -180,7 +180,8 @@ details.facultatif summary { font-weight: 700; font-size: 14px; color: var(--plu
 .jour-plan { background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; margin-top: 10px; }
 .jour-plan.aujourdhui { border: 2px solid var(--blush-deep); }
 .jour-plan .tete { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.jour-plan .quand { font-weight: 800; font-size: 15px; text-transform: capitalize; }
+.jour-plan .quand { font-weight: 800; font-size: 15px; }
+.premiere-majuscule::first-letter { text-transform: uppercase; }
 .jour-plan .quoi { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .jour-plan .pourquoi { font-size: 13.5px; color: var(--plum); margin-top: 6px; }
 .jour-plan .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
@@ -220,3 +221,9 @@ textarea.champ { resize: vertical; min-height: 80px; }
 .musique-choix { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
 .musique-choix button { background: rgba(255, 255, 255, .14); color: #fff; border: none; border-radius: var(--r-pill); padding: 9px 13px; font-size: 12.5px; font-weight: 700; }
 .musique-choix button.active { background: #fff; color: var(--hot-pink); }
+
+/* ----- Cartes du Plan : des fiches sur lesquelles on appuie ----- */
+button.jour-plan { display: block; width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; transition: transform .12s ease; }
+button.jour-plan:active { transform: scale(.985); }
+.jour-plan .fleche { font-size: 26px; line-height: 1; color: var(--mauve); }
+.retour-lien { border: none; background: none; color: var(--hot-pink); font-weight: 700; font-size: 15px; padding: 6px 0 12px; }

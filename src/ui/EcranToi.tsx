@@ -9,6 +9,7 @@ import type { SaisieCheckin } from './checkin';
 import { lireNombre } from './checkin';
 import { nf } from './format';
 import { jourLocal } from './jour';
+import { EVENEMENTS, SONS, debloquerAudio, definirSon, fichierSonValide, jouerSon, lireFichierSon, sonPour } from './son';
 import { derniereMesure, dernierPoids, joursDepuis, validerInventaire, validerPlaylist, type LigneDisque } from './profil';
 
 interface Props {
@@ -77,6 +78,63 @@ function Halteres({ profil, onProfil }: { profil: Profil; onProfil: Props['onPro
         setMessage({ texte: 'Matériel enregistré. Tes prochaines séances utiliseront ces charges.', erreur: false });
       }}>Enregistrer mon matériel</button>
       <Message m={message} />
+    </div>
+  );
+}
+
+function SonsCard({ profil, onProfil }: { profil: Profil; onProfil: Props['onProfil'] }) {
+  const [message, setMessage] = useState<{ texte: string; erreur: boolean } | null>(null);
+
+  return (
+    <div class="carte">
+      <h3>Tes sons</h3>
+      <p>Un son pour chaque moment, ou aucun. Tu peux choisir un son maison ou l'un de tes fichiers : il reste sur ton téléphone.</p>
+      {EVENEMENTS.map((ev) => {
+        const actuel = sonPour(profil, ev.id);
+        const options = actuel.perso ? [...SONS.slice(0, 3), { id: 'perso' as const, nom: actuel.nom ?? 'Mon son' }, SONS[3]!] : SONS;
+        const ecouter = () => { debloquerAudio(); void jouerSon(actuel.choix, actuel.perso).catch(() => undefined); };
+        return (
+          <div class="groupe" key={ev.id}>
+            <span class="etiquette">{ev.nom}</span>
+            <p style="margin:2px 0 8px;font-size:13px">{ev.explication}</p>
+            <div class="ligne-puces">
+              {options.map((o) => (
+                <button key={o.id} class={`puce ${actuel.choix === o.id ? 'active' : ''}`} aria-pressed={actuel.choix === o.id} onClick={async () => {
+                  debloquerAudio();
+                  await onProfil(definirSon(profil, ev.id, { choix: o.id, perso: actuel.perso, nom: actuel.nom }));
+                  void jouerSon(o.id, actuel.perso).catch(() => undefined);
+                }}>{o.nom}</button>
+              ))}
+            </div>
+            <div class="grille2" style="margin-top:10px">
+              <button class="mini neutre" style="padding:12px" onClick={ecouter}>Écouter</button>
+              <label class="mini neutre" style="padding:12px;text-align:center;cursor:pointer">
+                {actuel.perso ? 'Changer mon son' : 'Mon propre son'}
+                <input type="file" accept="audio/*" style="display:none" onChange={async (e) => {
+                  const input = e.currentTarget as HTMLInputElement;
+                  const fichier = input.files?.[0];
+                  if (!fichier) return;
+                  const erreur = fichierSonValide(fichier);
+                  if (erreur) { setMessage({ texte: erreur, erreur: true }); input.value = ''; return; }
+                  try {
+                    const adresse = await lireFichierSon(fichier);
+                    await onProfil(definirSon(profil, ev.id, { choix: 'perso', perso: adresse, nom: fichier.name.replace(/\.[^.]+$/, '') }));
+                    setMessage({ texte: 'Ton son est enregistré sur ton téléphone.', erreur: false });
+                  } catch (err) {
+                    setMessage({ texte: err instanceof Error ? err.message : "Ce son n'a pas pu être enregistré.", erreur: true });
+                  }
+                  input.value = '';
+                }} />
+              </label>
+            </div>
+            {actuel.perso && (
+              <button class="mini neutre" style="margin-top:8px" onClick={() => onProfil(definirSon(profil, ev.id, { choix: actuel.choix === 'perso' ? 'aucun' : actuel.choix }))}>Retirer mon son : {actuel.nom ?? 'Mon son'}</button>
+            )}
+          </div>
+        );
+      })}
+      <Message m={message} />
+      <p style="margin-top:12px;font-size:13px">Les sons se jouent quand l'écran est allumé. Si ton iPhone est en mode silencieux, tu risques de ne rien entendre.</p>
     </div>
   );
 }
@@ -243,6 +301,7 @@ export function EcranToi({ donnees, onProfil, onMesure, onAllerCreneaux }: Props
       </div>
 
       <Musique profil={profil} onProfil={onProfil} />
+      <SonsCard profil={profil} onProfil={onProfil} />
 
       <div class="carte">
         <h3>Tes créneaux</h3>

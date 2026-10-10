@@ -1,5 +1,7 @@
 import type { Creneau, GenreSeance, Jour, Moment, Playlist, Profil, Seance } from '../donnees/types';
 import type { TypePlanifie } from '../moteur/planification';
+import { nf } from './format';
+import type { PlanSeance } from './seance/preparer';
 
 /** Durée disponible associée à chaque moment (hypothèses, réglables plus tard dans le profil). */
 export const MOMENTS: { moment: Moment; nom: string; dureeMaxMin: number }[] = [
@@ -82,4 +84,24 @@ export function genrePourType(type: TypePlanifie): { kind: GenreSeance; dureeMin
 /** Playlists qui conviennent à un type de séance : celles choisies pour ce type, et celles valables pour toutes. */
 export function playlistsPour(playlists: Playlist[] | undefined, kind: GenreSeance): Playlist[] {
   return (playlists ?? []).filter((p) => !p.pour || p.pour.length === 0 || p.pour.includes(kind));
+}
+
+const DESCRIPTIONS: Record<TypePlanifie, string> = {
+  force: 'Une séance de force avec tes haltères ou ton poids du corps. Les charges sont choisies parmi celles que tu as vraiment, avec peu de changements de disques.',
+  combine: 'De la force courte, puis de la boxe, avec échauffement et étirements. Tu fais la partie force ici ; la boxe se note ensuite une fois faite (Boxa, Heavybox, sac, reflex bag).',
+  boxe: 'Une séance de boxe à intensité douce : tu dois pouvoir parler en même temps. Boxa, Heavybox, sac de frappe ou reflex bag, comme tu préfères, avec échauffement et étirements.',
+  marche: 'Une marche facile, à ton rythme. Elle compte pour ta semaine comme n\'importe quelle autre séance.',
+  mobilite: 'Un peu de mobilité et d\'étirements, tranquillement. Ça compte pour ta semaine et ça aide la récupération.',
+  recuperation: 'Une récupération active de 10 à 20 minutes : cardio léger, mobilité ou shadow-boxing doux. Ton corps a besoin de souffler aujourd\'hui.',
+  repos: 'Un jour sans séance prévue. Se reposer fait partie de l\'entraînement. Si tu as quand même envie de bouger, tu peux choisir une séance.',
+  'deja-fait': 'Tu as déjà bougé aujourd\'hui. Tu peux t\'arrêter là, ou en faire une autre si l\'envie est là.',
+};
+export const descriptionType = (type: TypePlanifie): string => DESCRIPTIONS[type];
+
+/** Ce qui est prévu dans une séance de force, ligne par ligne. */
+export function lignesPrevues(plan: PlanSeance): { nom: string; detail: string }[] {
+  return plan.exercices.map((e) => {
+    const s = e.series[0]!;
+    return { nom: e.nom, detail: `${e.series.length} × ${s.reps} · ${e.poidsDuCorps ? 'poids du corps' : s.w > 0 ? `${nf(s.w)} kg` : 'charge à choisir'}` };
+  });
 }

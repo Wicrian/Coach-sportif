@@ -89,3 +89,50 @@ describe('preparerSeance : séance du jour calculée par le moteur', () => {
     expect(preparerSeance({ modele: FB, seances: [], profil: PROFIL }).exercices.map((e) => e.key).sort()).toEqual([...FB.exercices].sort());
   });
 });
+
+describe('R-51 : ressenti « pénible » ou « bof » → séance suivante allégée d\'un cran', () => {
+  const avecRessenti = (feel: number | undefined, tplId = 'fb'): Seance => ({
+    ...seanceAvec('2026-10-01', 'goblet', 3.8, [12, 12, 12]),
+    tplId,
+    ...(feel === undefined ? {} : { feel }),
+  });
+
+  it('pénible (1) : une série de moins par exercice', () => {
+    const plan = preparerSeance({ modele: FB, seances: [avecRessenti(1)], profil: PROFIL });
+    expect(plan.exercices.every((e) => e.series.length === FB.series - 1)).toBe(true);
+    expect(plan.regles).toContain('R-51');
+    expect(plan.allegee).toBe(true);
+    expect(exo(plan, 'goblet').noteAllegee).toMatch(/allégée/i);
+  });
+
+  it('bof (2) : une série de moins par exercice', () => {
+    expect(preparerSeance({ modele: FB, seances: [avecRessenti(2)], profil: PROFIL }).exercices[0]!.series).toHaveLength(FB.series - 1);
+  });
+
+  it('correct (3) et au-dessus : séance normale', () => {
+    for (const f of [3, 4, 5]) {
+      const plan = preparerSeance({ modele: FB, seances: [avecRessenti(f)], profil: PROFIL });
+      expect(plan.exercices[0]!.series).toHaveLength(FB.series);
+      expect(plan.allegee).toBe(false);
+    }
+  });
+
+  it('sans ressenti noté : séance normale', () => {
+    expect(preparerSeance({ modele: FB, seances: [avecRessenti(undefined)], profil: PROFIL }).allegee).toBe(false);
+  });
+
+  it('ne tient compte que du même type de séance', () => {
+    expect(preparerSeance({ modele: FB, seances: [avecRessenti(1, 'bw')], profil: PROFIL }).allegee).toBe(false);
+  });
+
+  it('se base sur la dernière séance du même type, pas sur une plus ancienne', () => {
+    const vieille = { ...avecRessenti(1), id: 'v', date: '2026-09-01T18:00:00' };
+    const recente = { ...avecRessenti(4), id: 'r', date: '2026-10-01T18:00:00' };
+    expect(preparerSeance({ modele: FB, seances: [vieille, recente], profil: PROFIL }).allegee).toBe(false);
+  });
+
+  it('jamais moins de 2 séries', () => {
+    const modele = { ...FB, series: 2 };
+    expect(preparerSeance({ modele, seances: [avecRessenti(1)], profil: PROFIL }).exercices[0]!.series).toHaveLength(2);
+  });
+});

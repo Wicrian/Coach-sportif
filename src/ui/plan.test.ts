@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Profil, Seance } from '../donnees/types';
-import { MOMENTS, actionPourType, basculerIndisponible, creneauDuJour, creneauxDuProfil, definirCreneau, genrePourType, libelleJour, libelleType, modeleConseille, playlistsPour } from './plan';
+import type { PlanSeance } from './seance/preparer';
+import { MOMENTS, actionPourType, descriptionType, lignesPrevues, basculerIndisponible, creneauDuJour, creneauxDuProfil, definirCreneau, genrePourType, libelleJour, libelleType, modeleConseille, playlistsPour } from './plan';
 
 const profil = (extra: Partial<Profil> = {}): Profil => ({ gear: [], dumbbells: [], ...extra });
 const force = (tplId: string, jour: string): Seance => ({ id: jour, date: `${jour}T18:00:00`, kind: 'strength', tplId, exercises: [] });
@@ -106,5 +107,29 @@ describe('playlistsPour : celles qui conviennent à une séance', () => {
   it('liste vide ou absente : rien', () => {
     expect(playlistsPour([], 'strength')).toEqual([]);
     expect(playlistsPour(undefined, 'strength')).toEqual([]);
+  });
+});
+
+describe('fiche d\'une séance du plan', () => {
+  it('chaque type de séance a une description', () => {
+    for (const t of ['force', 'boxe', 'combine', 'marche', 'mobilite', 'recuperation', 'repos', 'deja-fait'] as const) {
+      expect(descriptionType(t).length).toBeGreaterThan(20);
+    }
+  });
+
+  it('résume ce qui est prévu : séries × reps, charge ou poids du corps', () => {
+    const plan = {
+      modeleId: 'fb', nom: 'Full-body', changements: 0, regles: [],
+      exercices: [
+        { nom: 'Squat gobelet', poidsDuCorps: false, series: [{ w: 3.8, reps: 12 }, { w: 3.8, reps: 12 }, { w: 3.8, reps: 12 }] },
+        { nom: 'Pompes', poidsDuCorps: true, series: [{ w: 0, reps: 8 }, { w: 0, reps: 8 }] },
+        { nom: 'Rowing', poidsDuCorps: false, series: [{ w: 0, reps: 10 }] },
+      ],
+    } as unknown as PlanSeance;
+    expect(lignesPrevues(plan)).toEqual([
+      { nom: 'Squat gobelet', detail: '3 × 12 · 3,8 kg' },
+      { nom: 'Pompes', detail: '2 × 8 · poids du corps' },
+      { nom: 'Rowing', detail: '1 × 10 · charge à choisir' },
+    ]);
   });
 });

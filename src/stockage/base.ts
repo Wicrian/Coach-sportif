@@ -14,7 +14,7 @@ export class BaseBouge extends Dexie {
   seances!: Table<Seance, string>;
   recuperation!: Table<MesureRecuperation, string>;
   profil!: Table<LigneProfil, string>;
-  brouillon!: Table<{ cle: 'seance'; valeur: unknown }, string>;
+  brouillon!: Table<{ cle: string; valeur: unknown }, string>;
 
   constructor(nom = 'bouge-de-la') {
     super(nom);
@@ -76,17 +76,20 @@ export async function exporterTexte(base: BaseBouge, maintenant: Date): Promise<
   return JSON.stringify(exporterSauvegarde(await chargerDonnees(base), maintenant), null, 2);
 }
 
-/** Séance en cours : gardée sur l'appareil pour survivre à un rechargement. Jamais exportée. */
-export async function sauverBrouillon(base: BaseBouge, valeur: unknown): Promise<void> {
-  await base.brouillon.put({ cle: 'seance', valeur });
+/**
+ * Séance en cours : gardée sur l'appareil pour survivre à un rechargement. Jamais exportée.
+ * `cle` distingue la séance de force guidée ('seance') de la séance libre : boxe, marche… ('libre').
+ */
+export async function sauverBrouillon(base: BaseBouge, valeur: unknown, cle = 'seance'): Promise<void> {
+  await base.brouillon.put({ cle, valeur });
 }
 
-export async function chargerBrouillon<T = unknown>(base: BaseBouge): Promise<T | null> {
-  return ((await base.brouillon.get('seance'))?.valeur as T | undefined) ?? null;
+export async function chargerBrouillon<T = unknown>(base: BaseBouge, cle = 'seance'): Promise<T | null> {
+  return ((await base.brouillon.get(cle))?.valeur as T | undefined) ?? null;
 }
 
-export async function effacerBrouillon(base: BaseBouge): Promise<void> {
-  await base.brouillon.delete('seance');
+export async function effacerBrouillon(base: BaseBouge, cle = 'seance'): Promise<void> {
+  await base.brouillon.delete(cle);
 }
 
 export async function supprimerSeance(base: BaseBouge, id: string): Promise<void> {

@@ -14,11 +14,10 @@ interface Props {
   seances: Seance[];
   onAjouter: (s: Seance) => Promise<void>;
   onSupprimer: (id: string) => Promise<void>;
-  /** Type et durée à pré-remplir (séance du plan que l'on note). */
-  preselection?: { kind: GenreSeance; dureeMin: number };
+  onBilan: (id: string) => void;
 }
 
-function FormulaireExterne({ onAjouter, onFerme, preselection }: { onAjouter: Props['onAjouter']; onFerme: () => void; preselection?: Props['preselection'] }) {
+export function FormulaireExterne({ onAjouter, onFerme, preselection }: { onAjouter: Props['onAjouter']; onFerme: () => void; preselection?: { kind: GenreSeance; dureeMin: number } }) {
   const [kind, setKind] = useState<GenreSeance>(preselection?.kind ?? 'box');
   const [jour, setJour] = useState(jourLocal(new Date()));
   const [duree, setDuree] = useState(preselection?.dureeMin ?? 30);
@@ -76,8 +75,8 @@ function FormulaireExterne({ onAjouter, onFerme, preselection }: { onAjouter: Pr
   );
 }
 
-export function Activite({ seances, onAjouter, onSupprimer, preselection }: Props) {
-  const [ajout, setAjout] = useState(preselection !== undefined);
+export function Activite({ seances, onAjouter, onSupprimer, onBilan }: Props) {
+  const [ajout, setAjout] = useState(false);
   const deux = (cle: string) => EXERCICES[cle]?.deuxHalteres ?? false;
 
   const groupes: { jour: string; seances: Seance[] }[] = [];
@@ -95,7 +94,7 @@ export function Activite({ seances, onAjouter, onSupprimer, preselection }: Prop
       <p style="color:var(--plum);margin-top:6px">Toutes tes séances, de la plus récente à la plus ancienne.</p>
 
       {ajout
-        ? <FormulaireExterne onAjouter={onAjouter} onFerme={() => setAjout(false)} preselection={preselection} />
+        ? <FormulaireExterne onAjouter={onAjouter} onFerme={() => setAjout(false)} />
         : <div class="pile"><button class="btn btn-contour" onClick={() => setAjout(true)}>Ajouter une séance faite ailleurs</button></div>}
 
       {groupes.length === 0 && <div class="carte"><h3>Ta première séance t'attend</h3><p>Elle apparaîtra ici dès que tu auras terminé une séance, ou ajouté une séance faite ailleurs.</p></div>}
@@ -116,6 +115,7 @@ export function Activite({ seances, onAjouter, onSupprimer, preselection }: Prop
                   <b>{libelleGenre(s.kind)}{s.source ? ` · ${s.source}` : ''}</b>
                   <span class="sous">{details || 'Séance enregistrée'}</span>
                 </div>
+                <button class="mini neutre" aria-label={`Voir le bilan de la séance ${libelleGenre(s.kind)} du ${titre(g.jour)}`} onClick={() => onBilan(s.id)}>Bilan</button>
                 <button class="supprimer" aria-label={`Supprimer la séance ${libelleGenre(s.kind)} du ${titre(g.jour)}`} onClick={() => { if (confirm('Supprimer cette séance ? Cette action est définitive.')) void onSupprimer(s.id); }}>Supprimer</button>
               </div>
             );

@@ -23,6 +23,8 @@ export interface ExercicePlan {
   reposSec: number;
   series: SeriePrevue[];
   raison: string;
+  /** R-51 : mention à afficher en séance quand elle est allégée (le bilan, lui, l'explique une seule fois). */
+  noteAllegee?: string;
   regles: string[];
   /** Disques à mettre de chaque côté ; null si poids du corps ou matériel inconnu. */
   montage: DisquesParCote[] | null;
@@ -35,6 +37,8 @@ export interface PlanSeance {
   exercices: ExercicePlan[];
   /** Nombre de changements de charge dans la séance (R-26). */
   changements: number;
+  /** R-51 : séance allégée d'un cran parce que la précédente du même type a été pénible ou bof. */
+  allegee: boolean;
   regles: string[];
 }
 
@@ -86,6 +90,11 @@ export function preparerSeance(entree: { modele: ModeleSeance; seances: Seance[]
   const { modele, seances, profil } = entree;
   const charges = chargesDuProfil(profil);
 
+  // R-51 : ressenti « pénible » (1) ou « bof » (2) à la dernière séance du même type → une série de moins.
+  const precedenteMemeType = recentesD(seances).find((x) => x.tplId === modele.id);
+  const allegee = precedenteMemeType?.feel !== undefined && precedenteMemeType.feel <= 2;
+  const nombreSeries = allegee ? Math.max(2, modele.series - 1) : modele.series;
+
   const exercices: ExercicePlan[] = modele.exercices.map((key) => {
     const e = EXERCICES[key]!;
     const dispo = e.poidsDuCorps ? [] : charges[e.mode];
@@ -105,9 +114,10 @@ export function preparerSeance(entree: { modele: ModeleSeance; seances: Seance[]
       poidsDuCorps: e.poidsDuCorps,
       deuxHalteres: e.deuxHalteres,
       reposSec: e.reposSec,
-      series: Array.from({ length: modele.series }, () => ({ w: p.charge, reps: p.reps })),
+      series: Array.from({ length: nombreSeries }, () => ({ w: p.charge, reps: p.reps })),
       raison: p.raison,
-      regles: p.regles,
+      ...(allegee ? { noteAllegee: `Séance allégée d'un cran : la dernière t'a paru ${precedenteMemeType!.feel === 1 ? 'pénible' : 'bof'}.` } : {}),
+      regles: allegee ? [...p.regles, 'R-51'] : p.regles,
       montage: !e.poidsDuCorps && profil.halteres ? decrireMontage(profil.halteres, p.charge, e.mode) : null,
       chargesDispo: dispo,
     };
@@ -121,6 +131,7 @@ export function preparerSeance(entree: { modele: ModeleSeance; seances: Seance[]
     nom: modele.nom,
     exercices: ordre.exercices.map((o) => parCle.get(o.key)!),
     changements: ordre.changements,
-    regles: ordre.regles,
+    allegee,
+    regles: allegee ? [...ordre.regles, 'R-51'] : ordre.regles,
   };
 }

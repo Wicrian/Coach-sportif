@@ -70,3 +70,28 @@ Attention : `dumbbells` est une **chaîne de texte**. Le nouveau modèle doit la
 - **Titre** : « Ce que je sais de toi » devient « Ton profil » (onglet « Profil »).
 - **Musique** : si plusieurs playlists conviennent à la séance, l'utilisateur choisit laquelle ouvrir.
 - **Test de robustesse** : `src/ui/seance/robustesse.test.ts` prépare une séance sur 3 000 historiques aléatoires sans erreur.
+
+## Plan : des fiches sur lesquelles on appuie (7 octobre)
+
+Retour d'usage : la carte du jour, colorée et dotée d'un bouton « Je l'ai faite », ressemblait à un état déjà validé, et l'utilisateur s'attendait à « entrer dans la fiche ».
+- Chaque jour du Plan est une **carte neutre** sur laquelle on appuie (flèche à droite, aucun bouton dans la liste).
+- La **fiche du jour** (`FicheJour.tsx`) montre ce qui est prévu et pourquoi ; pour la force, la liste des exercices avec séries, reps et charges ; aujourd'hui, elle permet de démarrer la séance, de noter qu'elle a été faite (formulaire pré-rempli avec ressenti et détails), de **choisir une autre séance** (liste des deux séances de force, ou une séance faite ailleurs) et de **reporter sans pénalité** (jour indisponible).
+- Les **jours à venir** s'ouvrent aussi : le prévu, et « je ne suis pas dispo ».
+- **Matériel inconnu** : la fiche affiche « charge à choisir » et, en séance, le bouton de charge avance par pas de 1 kg.
+
+## Bilan de séance, son de fin de repos, check-in léger (10 octobre)
+
+Retours d'usage : « j'aimerais un feedback après mes séances », « j'ai du mal à penser à mon check-in le matin », « un petit son à la fin du repos ».
+- **Bilan** : écran affiché après « Terminer » et rouvrable depuis l'Activité (bouton « Bilan »). Voir `docs/regles-moteur.md` §18.
+- **R-51** (séance allégée après un ressenti pénible ou bof) est maintenant codée.
+- **Check-in** : en haut de l'accueil, trois touches, replié une fois fait.
+- **Son** : réglable dans « Profil » ; fichier personnel possible.
+- **Rappel du matin** : une application web installée sur iPhone ne peut pas envoyer de notification programmée sans serveur. En attendant la version native, l'utilisateur peut créer une automatisation dans l'app Raccourcis.
+
+## Sons par moment et séances libres (10 octobre)
+
+- **Cinq moments, cinq sons** (profil `sons`) : ouverture de l'app, lancement d'une séance, lancement d'une séance de boxe, fin de séance (affichage du bilan), fin de repos. Chaque son est un son synthétisé (ding doux, cloche, double ding), aucun, ou un fichier de l'utilisateur. Réglage dans « Profil » → « Tes sons ».
+- **Sons personnels** : gardés **uniquement sur l'appareil** (adresse de données dans le profil, 1 Mo maximum chacun). Ils ne sont **jamais ajoutés au dépôt** : ce sont des extraits protégés par des droits d'auteur. Le fichier de sauvegarde personnel qui les contient reste dans `donnees-perso/` (ignoré par git).
+- **Limite de l'iPhone** : un son ne peut pas se jouer avant un premier toucher de l'écran. Le son d'ouverture se joue donc au premier appui.
+- **Séances libres** (`src/ui/seance/libre.ts`, `SeanceLibre.tsx`) : boxe, marche, mobilité, cardio léger se lancent depuis la fiche du jour : chronomètre, playlist du type, bouton « Terminer », ressenti et détails, bilan. La séance en cours survit à un rechargement (brouillon `libre`). La boxe reste à faire dans Boxa, Heavybox ou au sac : l'app tient le temps, la musique et le bilan.
+- **Moteur de décision** : inchangé. Une séance libre compte dans la semaine réussie et dans la planification.
