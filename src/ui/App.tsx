@@ -234,9 +234,21 @@ export function App() {
     await recharger();
   };
 
+  const importer = async (texte: string) => {
+    const { rapport, avertissements } = await importerSauvegarde(base, texte);
+    await recharger();
+    const morceaux = [
+      `Import terminé : ${rapport.seancesAjoutees} séance${rapport.seancesAjoutees > 1 ? 's' : ''} et ${rapport.mesuresAjoutees} mesure${rapport.mesuresAjoutees > 1 ? 's' : ''} ajoutée${rapport.mesuresAjoutees > 1 ? 's' : ''}.`,
+    ];
+    if (rapport.profilCompleteChamps.length) morceaux.push('Ton profil a été complété.');
+    if (avertissements.length) morceaux.push(avertissements.join(' '));
+    return morceaux.join(' ');
+  };
+
   const ecran = onglet === 'toi' ? (
     <EcranToi
       donnees={donnees}
+      onImporter={importer}
       onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
       onMesure={enregistrerMesure}
       onAllerCreneaux={() => { setOuvrirCreneaux(true); setOnglet('plan'); }}
@@ -273,16 +285,7 @@ export function App() {
         await sauverProfil(base, { ...donnees.profil, audOverride: choix });
         await recharger();
       }}
-      onImporter={async (texte) => {
-        const { rapport, avertissements } = await importerSauvegarde(base, texte);
-        await recharger();
-        const morceaux = [
-          `Import terminé : ${rapport.seancesAjoutees} séance${rapport.seancesAjoutees > 1 ? 's' : ''} et ${rapport.mesuresAjoutees} mesure${rapport.mesuresAjoutees > 1 ? 's' : ''} ajoutée${rapport.mesuresAjoutees > 1 ? 's' : ''}.`,
-        ];
-        if (rapport.profilCompleteChamps.length) morceaux.push('Ton profil a été complété.');
-        if (avertissements.length) morceaux.push(avertissements.join(' '));
-        return morceaux.join(' ');
-      }}
+      onImporter={importer}
       onExporter={async () => {
         const texte = await exporterTexte(base, new Date());
         const lien = document.createElement('a');

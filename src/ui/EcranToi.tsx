@@ -19,6 +19,8 @@ interface Props {
   onProfil: (profil: Profil) => Promise<void>;
   onMesure: (saisie: SaisieCheckin) => Promise<void>;
   onAllerCreneaux: () => void;
+  /** Importe un fichier de sauvegarde (texte JSON) et renvoie le compte rendu. */
+  onImporter: (texte: string) => Promise<string>;
 }
 
 const MATERIEL = ['Haltères', 'Élastiques', 'Swiss ball', 'Reflex bag mural', 'Sac de frappe sur socle', 'Tapis'];
@@ -144,13 +146,38 @@ function SonsCard({ profil, onProfil }: { profil: Profil; onProfil: Props['onPro
   );
 }
 
-function BoxeCard({ profil, onProfil }: { profil: Profil; onProfil: Props['onProfil'] }) {
+function BoxeCard({ profil, onProfil, onImporter }: { profil: Profil; onProfil: Props['onProfil']; onImporter: Props['onImporter'] }) {
   const [ouvert, setOuvert] = useState(false);
+  const [message, setMessage] = useState<{ texte: string; erreur: boolean } | null>(null);
   const reglages = reglagesDe(profil);
+  const nbClips = Object.keys(profil.boxe?.voixClips ?? {}).length;
   return (
     <div class="carte">
       <h3>Ma boxe guidée</h3>
       <p>Compose tes séries de combos : la voix te les dicte pendant la séance de boxe.</p>
+      <div class="groupe">
+        <span class="etiquette">Voix enregistrée</span>
+        <p style="margin-top:4px">
+          {nbClips > 0
+            ? <><b>{profil.boxe?.voixNom ?? 'Voix enregistrée'}</b> · {nbClips} clips sur ce téléphone.</>
+            : "Aucune pour l'instant : la séance utilise la voix de l'iPhone. Importe ton fichier de voix pour la remplacer."}
+        </p>
+        <label class="mini neutre" style="display:block;margin-top:8px;padding:12px;text-align:center;cursor:pointer">
+          {nbClips > 0 ? 'Importer une autre voix' : 'Importer un fichier de voix'}
+          <input type="file" accept="application/json,.json" style="display:none" onChange={async (e) => {
+            const input = e.currentTarget as HTMLInputElement;
+            const fichier = input.files?.[0];
+            if (!fichier) return;
+            try {
+              setMessage({ texte: await onImporter(await fichier.text()), erreur: false });
+            } catch (err) {
+              setMessage({ texte: err instanceof Error ? err.message : "Ce fichier n'a pas pu être importé.", erreur: true });
+            }
+            input.value = '';
+          }} />
+        </label>
+        <Message m={message} />
+      </div>
       <div class="groupe">
         <span class="etiquette">Ta garde</span>
         <div class="ligne-puces" style="margin-top:6px">
@@ -212,7 +239,7 @@ function Musique({ profil, onProfil }: { profil: Profil; onProfil: Props['onProf
   );
 }
 
-export function EcranToi({ donnees, onProfil, onMesure, onAllerCreneaux }: Props) {
+export function EcranToi({ donnees, onProfil, onMesure, onAllerCreneaux, onImporter }: Props) {
   const { profil } = donnees;
   const aujourdhui = jourLocal(new Date());
   const [why, setWhy] = useState(profil.why ?? '');
@@ -332,7 +359,7 @@ export function EcranToi({ donnees, onProfil, onMesure, onAllerCreneaux }: Props
 
       <Musique profil={profil} onProfil={onProfil} />
       <SonsCard profil={profil} onProfil={onProfil} />
-      <BoxeCard profil={profil} onProfil={onProfil} />
+      <BoxeCard profil={profil} onProfil={onProfil} onImporter={onImporter} />
 
       <div class="carte">
         <h3>Tes créneaux</h3>
