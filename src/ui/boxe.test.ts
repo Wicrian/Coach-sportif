@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { PROGRAMMES_DEPART } from '../donnees/boxe';
 import type { Profil } from '../donnees/types';
-import { avecProgrammes, avecReglages, copierProgramme, dureeTotale, nouveauProgramme, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe } from './boxe';
+import { avecProgrammes, avecReglages, copierProgramme, dureeTotale, momentAnnonceCombo, nouveauProgramme, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from './boxe';
 
 const profil: Profil = { gear: [], dumbbells: [] };
 
@@ -48,5 +48,37 @@ describe('boxe — déroulé de la séance', () => {
   it('calcule la durée totale', () => {
     const r = reglagesDe(avecReglages(profil, { dureeRondeSec: 120, reposSec: 20 }));
     expect(dureeTotale(phasesDeSeance(PROGRAMMES_DEPART[0]!, r))).toBe(3 * (120 + 20));
+  });
+});
+
+describe('boxe — annonce du combo avant la ronde', () => {
+  it('nomme le combo après le « Repos. Ronde n » et avant le compte à rebours', () => {
+    // repos de 25 s, combo de 2 coups : lecture ≈ 3,1 s, fin de lecture avant les 3 s de compte à rebours
+    const t = momentAnnonceCombo(25, 2);
+    expect(t).toBeGreaterThanOrEqual(3);
+    expect(t + 1.5 + 0.8 * 2).toBeLessThanOrEqual(25 - 3);
+  });
+
+  it('commence plus tôt quand le combo est long', () => {
+    expect(momentAnnonceCombo(25, 8)).toBeLessThan(momentAnnonceCombo(25, 2));
+  });
+
+  it('ne parle jamais avant 3 s, même si le repos est très court', () => {
+    expect(momentAnnonceCombo(10, 8)).toBe(3);
+  });
+});
+
+describe('boxe — vitesse de la voix', () => {
+  it('accélère les coups quand le rythme est rapide', () => {
+    expect(vitesseVoix(1.2, true)).toBe(1.2);
+    expect(vitesseVoix(1.0, true)).toBe(1.2);
+  });
+
+  it('ne change pas la vitesse aux rythmes normaux', () => {
+    expect(vitesseVoix(1.6, true)).toBe(1);
+  });
+
+  it('dit toujours la présentation du combo à vitesse normale, même au rythme le plus rapide', () => {
+    expect(vitesseVoix(1.0, false)).toBe(1);
   });
 });

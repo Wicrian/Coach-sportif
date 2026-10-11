@@ -19,6 +19,8 @@
 html, body { background: var(--cloud); }
 body { font-family: var(--sans); color: var(--ink); line-height: 1.5; -webkit-font-smoothing: antialiased; }
 button { font-family: inherit; cursor: pointer; }
+/* Plusieurs touchers rapides sur un bouton (+, −) ne zooment plus la page. Le pincement pour zoomer reste possible. */
+html, body, button, a, input, select, label, summary { touch-action: manipulation; }
 button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--hot-pink); outline-offset: 2px; }
 
 /* ----- Écrans ----- */

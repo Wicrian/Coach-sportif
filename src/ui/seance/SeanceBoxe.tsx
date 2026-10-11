@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { libelleCoup, type ProgrammeBoxe, type ReglagesBoxe } from '../../donnees/boxe';
 import type { Playlist, Profil } from '../../donnees/types';
 import { DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, etatDepart, resumeRonde, type EtatRonde } from '../../moteur/boxe';
-import { avecProgrammes, avecReglages, dureeTotale, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe } from '../boxe';
+import { avecProgrammes, avecReglages, dureeTotale, momentAnnonceCombo, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from '../boxe';
 import type { Details } from '../details';
 import { EditeurBoxe } from '../EditeurBoxe';
 import { Musique } from '../Musique';
@@ -236,14 +236,16 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
     pause: null as number | null,
     etat: etatDepart as EtatRonde,
     dernierCompte: -1,
+    comboAnnonce: false,
     tempo: reglages.tempoSec,
     muet: false,
     fini: false,
   });
 
-  const dire = (texte: string) => {
+  /** `coup` : seuls les coups suivent le rythme ; le reste est dit à vitesse normale. */
+  const dire = (texte: string, coup = false) => {
     if (s.current.muet) return;
-    parler(texte, reglages.voix, s.current.tempo <= 1.2 ? 1.2 : 1);
+    parler(texte, reglages.voix, vitesseVoix(s.current.tempo, coup));
   };
 
   const entrer = (i: number) => {
@@ -252,6 +254,7 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
     c.debut = Date.now();
     c.etat = etatDepart;
     c.dernierCompte = -1;
+    c.comboAnnonce = false;
     setIndex(i);
     setParle({ segment: -1, position: -1 });
     const ph = phases[i];
@@ -290,6 +293,11 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
       const t = (Date.now() - c.debut) / 1000;
       if (t >= ph.duree) { suivant(); return; }
       if (ph.genre === 'repos') {
+        const premier = combosJoues(programme.rondes[ph.ronde]!)[0] ?? [];
+        if (!c.comboAnnonce && premier.length > 0 && t >= momentAnnonceCombo(ph.duree, premier.length)) {
+          c.comboAnnonce = true;
+          dire(`Combo 1 : ${premier.map(libelleCoup).join(', ')}`);
+        }
         const reste = Math.ceil(ph.duree - t);
         if (reste <= 3 && reste >= 1 && c.dernierCompte !== reste) {
           c.dernierCompte = reste;
@@ -304,7 +312,7 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
             dire(`Combo ${r.annonce.numero}`);
             setParle({ segment: r.annonce.numero - 1, position: -1 });
           } else {
-            dire(libelleCoup(r.annonce.coup));
+            dire(libelleCoup(r.annonce.coup), true);
             const n = combosJoues(ronde)[r.etat.segment]!.length;
             setParle({ segment: r.etat.segment, position: (r.etat.coup - 1 + n) % n });
           }

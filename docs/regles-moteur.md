@@ -214,7 +214,8 @@ Module : `src/moteur/boxe.ts` (rythme), `src/donnees/boxe.ts` (coups, séries). 
 - **Rythme** (secondes entre deux coups) : défaut **1,6 s**, borné **1,0 à 3,0 s**, pas de 0,2 s. *Hypothèse* : 1,0 s est à peu près la durée d'un nom de coup dit par la voix ; en dessous, les annonces se chevauchent.
 - **Durée d'une ronde** : défaut **180 s** (3 min, usage de la boxe), bornée **30 à 600 s**, pas de 30 s.
 - **Repos** : défaut **25 s** (valeur vue sur l'écran de référence de l'utilisateur), borné 10 à 120 s, pas de 5 s. Un repos précède chaque ronde (c'est aussi la préparation avant la première), pas de repos après la dernière.
-- **Vitesse de la voix** : 1,0 normalement, 1,2 quand le rythme est ≤ 1,2 s par coup (hypothèse).
+- **Vitesse de la voix** : seuls les **coups** suivent le rythme (1,2 quand il est ≤ 1,2 s par coup, hypothèse). La présentation du combo, « Combo n », le repos et le compte à rebours sont **toujours dits à vitesse normale** : l'utilisateur doit bien comprendre le combo avant de partir.
+- **Présentation avant la ronde** : le premier combo est nommé pendant le repos, juste avant le compte à rebours de 3 s (durée de lecture estimée à 1,5 s + 0,8 s par coup, hypothèse).
 - **Retard** : après un long silence (écran verrouillé), on repart de l'instant présent, sans rafale d'annonces.
 - **Garde** : défaut « gaucher » (déclaré par l'utilisateur pour le kickboxing). Les combos sont écrits en « avant / arrière » ; en garde gaucher la main (et la jambe) avant est la droite.
 - **Séries de départ** : la ronde 1 vient de la séance de référence de l'utilisateur ; les rondes 2 et 3 ont été dictées de vive voix, à vérifier. Les rondes 4 à 8 restent à saisir.

@@ -56,3 +56,22 @@ export function phasesDeSeance(programme: ProgrammeBoxe, reglages: ReglagesBoxe)
 
 /** Durée totale en secondes, repos compris. */
 export const dureeTotale = (phases: PhaseBoxe[]): number => phases.reduce((s, p) => s + p.duree, 0);
+
+/**
+ * Instant (en secondes depuis le début du repos) où la voix nomme le premier combo, juste avant le compte à
+ * rebours de 3 s. Durée de lecture estimée : 1,5 s + 0,8 s par coup (hypothèse). Jamais avant 3 s, pour laisser
+ * finir « Repos. Ronde n sur N ».
+ */
+export function momentAnnonceCombo(reposSec: number, nbCoups: number): number {
+  const lecture = 1.5 + 0.8 * nbCoups;
+  return Math.max(3, reposSec - 3 - lecture - 0.5);
+}
+
+/**
+ * Vitesse de la voix : les coups suivent le rythme (un peu plus vite quand le rythme est ≤ 1,2 s par coup,
+ * hypothèse) ; tout le reste (présentation du combo, repos, compte à rebours) se dit toujours à vitesse normale,
+ * pour être bien compris avant de partir.
+ */
+export function vitesseVoix(tempoSec: number, estUnCoup: boolean): number {
+  return estUnCoup && tempoSec <= 1.2 ? 1.2 : 1;
+}
