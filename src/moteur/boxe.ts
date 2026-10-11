@@ -1,4 +1,4 @@
-import type { Combo, Garde, ReglagesBoxe, RondeBoxe, SupportBoxe } from '../donnees/boxe';
+import type { Combo, Garde, ReglagesBoxe, ReglagesIntervalles, RondeBoxe, SupportBoxe } from '../donnees/boxe';
 
 /**
  * Boxe guidée : le rythme des annonces vocales.
@@ -17,8 +17,10 @@ export interface Plage { min: number; max: number; defaut: number; pas: number }
 export const TEMPO: Plage = { min: 1.0, max: 3.0, defaut: 1.6, pas: 0.2 };
 /** Durée d'une ronde, en secondes. */
 export const DUREE_RONDE: Plage = { min: 30, max: 600, defaut: 180, pas: 30 };
-/** Repos avant une ronde, en secondes. */
-export const REPOS: Plage = { min: 10, max: 120, defaut: 25, pas: 5 };
+/** Repos avant une ronde, en secondes. Défaut de 60 s : les sources parlent de 1 à 2 min entre des rondes intenses. */
+export const REPOS: Plage = { min: 10, max: 120, defaut: 60, pas: 5 };
+/** Préparation avant la toute première ronde, en secondes (plus courte que le repos entre rondes). */
+export const PREPARATION_SEC = 30;
 
 const EPSILON = 1e-6;
 
@@ -36,6 +38,7 @@ export function reglagesValides(brut: Partial<ReglagesBoxe> | undefined): Reglag
     tempoSec: Math.round(borner(brut?.tempoSec, TEMPO) * 10) / 10,
     garde,
     sourceVoix: brut?.sourceVoix === 'iphone' ? 'iphone' : 'enregistree',
+    progressif: brut?.progressif !== false,
   };
   if (brut?.voix) r.voix = brut.voix;
   if (brut?.programmeId) r.programmeId = brut.programmeId;
@@ -197,3 +200,64 @@ export const REPERES_COUPS_PAR_MIN = { combat: 35, paos: 61, sacLibre: 71 } as c
 
 /** Coups par minute pour un rythme donné (secondes entre deux coups). */
 export const coupsParMinute = (tempoSec: number): number => Math.round(60 / tempoSec);
+
+/**
+ * Montée en intensité (hypothèse) : la première ronde est plus lente (×1,25), la deuxième un peu (×1,1), puis le
+ * rythme choisi. Raison : on démarre lentement et on monte quand la technique est sûre (Capello) ; la fréquence
+ * cardiaque augmente de ronde en ronde à rythme égal (Arseneau). Sans effet sous 3 rondes.
+ */
+export const FACTEURS_MONTEE = [1.25, 1.1] as const;
+
+export function tempoDeLaRonde(base: number, indiceRonde: number, nbRondes: number, progressif: boolean): number {
+  const facteur = progressif && nbRondes >= 3 ? FACTEURS_MONTEE[indiceRonde] ?? 1 : 1;
+  const t = Math.round(base * facteur * 10) / 10;
+  return Math.min(TEMPO.max, Math.max(TEMPO.min, t));
+}
+
+// ---- Intervalles (reflex bag) ----
+
+/**
+ * Plages des intervalles. Source : Capello (fiche NSCA), circuit au sac : 20 à 30 s d'effort, 10 à 15 s de repos,
+ * 2 min entre les séries. Les plages et les valeurs par défaut (20 s / 10 s, 8 répétitions, 2 blocs) sont des
+ * hypothèses : à ajuster à l'usage.
+ */
+export const INTERVALLES: Record<'effort' | 'repos' | 'repetitions' | 'blocs', Plage> = {
+  effort: { min: 15, max: 30, defaut: 20, pas: 5 },
+  repos: { min: 10, max: 30, defaut: 10, pas: 5 },
+  repetitions: { min: 4, max: 12, defaut: 8, pas: 2 },
+  blocs: { min: 1, max: 4, defaut: 2, pas: 1 },
+};
+/** Pause entre deux blocs, en secondes (2 min dans la source). */
+export const PAUSE_ENTRE_BLOCS_SEC = 120;
+
+export function reglagesIntervallesValides(brut: Partial<ReglagesIntervalles> | undefined): ReglagesIntervalles {
+  return {
+    effortSec: Math.round(borner(brut?.effortSec, INTERVALLES.effort)),
+    reposSec: Math.round(borner(brut?.reposSec, INTERVALLES.repos)),
+    repetitions: Math.round(borner(brut?.repetitions, INTERVALLES.repetitions)),
+    blocs: Math.round(borner(brut?.blocs, INTERVALLES.blocs)),
+  };
+}
+
+export interface PhaseIntervalle {
+  genre: 'effort' | 'repos' | 'pause';
+  duree: number;
+  /** Numéro du bloc et de la répétition, à partir de 1. */
+  bloc: number;
+  repetition: number;
+}
+
+/** Efforts et repos à la suite ; une pause entre les blocs ; pas de repos après le tout dernier effort. */
+export function phasesIntervalles(c: ReglagesIntervalles): PhaseIntervalle[] {
+  const phases: PhaseIntervalle[] = [];
+  for (let bloc = 1; bloc <= c.blocs; bloc++) {
+    for (let rep = 1; rep <= c.repetitions; rep++) {
+      phases.push({ genre: 'effort', duree: c.effortSec, bloc, repetition: rep });
+      if (rep < c.repetitions) phases.push({ genre: 'repos', duree: c.reposSec, bloc, repetition: rep });
+    }
+    if (bloc < c.blocs) phases.push({ genre: 'pause', duree: PAUSE_ENTRE_BLOCS_SEC, bloc, repetition: c.repetitions });
+  }
+  return phases;
+}
+
+export const dureeIntervalles = (phases: PhaseIntervalle[]): number => phases.reduce((s, p) => s + p.duree, 0);

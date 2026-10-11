@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { SUPPORTS, libelleCoup, type ProgrammeBoxe, type ReglagesBoxe, type SupportBoxe } from '../../donnees/boxe';
 import type { Playlist, Profil } from '../../donnees/types';
-import { DUREE_MURAL_MIN, DUREE_RONDE, REPERES_COUPS_PAR_MIN, REPOS, TEMPO, avancer, combosJoues, coupsParMinute, etatDepart, resumeRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
-import { avecProgrammes, avecReglages, dureeTotale, momentAnnonceCombo, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from '../boxe';
+import { DUREE_MURAL_MIN, DUREE_RONDE, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, REPERES_COUPS_PAR_MIN, REPOS, TEMPO, avancer, combosJoues, coupsParMinute, dureeIntervalles, etatDepart, phasesIntervalles, resumeRonde, tempoDeLaRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
+import { avecIntervalles, avecProgrammes, avecReglages, dureeTotale, intervallesDe, momentAnnonceCombo, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from '../boxe';
 import type { Details } from '../details';
 import { EditeurBoxe } from '../EditeurBoxe';
 import { Musique } from '../Musique';
@@ -12,6 +12,7 @@ import { arreterVoix, debloquerVoix, direPhrase, surVoixChangees, voixDisponible
 import { phraseCombo, phraseCompte, phraseCoup, phraseDepart, phraseFin, phrasePresentation, phraseRepos, type Phrase } from '../phrases-boxe';
 import { prechargerSons } from '../son';
 import type { BrouillonLibre } from './libre';
+import { SeanceIntervalles } from './SeanceIntervalles';
 import { SeanceLibre } from './SeanceLibre';
 import { useVerrouEcran } from './verrou';
 
@@ -38,7 +39,7 @@ interface Props {
   onAbandon: () => void;
 }
 
-type Mode = 'prepa' | 'editeur' | 'guide' | 'fin' | 'libre';
+type Mode = 'prepa' | 'editeur' | 'guide' | 'fin' | 'libre' | 'intervalles';
 
 function Reglage({ nom, valeur, onMoins, onPlus, moinsOff, plusOff }: { nom: string; valeur: string; onMoins: () => void; onPlus: () => void; moinsOff?: boolean; plusOff?: boolean }) {
   return (
@@ -60,6 +61,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
   const [voix, setVoix] = useState(() => voixFrancaises());
   const [support, setSupport] = useState<SupportBoxe>(b.support ?? conseil.support);
   const [dureeLibre, setDureeLibre] = useState<number | undefined>(undefined);
+  const [formatMural, setFormatMural] = useState<'libre' | 'intervalles'>('libre');
 
   useEffect(() => surVoixChangees(() => setVoix(voixFrancaises())), []);
 
@@ -82,6 +84,9 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
   }
   if (mode === 'fin') {
     return <SeanceLibre b={b} playlists={playlists} onFinAffichee={onFinAffichee} onTerminer={onTerminer} onAbandon={onAbandon} debutParFin />;
+  }
+  if (mode === 'intervalles') {
+    return <SeanceIntervalles config={intervallesDe(profil)} son={son} playlists={playlists} onFin={() => setMode('fin')} onAbandon={onAbandon} />;
   }
   if (mode === 'guide' && lance) {
     return (
@@ -116,6 +121,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
   }
 
   const total = dureeTotale(phases);
+  const nbRondesJouees = phases.filter((p) => p.genre === 'ronde').length;
   const lancer = () => {
     debloquerVoix();
     onDebutGuide('socle');
@@ -127,6 +133,12 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
     onDebutGuide('mural');
     setDureeLibre(dureeMural);
     setMode('libre');
+  };
+
+  const intervalles = intervallesDe(profil);
+  const lancerIntervalles = () => {
+    onDebutGuide('mural');
+    setMode('intervalles');
   };
 
   const choixSupport = (
@@ -152,12 +164,54 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
           <p style="color:var(--plum);margin-top:8px">À ton propre rythme, avec ta musique : vitesse et synchronisation. Pas de voix ici.</p>
           {choixSupport}
           <div class="carte">
-            <h3>Durée conseillée</h3>
-            <p><b>{dureeMural} min</b>, à une intensité où tu peux parler. Tu peux arrêter avant ou continuer : le chrono est là pour t'aider.</p>
+            <h3>Comment ?</h3>
+            <div class="ligne-puces" style="margin-top:10px">
+              <button class={`puce ${formatMural === 'libre' ? 'active' : ''}`} aria-pressed={formatMural === 'libre'} onClick={() => setFormatMural('libre')}>À ton rythme · conseillé</button>
+              <button class={`puce ${formatMural === 'intervalles' ? 'active' : ''}`} aria-pressed={formatMural === 'intervalles'} onClick={() => setFormatMural('intervalles')}>Intervalles</button>
+            </div>
+            <p style="margin-top:10px;font-size:13px">Les intervalles sont une variante pour de temps en temps : de courts efforts à fond, séparés de repos courts. Le plus souvent, à ton rythme suffit.</p>
           </div>
+          {formatMural === 'libre' ? (
+            <div class="carte">
+              <h3>Durée conseillée</h3>
+              <p><b>{dureeMural} min</b>, à un effort « assez dur » au plus : tu dois pouvoir dire quelques mots. Tu peux arrêter avant ou continuer : le chrono est là pour t'aider.</p>
+            </div>
+          ) : (
+            <div class="carte">
+              <h3>Tes intervalles</h3>
+              <Reglage
+                nom="Effort" valeur={`${intervalles.effortSec} s`}
+                moinsOff={intervalles.effortSec <= INTERVALLES.effort.min} plusOff={intervalles.effortSec >= INTERVALLES.effort.max}
+                onMoins={() => void onProfil(avecIntervalles(profil, { effortSec: intervalles.effortSec - INTERVALLES.effort.pas }))}
+                onPlus={() => void onProfil(avecIntervalles(profil, { effortSec: intervalles.effortSec + INTERVALLES.effort.pas }))}
+              />
+              <Reglage
+                nom="Repos entre les efforts" valeur={`${intervalles.reposSec} s`}
+                moinsOff={intervalles.reposSec <= INTERVALLES.repos.min} plusOff={intervalles.reposSec >= INTERVALLES.repos.max}
+                onMoins={() => void onProfil(avecIntervalles(profil, { reposSec: intervalles.reposSec - INTERVALLES.repos.pas }))}
+                onPlus={() => void onProfil(avecIntervalles(profil, { reposSec: intervalles.reposSec + INTERVALLES.repos.pas }))}
+              />
+              <Reglage
+                nom="Efforts par bloc" valeur={String(intervalles.repetitions)}
+                moinsOff={intervalles.repetitions <= INTERVALLES.repetitions.min} plusOff={intervalles.repetitions >= INTERVALLES.repetitions.max}
+                onMoins={() => void onProfil(avecIntervalles(profil, { repetitions: intervalles.repetitions - INTERVALLES.repetitions.pas }))}
+                onPlus={() => void onProfil(avecIntervalles(profil, { repetitions: intervalles.repetitions + INTERVALLES.repetitions.pas }))}
+              />
+              <Reglage
+                nom="Blocs" valeur={String(intervalles.blocs)}
+                moinsOff={intervalles.blocs <= INTERVALLES.blocs.min} plusOff={intervalles.blocs >= INTERVALLES.blocs.max}
+                onMoins={() => void onProfil(avecIntervalles(profil, { blocs: intervalles.blocs - INTERVALLES.blocs.pas }))}
+                onPlus={() => void onProfil(avecIntervalles(profil, { blocs: intervalles.blocs + INTERVALLES.blocs.pas }))}
+              />
+              <p style="margin-top:8px;font-size:13px">
+                Environ <b>{minutes(dureeIntervalles(phasesIntervalles(intervalles)))}</b> au total
+                {intervalles.blocs > 1 ? `, avec ${PAUSE_ENTRE_BLOCS_SEC / 60} min de pause entre les blocs` : ''}. Un son net marque le début de chaque effort, un autre celui du repos. Vise un effort « assez dur » : garde ta technique.
+              </p>
+            </div>
+          )}
           <div class="espace" />
           <div class="pile">
-            <button class="btn btn-principal" onClick={lancerMural}>Lancer le chrono</button>
+            <button class="btn btn-principal" onClick={formatMural === 'libre' ? lancerMural : lancerIntervalles}>{formatMural === 'libre' ? 'Lancer le chrono' : 'Lancer les intervalles'}</button>
             <button class="btn btn-contour" onClick={() => { if (confirm("Abandonner cette séance sans l'enregistrer ?")) onAbandon(); }}>Abandonner</button>
           </div>
         </div>
@@ -210,6 +264,14 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
             onMoins={() => void modifier({ tempoSec: Math.round((reglages.tempoSec - TEMPO.pas) * 10) / 10 })}
             onPlus={() => void modifier({ tempoSec: Math.round((reglages.tempoSec + TEMPO.pas) * 10) / 10 })}
           />
+          <div class="groupe">
+            <span class="etiquette">Montée en intensité</span>
+            <div class="ligne-puces" style="margin-top:6px">
+              <button class={`puce ${reglages.progressif ? 'active' : ''}`} aria-pressed={reglages.progressif} onClick={() => void modifier({ progressif: true })}>Oui · conseillé</button>
+              <button class={`puce ${!reglages.progressif ? 'active' : ''}`} aria-pressed={!reglages.progressif} onClick={() => void modifier({ progressif: false })}>Non, direct au rythme</button>
+            </div>
+            <p style="margin-top:6px;font-size:13px">La première ronde est plus lente, la deuxième un peu, puis le rythme que tu as choisi. Sans effet en dessous de 3 rondes.</p>
+          </div>
           <p style="margin-top:8px;font-size:13px">Chaque combo se répète pendant sa part de la ronde. Tu pourras aussi changer le rythme en pleine ronde.</p>
           <p style="margin-top:8px;font-size:13px">
             <b>≈ {coupsParMinute(reglages.tempoSec)} coups par minute.</b> Pour te repérer : des boxeurs expérimentés frappent environ {REPERES_COUPS_PAR_MIN.combat} coups par minute en combat et {REPERES_COUPS_PAR_MIN.paos} aux paos. Commence plus lent, et accélère quand la technique est sûre.
@@ -230,11 +292,13 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
           <div class="carte">
             <h3>Ce que tu vas faire</h3>
             {programme.rondes.map((ronde, i) => {
-              const resume = resumeRonde(ronde, reglages.dureeRondeSec, reglages.tempoSec);
+              const rang = phases.filter((p) => p.genre === 'ronde' && p.ronde < i).length;
+              const tempoRonde = tempoDeLaRonde(reglages.tempoSec, rang, nbRondesJouees, reglages.progressif);
+              const resume = resumeRonde(ronde, reglages.dureeRondeSec, tempoRonde);
               if (resume.length === 0) return null;
               return (
                 <div key={i} style="margin-top:10px">
-                  <span class="etiquette">Ronde {i + 1}</span>
+                  <span class="etiquette">Ronde {i + 1}{tempoRonde !== reglages.tempoSec ? ` · un coup toutes les ${nombre(tempoRonde)} s` : ''}</span>
                   {resume.map((c, j) => (
                     <p key={j} style="margin:2px 0;font-size:14px">
                       {c.coups.map(libelleCoup).join(' · ')} <span class="discret">{c.repetitions > 0 ? `× ${c.repetitions}` : '— trop long pour le temps'}</span>
@@ -321,6 +385,7 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
     dernierCompte: -1,
     comboAnnonce: false,
     tempo: reglages.tempoSec,
+    tempoEff: reglages.tempoSec,
     muet: false,
     fini: false,
   });
@@ -328,12 +393,22 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
   /** `coup` : seuls les coups suivent le rythme ; le reste est dit à vitesse normale. */
   const dire = (phrase: Phrase, coup = false) => {
     if (s.current.muet) return;
-    direPhrase(phrase, { clips, voixId: reglages.voix, vitesse: vitesseVoix(s.current.tempo, coup) });
+    direPhrase(phrase, { clips, voixId: reglages.voix, vitesse: vitesseVoix(s.current.tempoEff, coup) });
+  };
+
+  /** Rythme réel d'une phase : celui choisi, avec la montée en intensité sur les premières rondes. */
+  const tempoPour = (i: number) => {
+    const ph = phases[i];
+    if (!ph || ph.genre !== 'ronde') return s.current.tempo;
+    const rang = phases.slice(0, i).filter((p) => p.genre === 'ronde').length;
+    return tempoDeLaRonde(s.current.tempo, rang, nbRondes, reglages.progressif);
   };
 
   const entrer = (i: number) => {
     const c = s.current;
     c.index = i;
+    c.tempoEff = tempoPour(i);
+    setTempo(c.tempoEff);
     c.debut = Date.now();
     c.etat = etatDepart;
     c.dernierCompte = -1;
@@ -388,7 +463,7 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
         }
       } else {
         const ronde = programme.rondes[ph.ronde]!;
-        const r = avancer(c.etat, t, ronde, ph.duree, c.tempo);
+        const r = avancer(c.etat, t, ronde, ph.duree, c.tempoEff);
         c.etat = r.etat;
         if (r.annonce) {
           if (r.annonce.genre === 'combo') {
@@ -408,10 +483,11 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
   }, []);
 
   const changerTempo = (delta: number) => {
-    const v = Math.round(Math.min(TEMPO.max, Math.max(TEMPO.min, s.current.tempo + delta)) * 10) / 10;
-    s.current.tempo = v;
-    setTempo(v);
-    onTempo(v);
+    const base = Math.round(Math.min(TEMPO.max, Math.max(TEMPO.min, s.current.tempo + delta)) * 10) / 10;
+    s.current.tempo = base;
+    s.current.tempoEff = tempoPour(s.current.index);
+    setTempo(s.current.tempoEff);
+    onTempo(base);
   };
   const basculerPause = () => {
     const c = s.current;
@@ -446,10 +522,10 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
   const controles = (
     <>
       <div class="grille2" style="margin-top:14px">
-        <button class="btn btn-voile" onClick={() => changerTempo(-TEMPO.pas)} disabled={tempo <= TEMPO.min} aria-label="Rythme plus rapide">Plus vite</button>
-        <button class="btn btn-voile" onClick={() => changerTempo(TEMPO.pas)} disabled={tempo >= TEMPO.max} aria-label="Rythme plus lent">Plus lent</button>
+        <button class="btn btn-voile" onClick={() => changerTempo(-TEMPO.pas)} disabled={s.current.tempo <= TEMPO.min} aria-label="Rythme plus rapide">Plus vite</button>
+        <button class="btn btn-voile" onClick={() => changerTempo(TEMPO.pas)} disabled={s.current.tempo >= TEMPO.max} aria-label="Rythme plus lent">Plus lent</button>
       </div>
-      <p class="discret" style="text-align:center;margin-top:6px">Un coup toutes les {nombre(tempo)} s</p>
+      <p class="discret" style="text-align:center;margin-top:6px">Un coup toutes les {nombre(tempo)} s{tempo !== s.current.tempo ? ' · montée en intensité' : ''}</p>
       <div class="grille2" style="margin-top:10px">
         <button class="btn btn-voile" onClick={basculerPause}>{enPause ? 'Reprendre' : 'Pause'}</button>
         <button class="btn btn-voile" aria-pressed={muet} onClick={basculerVoix}>{muet ? 'Voix : coupée' : 'Voix : active'}</button>

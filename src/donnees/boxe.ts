@@ -92,12 +92,26 @@ export interface ReglagesBoxe {
   voix?: string;
   /** D'où vient la voix : les clips enregistrés (si on en a) ou la voix de l'iPhone. */
   sourceVoix: 'enregistree' | 'iphone';
+  /** Montée en intensité : première ronde plus lente, puis le rythme choisi. Actif par défaut. */
+  progressif: boolean;
   programmeId?: string;
+}
+
+/** Intervalles au reflex bag : de courts efforts séparés de repos, en blocs. */
+export interface ReglagesIntervalles {
+  /** Durée d'un effort, en secondes. */
+  effortSec: number;
+  /** Repos entre deux efforts, en secondes. */
+  reposSec: number;
+  /** Efforts par bloc. */
+  repetitions: number;
+  blocs: number;
 }
 
 export interface ProfilBoxe {
   programmes?: ProgrammeBoxe[];
   reglages?: Partial<ReglagesBoxe>;
+  intervalles?: Partial<ReglagesIntervalles>;
   /** Voix enregistrée : un petit clip audio par mot ou par coup (adresses de données), gardés sur l'appareil. */
   voixClips?: Record<string, string>;
   /** Nom de la voix enregistrée, pour l'affichage. */

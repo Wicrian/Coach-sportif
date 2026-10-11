@@ -45,6 +45,17 @@ describe('boxe — déroulé de la séance', () => {
     expect(phasesDeSeance(p, reglagesDe(profil)).map((x) => x.ronde)).toEqual([1, 1]);
   });
 
+  it('la préparation avant la première ronde est plus courte que le repos entre les rondes', () => {
+    const phases = phasesDeSeance(PROGRAMMES_DEPART[0]!, reglagesDe(profil));
+    expect(phases[0]).toMatchObject({ genre: 'repos', duree: 30 });
+    expect(phases[2]).toMatchObject({ genre: 'repos', duree: 60 });
+  });
+
+  it('garde un repos court réglé par l\'utilisateur, même pour la première ronde', () => {
+    const r = reglagesDe(avecReglages(profil, { reposSec: 15 }));
+    expect(phasesDeSeance(PROGRAMMES_DEPART[0]!, r)[0]!.duree).toBe(15);
+  });
+
   it('calcule la durée totale', () => {
     const r = reglagesDe(avecReglages(profil, { dureeRondeSec: 120, reposSec: 20 }));
     expect(dureeTotale(phasesDeSeance(PROGRAMMES_DEPART[0]!, r))).toBe(3 * (120 + 20));

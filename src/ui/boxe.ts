@@ -1,6 +1,6 @@
-import { PROGRAMMES_DEPART, type ProgrammeBoxe, type ReglagesBoxe, type RondeBoxe } from '../donnees/boxe';
+import { PROGRAMMES_DEPART, type ProgrammeBoxe, type ReglagesBoxe, type ReglagesIntervalles, type RondeBoxe } from '../donnees/boxe';
 import type { Profil } from '../donnees/types';
-import { conseillerBoxe, dernierSupport, reglagesValides, type ConseilBoxe } from '../moteur/boxe';
+import { PREPARATION_SEC, conseillerBoxe, dernierSupport, reglagesIntervallesValides, reglagesValides, type ConseilBoxe } from '../moteur/boxe';
 import { calculerPreparation } from './preparation';
 import type { Donnees } from '../donnees/types';
 
@@ -18,6 +18,14 @@ export function reglagesDe(profil: Profil): ReglagesBoxe {
 export function programmeChoisi(profil: Profil): ProgrammeBoxe {
   const tous = programmesDe(profil);
   return tous.find((p) => p.id === reglagesDe(profil).programmeId) ?? tous[0]!;
+}
+
+export function intervallesDe(profil: Profil): ReglagesIntervalles {
+  return reglagesIntervallesValides(profil.boxe?.intervalles);
+}
+
+export function avecIntervalles(profil: Profil, partiel: Partial<ReglagesIntervalles>): Profil {
+  return { ...profil, boxe: { ...profil.boxe, intervalles: { ...profil.boxe?.intervalles, ...partiel } } };
 }
 
 export function avecProgrammes(profil: Profil, programmes: ProgrammeBoxe[]): Profil {
@@ -47,13 +55,18 @@ export type PhaseBoxe =
   | { genre: 'repos'; ronde: number; duree: number }
   | { genre: 'ronde'; ronde: number; duree: number };
 
-/** Déroulé d'une séance : un repos puis une ronde, pour chaque ronde. Pas de repos après la dernière. */
+/**
+ * Déroulé d'une séance : un repos puis une ronde, pour chaque ronde. Pas de repos après la dernière.
+ * Avant la toute première ronde, c'est une préparation plus courte que le repos entre les rondes.
+ */
 export function phasesDeSeance(programme: ProgrammeBoxe, reglages: ReglagesBoxe): PhaseBoxe[] {
-  return programme.rondes.flatMap((r, i): PhaseBoxe[] =>
+  const phases = programme.rondes.flatMap((r, i): PhaseBoxe[] =>
     r.combos.some((c) => c.length > 0)
       ? [{ genre: 'repos', ronde: i, duree: reglages.reposSec }, { genre: 'ronde', ronde: i, duree: reglages.dureeRondeSec }]
       : [],
   );
+  if (phases[0]) phases[0] = { ...phases[0], duree: Math.min(phases[0].duree, PREPARATION_SEC) };
+  return phases;
 }
 
 /** Durée totale en secondes, repos compris. */

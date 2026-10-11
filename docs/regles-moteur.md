@@ -213,7 +213,7 @@ Module : `src/moteur/boxe.ts` (rythme), `src/donnees/boxe.ts` (coups, séries). 
 - **Annonce du combo** : « Combo n » est dit au début de chaque part et occupe un temps (un coup).
 - **Rythme** (secondes entre deux coups) : défaut **1,6 s**, borné **1,0 à 3,0 s**, pas de 0,2 s. *Hypothèse* : 1,0 s est à peu près la durée d'un nom de coup dit par la voix ; en dessous, les annonces se chevauchent.
 - **Durée d'une ronde** : défaut **180 s** (3 min, usage de la boxe), bornée **30 à 600 s**, pas de 30 s.
-- **Repos** : défaut **25 s** (valeur vue sur l'écran de référence de l'utilisateur), borné 10 à 120 s, pas de 5 s. Un repos précède chaque ronde (c'est aussi la préparation avant la première), pas de repos après la dernière.
+- **Repos** : défaut **60 s** (révisé le 11 octobre ; c'était 25 s, valeur de l'application de référence de l'utilisateur), borné 10 à 120 s, pas de 5 s. Un repos précède chaque ronde ; la préparation avant la première ronde dure 30 s au plus (voir §24). Pas de repos après la dernière.
 - **Vitesse de la voix** : seuls les **coups** suivent le rythme (1,2 quand il est ≤ 1,2 s par coup, hypothèse). La présentation du combo, « Combo n », le repos et le compte à rebours sont **toujours dits à vitesse normale** : l'utilisateur doit bien comprendre le combo avant de partir.
 - **Présentation avant la ronde** : le premier combo est nommé pendant le repos, juste avant le compte à rebours de 3 s (durée de lecture estimée à 1,5 s + 0,8 s par coup, hypothèse).
 - **Retard** : après un long silence (écran verrouillé), on repart de l'instant présent, sans rafale d'annonces.
@@ -258,3 +258,11 @@ Détail et limites dans `docs/recherche/boxe-sources.md`. Ce qui a été **appli
 Ce qui est **déjà conforme** : 48 h minimum entre deux séances intenses (R-10) ; si force et boxe le même jour, la force d'abord (R-26) ; boxe annoncée comme une vraie séance qui compte dans la semaine.
 
 Ce qui reste **à décider** (pas fait) : repos par défaut de 60 s au lieu de 25 s ; première ronde plus lente (montée en intensité) ; mode intervalles pour le reflex bag (20–30 s d'effort, 10–15 s de repos).
+
+## 24. Repos, montée en intensité et intervalles (11 octobre, hypothèses)
+
+- **Repos par défaut : 60 s.** Raisons : les sources parlent de 1 à 2 minutes entre des rondes intenses (Capello) ; le protocole expérimental d'Arseneau utilise 1 minute ; l'utilisateur retrouve ce repos d'« au moins une minute » dans ses cours de boxe. Un réglage déjà enregistré par l'utilisateur n'est pas modifié.
+- **Préparation avant la première ronde : 30 s au plus** (`PREPARATION_SEC`), jamais plus que le repos réglé. Une minute avant de commencer serait trop longue ; « Passer le repos » reste possible.
+- **Montée en intensité** (active par défaut, désactivable) : ronde 1 à ×1,25 du rythme choisi, ronde 2 à ×1,1, puis le rythme choisi ; sans effet sous 3 rondes. Le rythme reste borné à 1,0–3,0 s. Raisons : on démarre lent et on monte quand la technique est sûre (Capello) ; la fréquence cardiaque augmente de ronde en ronde à rythme égal (Arseneau). Les facteurs 1,25 et 1,1 sont des **hypothèses**. Un changement de rythme en pleine ronde modifie le rythme de base, la montée s'applique par-dessus.
+- **Intervalles au reflex bag** (mode facultatif, **jamais conseillé d'office** : le plan conseille toujours « à ton rythme »). Valeurs par défaut : effort 20 s (15–30), repos 10 s (10–30), 8 efforts par bloc (4–12), 2 blocs (1–4), 2 minutes de pause entre les blocs. Elles viennent du circuit au sac de Capello (20–30 s d'effort, 10–15 s de repos, 2 minutes entre les séries) ; les plages sont élargies pour laisser le choix. Durée par défaut : environ 10 minutes. Pas de voix : un son net au début de l'effort, un autre au début du repos.
+- **Pas fait** : aucune règle ne propose les intervalles « de temps en temps » ; si l'utilisateur le souhaite, il faudra décider d'une fréquence (par exemple une séance sur quatre) et du moment.

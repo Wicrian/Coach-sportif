@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { COUPS, PROGRAMMES_DEPART, membreDuCoup, coupDe, type RondeBoxe } from '../donnees/boxe';
 import {
-  DUREE_MURAL_ALLEGEE_MIN, DUREE_MURAL_MIN, DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, conseillerBoxe, coupsParMinute, dernierSupport, etatDepart, REPERES_COUPS_PAR_MIN,
+  DUREE_MURAL_ALLEGEE_MIN, DUREE_MURAL_MIN, DUREE_RONDE, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, PREPARATION_SEC, REPOS, TEMPO, avancer, combosJoues, conseillerBoxe, coupsParMinute, dernierSupport, etatDepart, REPERES_COUPS_PAR_MIN,
+  dureeIntervalles, phasesIntervalles, reglagesIntervallesValides, tempoDeLaRonde,
   reglagesValides, repetitionsPossibles,
   resumeRonde, segmentsDeRonde, type Annonce, type EtatRonde,
 } from './boxe';
@@ -239,5 +240,72 @@ describe('boxe — repères de fréquence (Arseneau, 2011)', () => {
 
   it('le rythme par défaut est proche de la fréquence mesurée en combat', () => {
     expect(Math.abs(coupsParMinute(TEMPO.defaut) - REPERES_COUPS_PAR_MIN.combat)).toBeLessThanOrEqual(5);
+  });
+});
+
+describe('boxe — repos et montée en intensité (hypothèses §24)', () => {
+  it('le repos par défaut est de 60 s, ce que les sources et la pratique de l\'utilisateur confirment', () => {
+    expect(REPOS.defaut).toBe(60);
+    expect(reglagesValides({}).reposSec).toBe(60);
+  });
+
+  it('la préparation avant la première ronde est plus courte que le repos entre les rondes', () => {
+    expect(PREPARATION_SEC).toBeLessThan(REPOS.defaut);
+  });
+
+  it('la première ronde est plus lente, la deuxième un peu, puis le rythme normal', () => {
+    expect(tempoDeLaRonde(1.6, 0, 6, true)).toBe(2.0);
+    expect(tempoDeLaRonde(1.6, 1, 6, true)).toBe(1.8);
+    expect(tempoDeLaRonde(1.6, 2, 6, true)).toBe(1.6);
+    expect(tempoDeLaRonde(1.6, 5, 6, true)).toBe(1.6);
+  });
+
+  it('ne change rien quand la montée est désactivée ou quand il y a moins de 3 rondes', () => {
+    expect(tempoDeLaRonde(1.6, 0, 6, false)).toBe(1.6);
+    expect(tempoDeLaRonde(1.6, 0, 2, true)).toBe(1.6);
+  });
+
+  it('reste dans la plage jouable', () => {
+    expect(tempoDeLaRonde(2.8, 0, 6, true)).toBe(TEMPO.max);
+    expect(tempoDeLaRonde(1.0, 0, 6, true)).toBeGreaterThanOrEqual(TEMPO.min);
+  });
+
+  it('la montée est active par défaut et se désactive', () => {
+    expect(reglagesValides({}).progressif).toBe(true);
+    expect(reglagesValides({ progressif: false }).progressif).toBe(false);
+  });
+});
+
+describe('boxe — intervalles au reflex bag (hypothèses §24)', () => {
+  const cfg = reglagesIntervallesValides({});
+
+  it('prend des valeurs par défaut issues de la fiche de Capello : 20 s d\'effort, 10 s de repos', () => {
+    expect(cfg).toMatchObject({ effortSec: 20, reposSec: 10, repetitions: 8, blocs: 2 });
+  });
+
+  it('enchaîne effort et repos, puis une pause entre les blocs, sans repos après le dernier effort', () => {
+    const phases = phasesIntervalles({ effortSec: 20, reposSec: 10, repetitions: 3, blocs: 2 });
+    expect(phases.map((p) => p.genre).join(',')).toBe('effort,repos,effort,repos,effort,pause,effort,repos,effort,repos,effort');
+    expect(phases[phases.length - 1]!.genre).toBe('effort');
+  });
+
+  it('calcule la durée totale', () => {
+    const phases = phasesIntervalles(cfg);
+    // 2 blocs × (8 efforts × 20 s + 7 repos × 10 s) + 1 pause entre blocs
+    expect(dureeIntervalles(phases)).toBe(2 * (8 * 20 + 7 * 10) + PAUSE_ENTRE_BLOCS_SEC);
+  });
+
+  it('numérote les blocs et les répétitions à partir de 1', () => {
+    const phases = phasesIntervalles({ effortSec: 20, reposSec: 10, repetitions: 2, blocs: 2 });
+    const efforts = phases.filter((p) => p.genre === 'effort').map((p) => `${p.bloc}.${p.repetition}`);
+    expect(efforts).toEqual(['1.1', '1.2', '2.1', '2.2']);
+  });
+
+  it('ramène les valeurs dans les plages', () => {
+    const r = reglagesIntervallesValides({ effortSec: 1, reposSec: 999, repetitions: 100, blocs: 0 });
+    expect(r.effortSec).toBe(INTERVALLES.effort.min);
+    expect(r.reposSec).toBe(INTERVALLES.repos.max);
+    expect(r.repetitions).toBe(INTERVALLES.repetitions.max);
+    expect(r.blocs).toBe(INTERVALLES.blocs.min);
   });
 });
