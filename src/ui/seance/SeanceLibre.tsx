@@ -7,7 +7,7 @@ import { Musique } from '../Musique';
 import type { BrouillonLibre } from './libre';
 
 const CONSEILS: Record<BrouillonLibre['kind'], string> = {
-  box: "Lance ta séance dans Boxa ou Heavybox, ou travaille au sac ou au reflex bag. Échauffe-toi, reste à une intensité où tu peux parler, puis reviens ici pour terminer.",
+  box: "Travaille au sac ou au reflex bag, ou lance une autre application de boxe. Échauffe-toi, reste à une intensité où tu peux parler, puis reviens ici pour terminer.",
   walk: "Marche à ton rythme. Tu dois pouvoir parler sans être essoufflé.",
   mob: "Prends ton temps : de la mobilité et des étirements doux, sans forcer.",
   cardio: "Du cardio léger : reste à une intensité confortable, où tu peux parler.",

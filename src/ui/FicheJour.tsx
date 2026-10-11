@@ -4,6 +4,9 @@ import type { Donnees, GenreSeance, Profil, Seance } from '../donnees/types';
 import type { JourPlanifie } from '../moteur/planification';
 import { jourDe } from '../moteur/utilitaires';
 import { FormulaireExterne } from './EcranActivite';
+import { dureeTotale, phasesDeSeance, programmeChoisi, reglagesDe } from './boxe';
+import { libelleCoup } from '../donnees/boxe';
+import { resumeRonde } from '../moteur/boxe';
 import { libelleGenre } from './activite';
 import { basculerIndisponible, descriptionType, genrePourType, libelleJour, libelleType, lignesPrevues, modeleConseille } from './plan';
 import type { GenreLibre } from './seance/libre';
@@ -22,6 +25,30 @@ interface Props {
 
 const AUTRES: GenreSeance[] = ['box', 'walk', 'mob', 'cardio'];
 const DUREES: Record<GenreSeance, number> = { box: 35, walk: 25, mob: 15, cardio: 20, strength: 40 };
+
+/** Ce que la voix va dicter : la série choisie, ronde par ronde (visible tous les jours, pas seulement aujourd'hui). */
+function ApercuBoxe({ profil }: { profil: Profil }) {
+  const programme = programmeChoisi(profil);
+  const reglages = reglagesDe(profil);
+  const phases = phasesDeSeance(programme, reglages);
+  if (phases.length === 0) return <p style="margin-top:8px">Ta série « {programme.nom} » n'a pas encore de combo : compose-la dans Profil › Ma boxe guidée.</p>;
+  return (
+    <div style="margin-top:12px">
+      <p><b>{programme.nom}</b> · {phases.filter((p) => p.genre === 'ronde').length} rondes de {Math.round(reglages.dureeRondeSec / 60 * 10) / 10} min · environ {Math.round(dureeTotale(phases) / 60)} min, repos compris.</p>
+      {programme.rondes.map((ronde, i) => {
+        const resume = resumeRonde(ronde, reglages.dureeRondeSec, reglages.tempoSec);
+        if (resume.length === 0) return null;
+        return (
+          <div key={i} style="margin-top:10px">
+            <span class="etiquette">Ronde {i + 1}</span>
+            {resume.map((c, j) => <p key={j} style="margin:2px 0;font-size:14px">{c.coups.map(libelleCoup).join(' · ')}</p>)}
+          </div>
+        );
+      })}
+      <p style="margin-top:10px;font-size:13px">Tu peux changer de série, de rythme et de voix au moment de lancer, ou composer tes séries dans Profil › Ma boxe guidée.</p>
+    </div>
+  );
+}
 
 export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLancerLibre, onAjouter, onProfil }: Props) {
   const estAujourdhui = jour.jour === aujourdhui;
@@ -66,8 +93,9 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
           <div class="carte">
             <h3>Partie 2 : la boxe</h3>
             <p>{descriptionType('boxe')} À la fin de ta force, je te propose de l'enchaîner d'un geste.</p>
+            <ApercuBoxe profil={profil} />
             {estAujourdhui && (
-              <div class="pile"><button class="btn btn-contour" onClick={() => onLancerLibre('box')}>Démarrer la boxe seule</button></div>
+              <div class="pile"><button class="btn btn-contour" onClick={() => onLancerLibre('box')}>Démarrer la boxe guidée seule</button></div>
             )}
           </div>
         </>
@@ -84,6 +112,8 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
           )}
           {prevu && <p style="margin-top:8px;font-size:13px">{modele.nom}. Les charges sont recalculées au moment où tu démarres, selon ta forme.</p>}
 
+          {type === 'boxe' && <ApercuBoxe profil={profil} />}
+
           {faitsAujourdhui.length > 0 && type === 'deja-fait' && (
             <ul class="signaux">
               {faitsAujourdhui.map((s) => <li key={s.id}><span><b>{libelleGenre(s.kind)}</b>{s.durationMin ? ` — ${s.durationMin} min` : ''}</span></li>)}
@@ -95,7 +125,7 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
           )}
           {estAujourdhui && preselection && !formulaire && (
             <div class="pile">
-              <button class="btn btn-principal" onClick={() => onLancerLibre(preselection.kind as GenreLibre)}>Démarrer : {libelleGenre(preselection.kind).toLowerCase()}</button>
+              <button class="btn btn-principal" onClick={() => onLancerLibre(preselection.kind as GenreLibre)}>{preselection.kind === 'box' ? 'Démarrer la boxe guidée' : `Démarrer : ${libelleGenre(preselection.kind).toLowerCase()}`}</button>
               <button class="btn btn-contour" onClick={() => ouvrirForm(preselection.kind)}>Je l'ai déjà faite</button>
             </div>
           )}
