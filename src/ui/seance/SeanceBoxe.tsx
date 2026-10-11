@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { SUPPORTS, libelleCoup, type ProgrammeBoxe, type ReglagesBoxe, type SupportBoxe } from '../../donnees/boxe';
 import type { Playlist, Profil } from '../../donnees/types';
-import { DUREE_MURAL_MIN, DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, etatDepart, resumeRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
+import { DUREE_MURAL_MIN, DUREE_RONDE, REPERES_COUPS_PAR_MIN, REPOS, TEMPO, avancer, combosJoues, coupsParMinute, etatDepart, resumeRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
 import { avecProgrammes, avecReglages, dureeTotale, momentAnnonceCombo, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from '../boxe';
 import type { Details } from '../details';
 import { EditeurBoxe } from '../EditeurBoxe';
@@ -211,7 +211,20 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
             onPlus={() => void modifier({ tempoSec: Math.round((reglages.tempoSec + TEMPO.pas) * 10) / 10 })}
           />
           <p style="margin-top:8px;font-size:13px">Chaque combo se répète pendant sa part de la ronde. Tu pourras aussi changer le rythme en pleine ronde.</p>
+          <p style="margin-top:8px;font-size:13px">
+            <b>≈ {coupsParMinute(reglages.tempoSec)} coups par minute.</b> Pour te repérer : des boxeurs expérimentés frappent environ {REPERES_COUPS_PAR_MIN.combat} coups par minute en combat et {REPERES_COUPS_PAR_MIN.paos} aux paos. Commence plus lent, et accélère quand la technique est sûre.
+          </p>
         </div>
+
+        <details class="carte">
+          <summary style="font-weight:700;cursor:pointer">Avant de commencer : échauffement, technique et sécurité</summary>
+          <p style="margin-top:10px"><b>Échauffement.</b> Au moins 5 minutes de cardio léger (corde, marche rapide), puis des mouvements qui préparent à frapper : cercles de bras, fentes avec rotation, pompes scapulaires. (Repère d'une séance d'une heure : 5 min générales puis 10 min spécifiques.)</p>
+          <p style="margin-top:8px"><b>Poignet.</b> Garde-le droit et ferme à l'impact, sans plier ni dévier.</p>
+          <p style="margin-top:8px"><b>Distance.</b> Bras avant tendu comme point de départ. Trop près : les chocs remontent au poignet, au coude, à l'épaule. Trop loin : le coude se tend à vide.</p>
+          <p style="margin-top:8px"><b>Poing.</b> Les deux premières articulations des doigts touchent la cible ; le pouce est replié sous les doigts, ni sorti ni caché derrière.</p>
+          <p style="margin-top:8px"><b>Protection.</b> Bandes et gants (10 oz) sur le sac lourd.</p>
+          <p style="margin-top:8px"><b>Effort.</b> Vise « assez dur » au plus (12 à 14 sur 20) : tu dois pouvoir dire quelques mots. Sinon, ralentis le rythme.</p>
+        </details>
 
         {phases.length > 0 && (
           <div class="carte">

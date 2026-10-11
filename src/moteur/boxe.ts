@@ -187,3 +187,13 @@ export function conseillerBoxe(e: { dernierSupport?: SupportBoxe; allegee: boole
   }
   return { support: 'socle', raison: 'Pour commencer, le sac sur socle avec ta série guidée.', regle: 'R-64' };
 }
+
+/**
+ * Fréquences de coups mesurées chez 9 boxeurs amateurs expérimentés (Arseneau, 2011, Université de Montréal) :
+ * environ 35 coups par minute en combat (sparring) et 61 aux paos ; au sac, 71 en séance libre.
+ * Ce sont des repères pour situer son rythme, pas des objectifs.
+ */
+export const REPERES_COUPS_PAR_MIN = { combat: 35, paos: 61, sacLibre: 71 } as const;
+
+/** Coups par minute pour un rythme donné (secondes entre deux coups). */
+export const coupsParMinute = (tempoSec: number): number => Math.round(60 / tempoSec);

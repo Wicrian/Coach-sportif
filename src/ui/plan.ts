@@ -89,7 +89,7 @@ export function playlistsPour(playlists: Playlist[] | undefined, kind: GenreSean
 const DESCRIPTIONS: Record<TypePlanifie, string> = {
   force: 'Une séance de force avec tes haltères ou ton poids du corps. Les charges sont choisies parmi celles que tu as vraiment, avec peu de changements de disques.',
   combine: 'De la force courte, puis de la boxe, avec échauffement et étirements. Tu fais la force ici, puis la boxe guidée par la voix : les combos de ta série te sont dictés.',
-  boxe: 'Une séance de boxe guidée par la voix, à intensité douce : tu dois pouvoir parler en même temps. Au sac de frappe ou au reflex bag, avec échauffement et étirements.',
+  boxe: 'Une séance de boxe guidée par la voix, à intensité modérée à soutenue : vise un effort « assez dur » au plus, et ralentis le rythme si tu es trop essoufflé pour dire quelques mots. Au sac de frappe ou au reflex bag, avec échauffement et étirements.',
   marche: 'Une marche facile, à ton rythme. Elle compte pour ta semaine comme n\'importe quelle autre séance.',
   mobilite: 'Un peu de mobilité et d\'étirements, tranquillement. Ça compte pour ta semaine et ça aide la récupération.',
   recuperation: 'Une récupération active de 10 à 20 minutes : cardio léger, mobilité ou shadow-boxing doux. Ton corps a besoin de souffler aujourd\'hui.',

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { COUPS, PROGRAMMES_DEPART, membreDuCoup, coupDe, type RondeBoxe } from '../donnees/boxe';
 import {
-  DUREE_MURAL_ALLEGEE_MIN, DUREE_MURAL_MIN, DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, conseillerBoxe, dernierSupport, etatDepart,
+  DUREE_MURAL_ALLEGEE_MIN, DUREE_MURAL_MIN, DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, conseillerBoxe, coupsParMinute, dernierSupport, etatDepart, REPERES_COUPS_PAR_MIN,
   reglagesValides, repetitionsPossibles,
   resumeRonde, segmentsDeRonde, type Annonce, type EtatRonde,
 } from './boxe';
@@ -223,5 +223,21 @@ describe('boxe — conseil du support (R-64, hypothèse)', () => {
     ];
     expect(dernierSupport(seances)).toBe('socle');
     expect(dernierSupport([])).toBeUndefined();
+  });
+});
+
+describe('boxe — repères de fréquence (Arseneau, 2011)', () => {
+  it('convertit le rythme en coups par minute', () => {
+    expect(coupsParMinute(1.6)).toBe(38);
+    expect(coupsParMinute(1.0)).toBe(60);
+    expect(coupsParMinute(3.0)).toBe(20);
+  });
+
+  it('le rythme le plus rapide autorisé ne dépasse pas la fréquence mesurée aux paos chez des boxeurs expérimentés', () => {
+    expect(coupsParMinute(TEMPO.min)).toBeLessThanOrEqual(REPERES_COUPS_PAR_MIN.paos);
+  });
+
+  it('le rythme par défaut est proche de la fréquence mesurée en combat', () => {
+    expect(Math.abs(coupsParMinute(TEMPO.defaut) - REPERES_COUPS_PAR_MIN.combat)).toBeLessThanOrEqual(5);
   });
 });

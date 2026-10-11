@@ -144,7 +144,7 @@ Choix faits lors du codage de `src/moteur/planification.ts` :
 - **R-63 (nouvelle, hypothèse) — semaine chargée** : sur demande de l'utilisateur, les séances sont limitées à 30 min : pas de force ni de séance combinée, seulement boxe courte, marche, mobilité. Une semaine réussie reste possible (3 séances de n'importe quel type, R-40).
 - **Jours indisponibles** : liste fournie par l'appelant (déclarée à la main pour l'instant ; pourra être alimentée par un agenda plus tard).
 - **Avertissement R-11** : émis pour toute semaine entièrement à venir où les créneaux ne permettent pas 2 séances de force.
-- **R-50** : les séances de boxe sont annoncées « à intensité douce » (repère : pouvoir parler). Le plafond d'intensité lui-même relève de l'écran de séance.
+- **R-50 (révisée, 11 octobre)** : les séances de boxe sont annoncées « à intensité modérée à soutenue » et non plus « douce » : chez des boxeurs expérimentés, le sac et les paos se situent autour de 66 à 70 % du VO2 max, à 84–87 % de la FC max et à un effort perçu de 12 à 14 sur 20 (Arseneau, 2011 ; voir §23). Repère affiché : « assez dur » au plus, quelques mots possibles, sinon ralentir le rythme. Le plafond d'intensité lui-même relève de l'écran de séance.
 
 ## 14. Précisions d'implémentation (ordre de la séance, R-26)
 
@@ -245,3 +245,16 @@ Module : `conseillerBoxe` et `dernierSupport` dans `src/moteur/boxe.ts`. **Les d
 - **Choix** : réglage `sourceVoix` (voix enregistrée ou voix de l'iPhone). S'il manque un clip pour une phrase (ex. ronde n° 13), l'application se rabat sur la voix de l'iPhone pour cette phrase.
 - **Vitesse** : les clips suivent la même règle que la voix de l'iPhone (coups à ×1,2 si le rythme est ≤ 1,2 s ; le reste à vitesse normale). Les clips les plus longs (« Low kick arrière », ≈ 1,3 s) dépassent le rythme minimal de 1,0 s : une nouvelle annonce coupe alors la précédente. *Hypothèse à valider à l'usage.*
 - **Prononciation** : les mots anglais sont écrits phonétiquement pour Piper (champ `dire` de `clips-voix.json`), par exemple « djab », « lo kique ». À corriger dans ce fichier si une prononciation est mauvaise, puis régénérer.
+
+## 23. Ce que disent les sources sur la boxe (11 octobre)
+
+Détail et limites dans `docs/recherche/boxe-sources.md`. Ce qui a été **appliqué** :
+
+- **R-50 révisée** (voir §13) : la boxe n'est plus annoncée « douce ».
+- **Repère de fréquence** affiché sous le rythme : « ≈ N coups par minute » ; repères mesurés chez des boxeurs expérimentés : ~35/min en combat, ~61/min aux paos (Arseneau, 2011). Le rythme minimal de 1,0 s (60 coups/min) correspond à la fréquence des paos ; le rythme par défaut de 1,6 s (38/min) à celle du combat. Ces chiffres valident l'**ordre de grandeur** des hypothèses du §20, pas la valeur exacte pour un débutant.
+- **Technique et sécurité** (Capello, NSCA/UKSCA) : poignet droit, distance au sac, pouce, protections, démarrer lent et monter en intensité quand la technique est sûre. Affiché avant la séance guidée.
+- **Échauffement** : au moins 5 minutes avant de frapper (la source donne 5 min générales + 10 min spécifiques pour une séance d'une heure).
+
+Ce qui est **déjà conforme** : 48 h minimum entre deux séances intenses (R-10) ; si force et boxe le même jour, la force d'abord (R-26) ; boxe annoncée comme une vraie séance qui compte dans la semaine.
+
+Ce qui reste **à décider** (pas fait) : repos par défaut de 60 s au lieu de 25 s ; première ronde plus lente (montée en intensité) ; mode intervalles pour le reflex bag (20–30 s d'effort, 10–15 s de repos).
