@@ -127,7 +127,7 @@ export function fusionner(existant: Donnees, importees: Donnees): { donnees: Don
   const profil: Profil = { ...existant.profil };
   const profilCompleteChamps: string[] = [];
   for (const [cle, valeur] of Object.entries(importees.profil)) {
-    if (cle === 'gear' || cle === 'sons') continue;
+    if (cle === 'gear' || cle === 'sons' || cle === 'boxe') continue;
     if (estVide(profil[cle]) && !estVide(valeur)) {
       profil[cle] = valeur;
       profilCompleteChamps.push(cle);
@@ -154,6 +154,29 @@ export function fusionner(existant: Donnees, importees: Donnees): { donnees: Don
     if (ajoutes) {
       profil.sons = sons;
       profilCompleteChamps.push('sons');
+    }
+  }
+
+  // Boxe : séries et réglages de l'appareil prioritaires ; la voix enregistrée du fichier est reprise
+  // (importer un fichier de voix est un geste voulu) et remplace les clips de même nom.
+  const boxeFichier = importees.profil.boxe;
+  if (boxeFichier) {
+    const boxe: NonNullable<Profil['boxe']> = { ...(existant.profil.boxe ?? {}) };
+    let ajoute = false;
+    for (const cle of ['programmes', 'reglages'] as const) {
+      if (boxe[cle] === undefined && boxeFichier[cle] !== undefined) {
+        (boxe as Record<string, unknown>)[cle] = boxeFichier[cle];
+        ajoute = true;
+      }
+    }
+    if (boxeFichier.voixClips && Object.keys(boxeFichier.voixClips).length > 0) {
+      boxe.voixClips = { ...(boxe.voixClips ?? {}), ...boxeFichier.voixClips };
+      if (boxeFichier.voixNom) boxe.voixNom = boxeFichier.voixNom;
+      ajoute = true;
+    }
+    if (ajoute) {
+      profil.boxe = boxe;
+      profilCompleteChamps.push('boxe');
     }
   }
 

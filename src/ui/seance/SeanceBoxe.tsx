@@ -7,8 +7,10 @@ import type { Details } from '../details';
 import { EditeurBoxe } from '../EditeurBoxe';
 import { Musique } from '../Musique';
 import type { ChoixSon } from '../../donnees/types';
-import { jouerSon } from '../son';
-import { arreterVoix, debloquerVoix, parler, surVoixChangees, voixDisponible, voixFrancaises } from '../voix';
+import { debloquerAudio, jouerSon } from '../son';
+import { arreterVoix, debloquerVoix, direPhrase, surVoixChangees, voixDisponible, voixFrancaises } from '../voix';
+import { phraseCombo, phraseCompte, phraseCoup, phraseDepart, phraseFin, phrasePresentation, phraseRepos, type Phrase } from '../phrases-boxe';
+import { prechargerSons } from '../son';
 import type { BrouillonLibre } from './libre';
 import { SeanceLibre } from './SeanceLibre';
 import { useVerrouEcran } from './verrou';
@@ -66,6 +68,14 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
   const reglages = reglagesDe(profil);
   const phases = phasesDeSeance(programme, reglages);
   const modifier = (partiel: Partial<ReglagesBoxe>) => onProfil(avecReglages(profil, partiel));
+  const clipsDuProfil = profil.boxe?.voixClips;
+  const aVoixEnregistree = !!clipsDuProfil && Object.keys(clipsDuProfil).length > 0;
+  const clipsEnUsage = aVoixEnregistree && reglages.sourceVoix === 'enregistree' ? clipsDuProfil : undefined;
+
+  // Prépare les clips à l'avance : ils partent ensuite sans attendre.
+  useEffect(() => {
+    if (clipsDuProfil) void prechargerSons(Object.values(clipsDuProfil));
+  }, [clipsDuProfil]);
 
   if (mode === 'libre') {
     return <SeanceLibre b={b} playlists={playlists} onFinAffichee={onFinAffichee} onTerminer={onTerminer} onAbandon={onAbandon} dureeConseilleeMin={dureeLibre} />;
@@ -80,6 +90,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
         reglages={lance.reglages}
         son={son}
         playlists={playlists}
+        clips={clipsEnUsage}
         onTempo={(tempoSec) => void modifier({ tempoSec })}
         onFin={() => setMode('fin')}
         onAbandon={onAbandon}
@@ -224,7 +235,17 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
 
         <div class="carte">
           <h3>La voix</h3>
-          {!voixDisponible() ? (
+          {aVoixEnregistree && (
+            <div class="groupe">
+              <span class="etiquette">Quelle voix ?</span>
+              <div class="ligne-puces" style="margin-top:6px">
+                <button class={`puce ${reglages.sourceVoix === 'enregistree' ? 'active' : ''}`} aria-pressed={reglages.sourceVoix === 'enregistree'} onClick={() => void modifier({ sourceVoix: 'enregistree' })}>{profil.boxe?.voixNom ?? 'Voix enregistrée'}</button>
+                <button class={`puce ${reglages.sourceVoix === 'iphone' ? 'active' : ''}`} aria-pressed={reglages.sourceVoix === 'iphone'} onClick={() => void modifier({ sourceVoix: 'iphone' })}>Voix de l'iPhone</button>
+              </div>
+              <button class="mini neutre" style="margin-top:10px" onClick={() => { debloquerAudio(); debloquerVoix(); direPhrase(phrasePresentation(1, ['jab', 'low-kick-arriere', 'direct']), { clips: clipsEnUsage, voixId: reglages.voix }); }}>Écouter la voix</button>
+            </div>
+          )}
+          {aVoixEnregistree && reglages.sourceVoix === 'enregistree' ? null : !voixDisponible() ? (
             <p>Ton navigateur ne propose pas de voix : la séance guidée fonctionnera sans son.</p>
           ) : (
             <>
@@ -235,7 +256,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
                   {voix.map((v) => <option key={v.voiceURI} value={v.voiceURI}>{v.name}</option>)}
                 </select>
               </div>
-              <button class="mini neutre" style="margin-top:10px" onClick={() => { debloquerVoix(); parler('Jab, low kick arrière, direct, low kick avant.', reglages.voix); }}>Écouter la voix</button>
+              <button class="mini neutre" style="margin-top:10px" onClick={() => { debloquerVoix(); direPhrase(phrasePresentation(1, ['jab', 'low-kick-arriere', 'direct', 'low-kick-avant']), { voixId: reglages.voix }); }}>Écouter la voix</button>
               <p style="margin-top:10px;font-size:13px">
                 Sur iPhone, tu peux télécharger une voix plus naturelle : Réglages › Accessibilité › Contenu énoncé › Voix › Français, puis une voix « Améliorée » ou « Premium ». Elle apparaîtra ici après avoir rouvert l'application.
               </p>
@@ -259,13 +280,15 @@ interface GuideProps {
   reglages: ReglagesBoxe;
   son: { choix: ChoixSon; perso?: string };
   playlists: Playlist[];
+  /** Voix enregistrée à utiliser, ou rien pour la voix de l'iPhone. */
+  clips?: Record<string, string>;
   onTempo: (tempoSec: number) => void;
   onFin: () => void;
   onAbandon: () => void;
 }
 
 /** La séance en cours : un repos, une ronde, un repos, une ronde… la voix annonce tout. */
-function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon }: GuideProps) {
+function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onAbandon }: GuideProps) {
   useVerrouEcran();
   const phases = useRef(phasesDeSeance(programme, reglages)).current;
   const nbRondes = phases.filter((p) => p.genre === 'ronde').length;
@@ -290,9 +313,9 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
   });
 
   /** `coup` : seuls les coups suivent le rythme ; le reste est dit à vitesse normale. */
-  const dire = (texte: string, coup = false) => {
+  const dire = (phrase: Phrase, coup = false) => {
     if (s.current.muet) return;
-    parler(texte, reglages.voix, vitesseVoix(s.current.tempo, coup));
+    direPhrase(phrase, { clips, voixId: reglages.voix, vitesse: vitesseVoix(s.current.tempo, coup) });
   };
 
   const entrer = (i: number) => {
@@ -308,7 +331,7 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
     if (!ph) return;
     if (ph.genre === 'repos') {
       const numero = phases.slice(0, i + 1).filter((p) => p.genre === 'repos').length;
-      dire(i === 0 ? `Prépare-toi. Ronde ${numero} sur ${nbRondes}.` : `Repos. Ronde ${numero} sur ${nbRondes}.`);
+      dire(i === 0 ? phraseDepart(numero, nbRondes) : phraseRepos(numero, nbRondes));
     } else {
       navigator.vibrate?.(200);
       void jouerSon(son.choix, son.perso).catch(() => undefined);
@@ -320,7 +343,7 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
     if (c.fini) return;
     c.fini = true;
     arreterVoix();
-    if (!c.muet) parler('Séance terminée. Bravo.', reglages.voix);
+    if (!c.muet) direPhrase(phraseFin(), { clips, voixId: reglages.voix });
     onFin();
   };
 
@@ -343,12 +366,12 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
         const premier = combosJoues(programme.rondes[ph.ronde]!)[0] ?? [];
         if (!c.comboAnnonce && premier.length > 0 && t >= momentAnnonceCombo(ph.duree, premier.length)) {
           c.comboAnnonce = true;
-          dire(`Combo 1 : ${premier.map(libelleCoup).join(', ')}`);
+          dire(phrasePresentation(1, premier));
         }
         const reste = Math.ceil(ph.duree - t);
         if (reste <= 3 && reste >= 1 && c.dernierCompte !== reste) {
           c.dernierCompte = reste;
-          dire(String(reste));
+          dire(phraseCompte(reste));
         }
       } else {
         const ronde = programme.rondes[ph.ronde]!;
@@ -356,10 +379,10 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
         c.etat = r.etat;
         if (r.annonce) {
           if (r.annonce.genre === 'combo') {
-            dire(`Combo ${r.annonce.numero}`);
+            dire(phraseCombo(r.annonce.numero));
             setParle({ segment: r.annonce.numero - 1, position: -1 });
           } else {
-            dire(libelleCoup(r.annonce.coup), true);
+            dire(phraseCoup(r.annonce.coup), true);
             const n = combosJoues(ronde)[r.etat.segment]!.length;
             setParle({ segment: r.etat.segment, position: (r.etat.coup - 1 + n) % n });
           }
@@ -367,7 +390,8 @@ function Guide({ programme, reglages, son, playlists, onTempo, onFin, onAbandon 
       }
       setTic((n) => n + 1);
     }, 100);
-    return () => { clearInterval(horloge); arreterVoix(); };
+    // Si la séance se termine normalement, on laisse finir « Séance terminée. Bravo. ».
+    return () => { clearInterval(horloge); if (!s.current.fini) arreterVoix(); };
   }, []);
 
   const changerTempo = (delta: number) => {

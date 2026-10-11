@@ -235,3 +235,13 @@ Module : `conseillerBoxe` et `dernierSupport` dans `src/moteur/boxe.ts`. **Les d
 - **Choix libre** : le conseil est une proposition, jamais une obligation. Le plan propose toujours l'autre support en un geste (« Plutôt : … »).
 - **Données** : `Seance.support?: 'socle' | 'mural'` (champ facultatif, sans impact sur les anciennes données). Il est enregistré à la fin d'une séance lancée dans l'app, ou choisi en notant une séance faite ailleurs.
 - **Pas encore fait** : aucune règle ne fait varier la série guidée selon ce qui serait bon à travailler (l'utilisateur compose et change ses séries lui-même).
+
+## 22. Voix enregistrée de la boxe guidée
+
+- **Pourquoi** : les voix de synthèse de l'iPhone accessibles à une application web sont mécaniques et parfois peu compréhensibles ; les voix Siri ne sont pas exposées aux applications web.
+- **Principe** : de petits clips audio (un par coup, un par mot, un par nombre de 1 à 12 : 36 clips, liste dans `src/donnees/clips-voix.json`) sont fabriqués une fois sur le Mac par `outils/generer-voix.mjs` avec **Piper** (synthèse libre, locale ; rien n'est envoyé sur Internet). L'application les met bout à bout : « Combo 1 : Jab, low kick arrière ».
+- **Voix utilisée** : `fr_FR-siwis-medium` (jeu de données SIWIS), déjà présente dans un autre projet de l'utilisateur. *Licence de la voix à vérifier dans la fiche MODEL_CARD du dépôt rhasspy/piper-voices avant tout usage public.* Les clips générés ne sont **pas** versionnés (`donnees-perso/`) : ils s'importent comme une sauvegarde.
+- **Stockage** : `profil.boxe.voixClips` (adresses de données) et `profil.boxe.voixNom`. Importer un fichier de voix remplace les clips de même nom et garde les autres ; il ne touche ni aux séries ni aux réglages.
+- **Choix** : réglage `sourceVoix` (voix enregistrée ou voix de l'iPhone). S'il manque un clip pour une phrase (ex. ronde n° 13), l'application se rabat sur la voix de l'iPhone pour cette phrase.
+- **Vitesse** : les clips suivent la même règle que la voix de l'iPhone (coups à ×1,2 si le rythme est ≤ 1,2 s ; le reste à vitesse normale). Les clips les plus longs (« Low kick arrière », ≈ 1,3 s) dépassent le rythme minimal de 1,0 s : une nouvelle annonce coupe alors la précédente. *Hypothèse à valider à l'usage.*
+- **Prononciation** : les mots anglais sont écrits phonétiquement pour Piper (champ `dire` de `clips-voix.json`), par exemple « djab », « lo kique ». À corriger dans ce fichier si une prononciation est mauvaise, puis régénérer.

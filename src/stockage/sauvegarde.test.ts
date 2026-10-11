@@ -196,3 +196,47 @@ describe('fusion des sons personnels (un par moment de l\'application)', () => {
     expect(fusionner(appareil({ finRepos: { choix: 'ding' } }), importes).rapport.profilCompleteChamps).toContain('sons');
   });
 });
+
+describe('fusion de la boxe (séries, réglages, voix enregistrée)', () => {
+  const avecBoxe = (boxe: Record<string, unknown>): Donnees => ({ profil: { gear: [], dumbbells: [], boxe } as Donnees['profil'], seances: [], recuperation: [] });
+  const sansBoxe: Donnees = { profil: { gear: [], dumbbells: [] }, seances: [], recuperation: [] };
+
+  it('reprend la voix enregistrée du fichier sans toucher aux séries de l\'appareil', () => {
+    const appareil = avecBoxe({ programmes: [{ id: 'a', nom: 'Ma série', rondes: [] }], reglages: { tempoSec: 1.4 } });
+    const fichier = avecBoxe({ voixClips: { 'coup:jab': 'data:audio/mp4;base64,AAA' }, voixNom: 'Siwis' });
+    const { donnees, rapport } = fusionner(appareil, fichier);
+    expect(donnees.profil.boxe?.programmes).toEqual([{ id: 'a', nom: 'Ma série', rondes: [] }]);
+    expect(donnees.profil.boxe?.reglages).toEqual({ tempoSec: 1.4 });
+    expect(donnees.profil.boxe?.voixClips).toEqual({ 'coup:jab': 'data:audio/mp4;base64,AAA' });
+    expect(donnees.profil.boxe?.voixNom).toBe('Siwis');
+    expect(rapport.profilCompleteChamps).toContain('boxe');
+  });
+
+  it('une nouvelle voix remplace les clips de même nom et garde les autres', () => {
+    const appareil = avecBoxe({ voixClips: { 'coup:jab': 'ancien', 'mot:combo': 'ancien-combo' } });
+    const fichier = avecBoxe({ voixClips: { 'coup:jab': 'nouveau' } });
+    const { donnees } = fusionner(appareil, fichier);
+    expect(donnees.profil.boxe?.voixClips).toEqual({ 'coup:jab': 'nouveau', 'mot:combo': 'ancien-combo' });
+  });
+
+  it('un fichier sans voix n\'efface pas la voix de l\'appareil', () => {
+    const appareil = avecBoxe({ voixClips: { 'coup:jab': 'ancien' } });
+    const fichier = avecBoxe({ reglages: { tempoSec: 2 } });
+    const { donnees } = fusionner(appareil, fichier);
+    expect(donnees.profil.boxe?.voixClips).toEqual({ 'coup:jab': 'ancien' });
+  });
+
+  it('sur un appareil vide, reprend les séries et les réglages du fichier', () => {
+    const fichier = avecBoxe({ programmes: [{ id: 'z', nom: 'Z', rondes: [] }], reglages: { dureeRondeSec: 120 } });
+    const { donnees } = fusionner(sansBoxe, fichier);
+    expect(donnees.profil.boxe?.programmes?.[0]?.id).toBe('z');
+    expect(donnees.profil.boxe?.reglages).toEqual({ dureeRondeSec: 120 });
+  });
+
+  it('ne change rien quand le fichier n\'a pas de boxe', () => {
+    const { donnees, rapport } = fusionner(avecBoxe({ reglages: { tempoSec: 1.4 } }), sansBoxe);
+    expect(donnees.profil.boxe).toEqual({ reglages: { tempoSec: 1.4 } });
+    expect(rapport.profilCompleteChamps).not.toContain('boxe');
+  });
+});
+

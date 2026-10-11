@@ -181,6 +181,59 @@ export async function jouerSon(choix: ChoixSon, perso?: string): Promise<void> {
   }
 }
 
+// ---- Voix enregistrée : de petits clips mis bout à bout, sur leur propre piste (ils ne coupent pas un « ding ») ----
+
+let demandeVoix = 0;
+let voixEnCours: AudioBufferSourceNode[] = [];
+
+/** Coupe la phrase enregistrée en cours. */
+export function arreterEnchainement(): void {
+  demandeVoix++;
+  for (const source of voixEnCours) {
+    try { source.stop(); } catch { /* déjà terminée */ }
+  }
+  voixEnCours = [];
+}
+
+/**
+ * Joue des clips à la suite (adresses de données). Remplace la phrase précédente.
+ * Renvoie `false` si un clip est illisible : l'appelant peut alors se rabattre sur la voix de l'iPhone.
+ */
+export async function jouerEnchainement(adresses: string[], options: { vitesse?: number; pauseSec?: number } = {}): Promise<boolean> {
+  arreterEnchainement();
+  const moi = demandeVoix;
+  const ctx = obtenirContexte();
+  if (!ctx || adresses.length === 0) return false;
+  if (ctx.state === 'suspended') await ctx.resume();
+  const morceaux: AudioBuffer[] = [];
+  for (const adresse of adresses) {
+    let tampon = tampons.get(adresse);
+    if (!tampon) {
+      try {
+        tampon = await ctx.decodeAudioData(await (await fetch(adresse)).arrayBuffer());
+        tampons.set(adresse, tampon);
+      } catch {
+        return false;
+      }
+    }
+    if (moi !== demandeVoix) return true; // une phrase plus récente a pris la place
+    morceaux.push(tampon);
+  }
+  const vitesse = options.vitesse ?? 1;
+  const pause = options.pauseSec ?? 0.06;
+  let debut = ctx.currentTime + 0.02;
+  for (const tampon of morceaux) {
+    const source = ctx.createBufferSource();
+    source.buffer = tampon;
+    source.playbackRate.value = vitesse;
+    source.connect(ctx.destination);
+    source.start(debut);
+    voixEnCours.push(source);
+    debut += tampon.duration / vitesse + pause;
+  }
+  return true;
+}
+
 /** Lit un fichier audio choisi par l'utilisateur et le range sous forme d'adresse de données. */
 export function lireFichierSon(fichier: File): Promise<string> {
   return new Promise((resolve, reject) => {

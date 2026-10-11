@@ -35,6 +35,7 @@ export function reglagesValides(brut: Partial<ReglagesBoxe> | undefined): Reglag
     reposSec: borner(brut?.reposSec, REPOS),
     tempoSec: Math.round(borner(brut?.tempoSec, TEMPO) * 10) / 10,
     garde,
+    sourceVoix: brut?.sourceVoix === 'iphone' ? 'iphone' : 'enregistree',
   };
   if (brut?.voix) r.voix = brut.voix;
   if (brut?.programmeId) r.programmeId = brut.programmeId;

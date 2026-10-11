@@ -1,0 +1,182 @@
+[
+ {
+  "id": "coup:jab",
+  "texte": "Jab",
+  "dire": "djab"
+ },
+ {
+  "id": "coup:direct",
+  "texte": "Direct",
+  "dire": "direct"
+ },
+ {
+  "id": "coup:crochet-avant",
+  "texte": "Crochet avant",
+  "dire": "crochet avant"
+ },
+ {
+  "id": "coup:crochet-arriere",
+  "texte": "Crochet arrière",
+  "dire": "crochet arrière"
+ },
+ {
+  "id": "coup:uppercut-avant",
+  "texte": "Uppercut avant",
+  "dire": "eupeurkeute avant"
+ },
+ {
+  "id": "coup:uppercut-arriere",
+  "texte": "Uppercut arrière",
+  "dire": "eupeurkeute arrière"
+ },
+ {
+  "id": "coup:crochet-corps-avant",
+  "texte": "Crochet au corps avant",
+  "dire": "crochet au corps avant"
+ },
+ {
+  "id": "coup:crochet-corps-arriere",
+  "texte": "Crochet au corps arrière",
+  "dire": "crochet au corps arrière"
+ },
+ {
+  "id": "coup:low-kick-avant",
+  "texte": "Low kick avant",
+  "dire": "lo kique avant"
+ },
+ {
+  "id": "coup:low-kick-arriere",
+  "texte": "Low kick arrière",
+  "dire": "lo kique arrière"
+ },
+ {
+  "id": "coup:middle-kick-avant",
+  "texte": "Middle kick avant",
+  "dire": "mideul kique avant"
+ },
+ {
+  "id": "coup:middle-kick-arriere",
+  "texte": "Middle kick arrière",
+  "dire": "mideul kique arrière"
+ },
+ {
+  "id": "coup:front-kick-avant",
+  "texte": "Front kick avant",
+  "dire": "front kique avant"
+ },
+ {
+  "id": "coup:front-kick-arriere",
+  "texte": "Front kick arrière",
+  "dire": "front kique arrière"
+ },
+ {
+  "id": "coup:genou-avant",
+  "texte": "Genou avant",
+  "dire": "genou avant"
+ },
+ {
+  "id": "coup:genou-arriere",
+  "texte": "Genou arrière",
+  "dire": "genou arrière"
+ },
+ {
+  "id": "coup:esquive",
+  "texte": "Esquive",
+  "dire": "esquive"
+ },
+ {
+  "id": "coup:parade",
+  "texte": "Parade",
+  "dire": "parade"
+ },
+ {
+  "id": "mot:preparetoi",
+  "texte": "Prépare-toi",
+  "dire": "Prépare-toi."
+ },
+ {
+  "id": "mot:repos",
+  "texte": "Repos",
+  "dire": "Repos."
+ },
+ {
+  "id": "mot:ronde",
+  "texte": "Ronde",
+  "dire": "Ronde"
+ },
+ {
+  "id": "mot:sur",
+  "texte": "sur",
+  "dire": "sur"
+ },
+ {
+  "id": "mot:combo",
+  "texte": "Combo",
+  "dire": "Combo"
+ },
+ {
+  "id": "mot:termine",
+  "texte": "Séance terminée. Bravo.",
+  "dire": "Séance terminée. Bravo."
+ },
+ {
+  "id": "nombre:1",
+  "texte": "1",
+  "dire": "un"
+ },
+ {
+  "id": "nombre:2",
+  "texte": "2",
+  "dire": "deux"
+ },
+ {
+  "id": "nombre:3",
+  "texte": "3",
+  "dire": "trois"
+ },
+ {
+  "id": "nombre:4",
+  "texte": "4",
+  "dire": "quatre"
+ },
+ {
+  "id": "nombre:5",
+  "texte": "5",
+  "dire": "cinq"
+ },
+ {
+  "id": "nombre:6",
+  "texte": "6",
+  "dire": "six"
+ },
+ {
+  "id": "nombre:7",
+  "texte": "7",
+  "dire": "sept"
+ },
+ {
+  "id": "nombre:8",
+  "texte": "8",
+  "dire": "huit"
+ },
+ {
+  "id": "nombre:9",
+  "texte": "9",
+  "dire": "neuf"
+ },
+ {
+  "id": "nombre:10",
+  "texte": "10",
+  "dire": "dix"
+ },
+ {
+  "id": "nombre:11",
+  "texte": "11",
+  "dire": "onze"
+ },
+ {
+  "id": "nombre:12",
+  "texte": "12",
+  "dire": "douze"
+ }
+]

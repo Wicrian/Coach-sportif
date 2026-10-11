@@ -90,12 +90,18 @@ export interface ReglagesBoxe {
   garde: Garde;
   /** Identifiant de la voix choisie (voiceURI), ou absent pour la voix par défaut. */
   voix?: string;
+  /** D'où vient la voix : les clips enregistrés (si on en a) ou la voix de l'iPhone. */
+  sourceVoix: 'enregistree' | 'iphone';
   programmeId?: string;
 }
 
 export interface ProfilBoxe {
   programmes?: ProgrammeBoxe[];
   reglages?: Partial<ReglagesBoxe>;
+  /** Voix enregistrée : un petit clip audio par mot ou par coup (adresses de données), gardés sur l'appareil. */
+  voixClips?: Record<string, string>;
+  /** Nom de la voix enregistrée, pour l'affichage. */
+  voixNom?: string;
 }
 
 /**
