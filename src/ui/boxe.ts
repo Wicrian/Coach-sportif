@@ -1,6 +1,8 @@
 import { PROGRAMMES_DEPART, type ProgrammeBoxe, type ReglagesBoxe, type RondeBoxe } from '../donnees/boxe';
 import type { Profil } from '../donnees/types';
-import { reglagesValides } from '../moteur/boxe';
+import { conseillerBoxe, dernierSupport, reglagesValides, type ConseilBoxe } from '../moteur/boxe';
+import { calculerPreparation } from './preparation';
+import type { Donnees } from '../donnees/types';
 
 /** Séries de l'utilisateur, ou celles de départ tant qu'il n'a rien composé. */
 export function programmesDe(profil: Profil): ProgrammeBoxe[] {
@@ -74,4 +76,10 @@ export function momentAnnonceCombo(reposSec: number, nbCoups: number): number {
  */
 export function vitesseVoix(tempoSec: number, estUnCoup: boolean): number {
   return estUnCoup && tempoSec <= 1.2 ? 1.2 : 1;
+}
+
+/** Conseil de boxe (sac sur socle ou reflex bag), selon la dernière boxe et la forme du jour. */
+export function conseilBoxeDuJour(donnees: Donnees, estAujourdhui = true, maintenant: Date = new Date()): ConseilBoxe {
+  const allegee = estAujourdhui && calculerPreparation(donnees, maintenant).verdict === 'allegee';
+  return conseillerBoxe({ dernierSupport: dernierSupport(donnees.seances), allegee });
 }

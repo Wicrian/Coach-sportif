@@ -33,3 +33,11 @@ describe('séance faite ailleurs', () => {
     expect(libelleGenre('cardio')).toBe('Cardio léger');
   });
 });
+
+describe('séance externe de boxe : support', () => {
+  it('garde le support pour la boxe seulement', () => {
+    const maintenant = new Date('2026-10-11T12:00:00');
+    expect(creerSeanceExterne({ jour: '2026-10-11', kind: 'box', durationMin: 20, support: 'mural' }, maintenant).support).toBe('mural');
+    expect(creerSeanceExterne({ jour: '2026-10-11', kind: 'walk', durationMin: 20, support: 'mural' }, maintenant).support).toBeUndefined();
+  });
+});

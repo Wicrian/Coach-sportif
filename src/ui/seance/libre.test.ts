@@ -24,4 +24,10 @@ describe('séance libre (boxe, marche, mobilité, cardio léger)', () => {
   it('dure au moins une minute', () => {
     expect(terminerLibre(demarrerLibre('mob', T0), 3, new Date(T0.getTime() + 5000)).durationMin).toBe(1);
   });
+
+  it('garde le support et la durée conseillée pour la boxe', () => {
+    const b = demarrerLibre('box', T0, { support: 'mural', dureeConseilleeMin: 15 });
+    expect(b).toEqual({ kind: 'box', debut: T0.toISOString(), support: 'mural', dureeConseilleeMin: 15 });
+    expect(terminerLibre(b, 4, new Date('2026-10-10T12:16:00Z')).support).toBe('mural');
+  });
 });

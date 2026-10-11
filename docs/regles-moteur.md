@@ -220,3 +220,18 @@ Module : `src/moteur/boxe.ts` (rythme), `src/donnees/boxe.ts` (coups, séries). 
 - **Garde** : défaut « gaucher » (déclaré par l'utilisateur pour le kickboxing). Les combos sont écrits en « avant / arrière » ; en garde gaucher la main (et la jambe) avant est la droite.
 - **Séries de départ** : la ronde 1 vient de la séance de référence de l'utilisateur ; les rondes 2 et 3 ont été dictées de vive voix, à vérifier. Les rondes 4 à 8 restent à saisir.
 - **Séance enregistrée** : comme une séance libre de type « boxe » (durée depuis le lancement guidé).
+
+## 21. Boxe : sac sur socle ou reflex bag mural (R-64, hypothèse)
+
+Module : `conseillerBoxe` et `dernierSupport` dans `src/moteur/boxe.ts`. **Les durées ci-dessous sont des hypothèses à valider.**
+
+- **Deux supports** : le **sac sur socle** (plus physique : puissance, cardio plus intense ; série guidée par la voix) et le **reflex bag mural musical** (plus léger : vitesse, synchronisation, cardio plus doux ; à son propre rythme, sans voix).
+- **R-64** : le plan conseille un support et dit pourquoi.
+  - préparation du jour **allégée** (R-05) → reflex bag mural, **10 min** (prudence par défaut, principe 2) ;
+  - sinon, **alternance** avec la dernière boxe connue : après le socle → reflex bag mural **15 min** ; après le reflex bag → socle, série guidée ;
+  - sans historique → sac sur socle, série guidée.
+- **Dernier support** : celui de la séance de boxe la plus récente qui en a un. Les séances sans support (anciennes, faites ailleurs sans l'avoir précisé) sont ignorées.
+- **Durée du reflex bag** : seulement conseillée (affichée sous le chrono). L'utilisateur règle son rythme et sa durée ; il peut la lancer lui-même et la noter ensuite.
+- **Choix libre** : le conseil est une proposition, jamais une obligation. Le plan propose toujours l'autre support en un geste (« Plutôt : … »).
+- **Données** : `Seance.support?: 'socle' | 'mural'` (champ facultatif, sans impact sur les anciennes données). Il est enregistré à la fin d'une séance lancée dans l'app, ou choisi en notant une séance faite ailleurs.
+- **Pas encore fait** : aucune règle ne fait varier la série guidée selon ce qui serait bon à travailler (l'utilisateur compose et change ses séries lui-même).

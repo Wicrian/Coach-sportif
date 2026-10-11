@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { libelleCoup, type ProgrammeBoxe, type ReglagesBoxe } from '../../donnees/boxe';
+import { SUPPORTS, libelleCoup, type ProgrammeBoxe, type ReglagesBoxe, type SupportBoxe } from '../../donnees/boxe';
 import type { Playlist, Profil } from '../../donnees/types';
-import { DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, etatDepart, resumeRonde, type EtatRonde } from '../../moteur/boxe';
+import { DUREE_MURAL_MIN, DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, etatDepart, resumeRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
 import { avecProgrammes, avecReglages, dureeTotale, momentAnnonceCombo, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from '../boxe';
 import type { Details } from '../details';
 import { EditeurBoxe } from '../EditeurBoxe';
@@ -27,8 +27,10 @@ interface Props {
   /** Son joué au début de chaque ronde (celui de fin de repos). */
   son: { choix: ChoixSon; perso?: string };
   onProfil: (profil: Profil) => Promise<void>;
-  /** La séance guidée démarre : l'horloge de la séance repart de zéro. */
-  onDebutGuide: () => void;
+  /** Conseil du jour (sac sur socle ou reflex bag), affiché en haut de la préparation. */
+  conseil: ConseilBoxe;
+  /** La séance démarre : l'horloge repart de zéro et on retient sur quoi on frappe. */
+  onDebutGuide: (support: SupportBoxe) => void;
   onFinAffichee: () => void;
   onTerminer: (feel: number | undefined, details: Details) => void;
   onAbandon: () => void;
@@ -50,10 +52,12 @@ function Reglage({ nom, valeur, onMoins, onPlus, moinsOff, plusOff }: { nom: str
 }
 
 /** Séance de boxe guidée : préparation, rondes dictées par la voix, puis bilan comme les autres séances libres. */
-export function SeanceBoxe({ b, profil, playlists, son, onProfil, onDebutGuide, onFinAffichee, onTerminer, onAbandon }: Props) {
+export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDebutGuide, onFinAffichee, onTerminer, onAbandon }: Props) {
   const [mode, setMode] = useState<Mode>('prepa');
   const [lance, setLance] = useState<{ programme: ProgrammeBoxe; reglages: ReglagesBoxe } | null>(null);
   const [voix, setVoix] = useState(() => voixFrancaises());
+  const [support, setSupport] = useState<SupportBoxe>(b.support ?? conseil.support);
+  const [dureeLibre, setDureeLibre] = useState<number | undefined>(undefined);
 
   useEffect(() => surVoixChangees(() => setVoix(voixFrancaises())), []);
 
@@ -64,7 +68,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, onDebutGuide, 
   const modifier = (partiel: Partial<ReglagesBoxe>) => onProfil(avecReglages(profil, partiel));
 
   if (mode === 'libre') {
-    return <SeanceLibre b={b} playlists={playlists} onFinAffichee={onFinAffichee} onTerminer={onTerminer} onAbandon={onAbandon} />;
+    return <SeanceLibre b={b} playlists={playlists} onFinAffichee={onFinAffichee} onTerminer={onTerminer} onAbandon={onAbandon} dureeConseilleeMin={dureeLibre} />;
   }
   if (mode === 'fin') {
     return <SeanceLibre b={b} playlists={playlists} onFinAffichee={onFinAffichee} onTerminer={onTerminer} onAbandon={onAbandon} debutParFin />;
@@ -103,10 +107,52 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, onDebutGuide, 
   const total = dureeTotale(phases);
   const lancer = () => {
     debloquerVoix();
-    onDebutGuide();
+    onDebutGuide('socle');
     setLance({ programme, reglages });
     setMode('guide');
   };
+  const dureeMural = conseil.support === 'mural' && conseil.dureeMin ? conseil.dureeMin : DUREE_MURAL_MIN;
+  const lancerMural = () => {
+    onDebutGuide('mural');
+    setDureeLibre(dureeMural);
+    setMode('libre');
+  };
+
+  const choixSupport = (
+    <div class="carte">
+      <h3>Sur quoi tu frappes ?</h3>
+      <div class="ligne-puces" style="margin-top:10px">
+        {SUPPORTS.map((x) => (
+          <button key={x.id} class={`puce ${support === x.id ? 'active' : ''}`} aria-pressed={support === x.id} onClick={() => setSupport(x.id)}>
+            {x.nom}{conseil.support === x.id ? ' · conseillé' : ''}
+          </button>
+        ))}
+      </div>
+      <p style="margin-top:10px"><b>Conseil :</b> {conseil.raison}</p>
+    </div>
+  );
+
+  if (support === 'mural') {
+    return (
+      <div class="pleine-largeur fond-clair">
+        <div class="ecran fond-clair">
+          <span class="legende" style="color:var(--plum)">BOXE</span>
+          <h1 style="margin-top:8px">Reflex bag mural</h1>
+          <p style="color:var(--plum);margin-top:8px">À ton propre rythme, avec ta musique : vitesse et synchronisation. Pas de voix ici.</p>
+          {choixSupport}
+          <div class="carte">
+            <h3>Durée conseillée</h3>
+            <p><b>{dureeMural} min</b>, à une intensité où tu peux parler. Tu peux arrêter avant ou continuer : le chrono est là pour t'aider.</p>
+          </div>
+          <div class="espace" />
+          <div class="pile">
+            <button class="btn btn-principal" onClick={lancerMural}>Lancer le chrono</button>
+            <button class="btn btn-contour" onClick={() => { if (confirm("Abandonner cette séance sans l'enregistrer ?")) onAbandon(); }}>Abandonner</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div class="pleine-largeur fond-clair">
@@ -114,6 +160,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, onDebutGuide, 
         <span class="legende" style="color:var(--plum)">BOXE GUIDÉE</span>
         <h1 style="margin-top:8px">Prépare ta séance</h1>
         <p style="color:var(--plum);margin-top:8px">La voix te dicte chaque coup : tu frappes quand elle le dit.</p>
+        {choixSupport}
 
         <div class="carte">
           <h3>Ta série</h3>

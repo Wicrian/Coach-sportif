@@ -1,4 +1,4 @@
-import type { Combo, Garde, ReglagesBoxe, RondeBoxe } from '../donnees/boxe';
+import type { Combo, Garde, ReglagesBoxe, RondeBoxe, SupportBoxe } from '../donnees/boxe';
 
 /**
  * Boxe guidée : le rythme des annonces vocales.
@@ -133,4 +133,56 @@ export function avancer(
     etat: { segment: indice, coup: (etat.coup + 1) % n, prochain: quand + tempo },
     annonce: { genre: 'coup', coup: segment.coups[etat.coup]! },
   };
+}
+
+/** Durée conseillée au reflex bag mural, à ton propre rythme (hypothèse, voir docs/regles-moteur.md §20). */
+export const DUREE_MURAL_MIN = 15;
+/** Même chose quand la préparation du jour est allégée (hypothèse). */
+export const DUREE_MURAL_ALLEGEE_MIN = 10;
+
+export interface ConseilBoxe {
+  support: SupportBoxe;
+  /** Durée conseillée, pour le reflex bag (la série guidée a ses propres rondes). */
+  dureeMin?: number;
+  raison: string;
+  regle: 'R-64';
+}
+
+/** Dernier support utilisé en boxe, parmi des séances triées dans n'importe quel ordre. */
+export function dernierSupport(seances: { kind: string; date: string; support?: SupportBoxe }[]): SupportBoxe | undefined {
+  return seances
+    .filter((s) => s.kind === 'box' && s.support)
+    .sort((a, b) => b.date.localeCompare(a.date))[0]?.support;
+}
+
+/**
+ * R-64 (hypothèse) : conseille le sac sur socle (plus physique : puissance, cardio plus intense, série guidée)
+ * ou le reflex bag mural (plus léger : vitesse, synchronisation, durée à son rythme). On alterne pour que les deux
+ * se complètent ; si la préparation du jour est allégée, on reste sur le plus léger (prudence par défaut).
+ */
+export function conseillerBoxe(e: { dernierSupport?: SupportBoxe; allegee: boolean }): ConseilBoxe {
+  if (e.allegee) {
+    return {
+      support: 'mural',
+      dureeMin: DUREE_MURAL_ALLEGEE_MIN,
+      raison: "Ta forme du jour est basse : le reflex bag mural est plus léger pour le corps, et tu gardes la vitesse et la synchronisation.",
+      regle: 'R-64',
+    };
+  }
+  if (e.dernierSupport === 'socle') {
+    return {
+      support: 'mural',
+      dureeMin: DUREE_MURAL_MIN,
+      raison: "Ta dernière boxe était sur le sac sur socle : le reflex bag mural complète, avec de la vitesse et de la synchronisation, pour un cardio plus léger.",
+      regle: 'R-64',
+    };
+  }
+  if (e.dernierSupport === 'mural') {
+    return {
+      support: 'socle',
+      raison: "Ta dernière boxe était au reflex bag : le sac sur socle complète, avec plus de puissance et un travail plus physique, en série guidée.",
+      regle: 'R-64',
+    };
+  }
+  return { support: 'socle', raison: 'Pour commencer, le sac sur socle avec ta série guidée.', regle: 'R-64' };
 }

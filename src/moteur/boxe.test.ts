@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { COUPS, PROGRAMMES_DEPART, membreDuCoup, coupDe, type RondeBoxe } from '../donnees/boxe';
 import {
-  DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, etatDepart, reglagesValides, repetitionsPossibles,
+  DUREE_MURAL_ALLEGEE_MIN, DUREE_MURAL_MIN, DUREE_RONDE, REPOS, TEMPO, avancer, combosJoues, conseillerBoxe, dernierSupport, etatDepart,
+  reglagesValides, repetitionsPossibles,
   resumeRonde, segmentsDeRonde, type Annonce, type EtatRonde,
 } from './boxe';
 
@@ -179,5 +180,48 @@ describe('boxe — données', () => {
     expect(membreDuCoup(jab, 'orthodoxe')).toBe('gauche');
     expect(membreDuCoup(coupDe('direct')!, 'gaucher')).toBe('gauche');
     expect(membreDuCoup(coupDe('esquive')!, 'gaucher')).toBeUndefined();
+  });
+});
+
+describe('boxe — conseil du support (R-64, hypothèse)', () => {
+  it('commence par le sac sur socle avec la série guidée quand il n\'y a pas d\'historique', () => {
+    const c = conseillerBoxe({ allegee: false });
+    expect(c.support).toBe('socle');
+    expect(c.dureeMin).toBeUndefined();
+    expect(c.regle).toBe('R-64');
+  });
+
+  it('alterne : après le sac sur socle, le reflex bag mural avec une durée conseillée', () => {
+    const c = conseillerBoxe({ dernierSupport: 'socle', allegee: false });
+    expect(c.support).toBe('mural');
+    expect(c.dureeMin).toBe(DUREE_MURAL_MIN);
+  });
+
+  it('alterne : après le reflex bag, le sac sur socle', () => {
+    expect(conseillerBoxe({ dernierSupport: 'mural', allegee: false }).support).toBe('socle');
+  });
+
+  it('prudent quand la préparation du jour est allégée : reflex bag, plus court', () => {
+    const c = conseillerBoxe({ dernierSupport: 'mural', allegee: true });
+    expect(c.support).toBe('mural');
+    expect(c.dureeMin).toBe(DUREE_MURAL_ALLEGEE_MIN);
+    expect(DUREE_MURAL_ALLEGEE_MIN).toBeLessThan(DUREE_MURAL_MIN);
+  });
+
+  it('donne toujours une raison lisible', () => {
+    for (const dernier of [undefined, 'socle', 'mural'] as const) {
+      for (const allegee of [false, true]) expect(conseillerBoxe({ dernierSupport: dernier, allegee }).raison.length).toBeGreaterThan(10);
+    }
+  });
+
+  it('retrouve le dernier support utilisé, en ignorant les séances sans support et les autres types', () => {
+    const seances = [
+      { kind: 'strength', date: '2026-10-11T10:00:00Z' },
+      { kind: 'box', date: '2026-10-10T10:00:00Z' },
+      { kind: 'box', date: '2026-10-08T10:00:00Z', support: 'socle' as const },
+      { kind: 'box', date: '2026-10-05T10:00:00Z', support: 'mural' as const },
+    ];
+    expect(dernierSupport(seances)).toBe('socle');
+    expect(dernierSupport([])).toBeUndefined();
   });
 });

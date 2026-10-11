@@ -1,3 +1,4 @@
+import type { SupportBoxe } from '../donnees/boxe';
 import type { GenreSeance, Jour, Seance } from '../donnees/types';
 
 const LIBELLES: Record<GenreSeance, string> = {
@@ -13,7 +14,7 @@ export const libelleGenre = (kind: GenreSeance): string => LIBELLES[kind];
 
 /** Séance faite en dehors de l'app (Boxa, Heavybox, marche…). Elle compte comme les autres dans ta semaine. */
 export function creerSeanceExterne(
-  e: { jour: Jour; kind: GenreSeance; durationMin: number; feel?: number; source?: string },
+  e: { jour: Jour; kind: GenreSeance; durationMin: number; feel?: number; source?: string; support?: SupportBoxe },
   maintenant: Date,
 ): Seance {
   const [an, mois, jour] = e.jour.split('-').map(Number) as [number, number, number];
@@ -22,5 +23,6 @@ export function creerSeanceExterne(
   const seance: Seance = { id: `ext-${maintenant.getTime().toString(36)}`, date: date.toISOString(), kind: e.kind, durationMin: e.durationMin, exercises: [] };
   if (e.feel !== undefined) seance.feel = e.feel;
   if (e.source) seance.source = e.source;
+  if (e.support && e.kind === 'box') seance.support = e.support;
   return seance;
 }

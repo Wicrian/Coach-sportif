@@ -7,7 +7,7 @@ import { Musique } from '../Musique';
 import type { BrouillonLibre } from './libre';
 
 const CONSEILS: Record<BrouillonLibre['kind'], string> = {
-  box: "Travaille au sac ou au reflex bag, ou lance une autre application de boxe. Échauffe-toi, reste à une intensité où tu peux parler, puis reviens ici pour terminer.",
+  box: "Travaille sur ton sac ou ton reflex bag, à ton rythme. Échauffe-toi, reste à une intensité où tu peux parler, puis reviens ici pour terminer.",
   walk: "Marche à ton rythme. Tu dois pouvoir parler sans être essoufflé.",
   mob: "Prends ton temps : de la mobilité et des étirements doux, sans forcer.",
   cardio: "Du cardio léger : reste à une intensité confortable, où tu peux parler.",
@@ -27,10 +27,12 @@ interface Props {
   onAbandon: () => void;
   /** Ouvre directement l'écran de fin (séance guidée déjà terminée). */
   debutParFin?: boolean;
+  /** Durée conseillée par le plan, affichée sous le chrono. */
+  dureeConseilleeMin?: number;
 }
 
 /** Séance sans exercices à saisir : un chronomètre, ta musique, et le bilan à la fin. */
-export function SeanceLibre({ b, playlists, onFinAffichee, onTerminer, onAbandon, debutParFin = false }: Props) {
+export function SeanceLibre({ b, playlists, onFinAffichee, onTerminer, onAbandon, debutParFin = false, dureeConseilleeMin }: Props) {
   const [fin, setFin] = useState(debutParFin);
   const [feel, setFeel] = useState<number | undefined>(undefined);
   const [details, setDetails] = useState<Details>({});
@@ -100,6 +102,9 @@ export function SeanceLibre({ b, playlists, onFinAffichee, onTerminer, onAbandon
             <span style="color:#e6c9ee">depuis le départ</span>
           </div>
         </div>
+        {dureeConseilleeMin !== undefined && (
+          <p style="margin-top:14px;text-align:center;font-weight:700">Durée conseillée : {dureeConseilleeMin} min, à ton rythme.</p>
+        )}
         <p class="discret" style="margin-top:18px;text-align:center">{CONSEILS[b.kind]}</p>
         <div class="espace" />
         <Musique playlists={playlists} />

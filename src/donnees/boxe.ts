@@ -56,6 +56,16 @@ export function membreDuCoup(coup: CoupBoxe, garde: Garde): 'gauche' | 'droite' 
   return (coup.cote === 'avant') === avantEstGauche ? 'gauche' : 'droite';
 }
 
+/** Sur quoi on frappe : le sac sur socle (plus physique) ou le reflex bag mural musical (vitesse, synchronisation). */
+export type SupportBoxe = 'socle' | 'mural';
+
+export const SUPPORTS: { id: SupportBoxe; nom: string }[] = [
+  { id: 'socle', nom: 'Sac sur socle' },
+  { id: 'mural', nom: 'Reflex bag mural' },
+];
+
+export const libelleSupport = (id: SupportBoxe): string => SUPPORTS.find((x) => x.id === id)!.nom;
+
 export type Combo = string[];
 
 export interface RondeBoxe {

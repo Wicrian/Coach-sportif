@@ -4,7 +4,7 @@
  * sont ceux de l'export du prototype : ne pas les renommer sans migration.
  */
 
-import type { ProfilBoxe } from './boxe';
+import type { ProfilBoxe, SupportBoxe } from './boxe';
 
 /** Jour au format 'AAAA-MM-JJ'. */
 export type Jour = string;
@@ -51,6 +51,8 @@ export interface Seance {
   /** Ressenti de séance, 1 (Pénible) à 5 (Super). */
   feel?: number;
   durationMin?: number;
+  /** Pour la boxe : le sac sur socle ou le reflex bag mural. */
+  support?: SupportBoxe;
   /** Application ou lieu d'une séance faite ailleurs (ex. « Boxa »). */
   source?: string;
   /** Effort ressenti pendant la séance, de 1 (très facile) à 10 (maximal). Enregistré, pas encore utilisé par le moteur. */

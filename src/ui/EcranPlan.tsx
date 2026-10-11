@@ -3,7 +3,7 @@ import type { Donnees, Moment, Profil, Seance } from '../donnees/types';
 import { planifier, type JourPlanifie, type TypePlanifie } from '../moteur/planification';
 import { ajouterJours, lundiDeLaSemaine } from '../moteur/utilitaires';
 import { FicheJour } from './FicheJour';
-import type { GenreLibre } from './seance/libre';
+import type { GenreLibre, OptionsLibre } from './seance/libre';
 import { jourLocal } from './jour';
 import { MOMENTS, NOMS_JOURS, creneauDuJour, creneauxDuProfil, definirCreneau, libelleJour, libelleType } from './plan';
 import { calculerPreparation } from './preparation';
@@ -12,7 +12,7 @@ interface Props {
   donnees: Donnees;
   onProfil: (profil: Profil) => Promise<void>;
   onLancer: (modeleId: string, enchainerBoxe?: boolean) => void;
-  onLancerLibre: (kind: GenreLibre) => void;
+  onLancerLibre: (kind: GenreLibre, options?: OptionsLibre) => void;
   /** Enregistrer une séance faite ailleurs (depuis la fiche d'un jour). */
   onAjouter: (s: Seance) => Promise<void>;
   /** Ouvre « Mes créneaux » dès l'arrivée sur l'écran. */

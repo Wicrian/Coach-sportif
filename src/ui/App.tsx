@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { MODELES } from '../donnees/exercices';
 import type { Donnees, EvenementSon, Profil } from '../donnees/types';
 import { curseurAudace } from '../moteur/audace';
+import { conseilBoxeDuJour } from './boxe';
 import { evaluerHabitude } from '../moteur/habitude';
 import { chargerBrouillon, chargerDonnees, effacerBrouillon, exporterTexte, importerSauvegarde, sauverBrouillon, sauverMesure, sauverProfil, sauverSeance, supprimerSeance } from '../stockage/base';
 import { base } from '../stockage/instance';
@@ -19,7 +20,7 @@ import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
 import { demarrer, terminer, type Brouillon } from './seance/deroulement';
 import { preparerSeance } from './seance/preparer';
-import { demarrerLibre, terminerLibre, type BrouillonLibre, type GenreLibre } from './seance/libre';
+import { demarrerLibre, terminerLibre, type BrouillonLibre, type GenreLibre, type OptionsLibre } from './seance/libre';
 import { SeanceActive } from './seance/SeanceActive';
 import { SeanceBoxe } from './seance/SeanceBoxe';
 import { SeanceLibre } from './seance/SeanceLibre';
@@ -105,9 +106,9 @@ export function App() {
     const son = sonPour(donnees.profil, evenement);
     void jouerSon(son.choix, son.perso).catch(() => undefined);
   };
-  const lancerLibre = (kind: GenreLibre) => {
+  const lancerLibre = (kind: GenreLibre, options: OptionsLibre = {}) => {
     jouer(kind === 'box' ? 'debutBoxe' : 'debutSeance');
-    const b = demarrerLibre(kind, new Date());
+    const b = demarrerLibre(kind, new Date(), options);
     setLibre(b);
     setEnLibre(true);
     void sauverBrouillon(base, b, 'libre');
@@ -182,8 +183,9 @@ export function App() {
         playlists={playlistsPour(donnees.profil.playlists, 'box')}
         son={sonPour(donnees.profil, 'finRepos')}
         onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
-        onDebutGuide={() => {
-          const b = { ...libre, debut: new Date().toISOString() };
+        conseil={conseilBoxeDuJour(donnees)}
+        onDebutGuide={(support) => {
+          const b = { ...libre, debut: new Date().toISOString(), support };
           setLibre(b);
           void sauverBrouillon(base, b, 'libre');
         }}

@@ -4,12 +4,12 @@ import type { Donnees, GenreSeance, Profil, Seance } from '../donnees/types';
 import type { JourPlanifie } from '../moteur/planification';
 import { jourDe } from '../moteur/utilitaires';
 import { FormulaireExterne } from './EcranActivite';
-import { dureeTotale, phasesDeSeance, programmeChoisi, reglagesDe } from './boxe';
-import { libelleCoup } from '../donnees/boxe';
-import { resumeRonde } from '../moteur/boxe';
+import { conseilBoxeDuJour, dureeTotale, phasesDeSeance, programmeChoisi, reglagesDe } from './boxe';
+import { libelleCoup, libelleSupport, type SupportBoxe } from '../donnees/boxe';
+import { DUREE_MURAL_MIN, resumeRonde, type ConseilBoxe } from '../moteur/boxe';
 import { libelleGenre } from './activite';
 import { basculerIndisponible, descriptionType, genrePourType, libelleJour, libelleType, lignesPrevues, modeleConseille } from './plan';
-import type { GenreLibre } from './seance/libre';
+import type { GenreLibre, OptionsLibre } from './seance/libre';
 import { preparerSeance } from './seance/preparer';
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
   donnees: Donnees;
   onRetour: () => void;
   onLancer: (modeleId: string, enchainerBoxe?: boolean) => void;
-  onLancerLibre: (kind: GenreLibre) => void;
+  onLancerLibre: (kind: GenreLibre, options?: OptionsLibre) => void;
   onAjouter: (s: Seance) => Promise<void>;
   onProfil: (profil: Profil) => Promise<void>;
 }
@@ -50,6 +50,28 @@ function ApercuBoxe({ profil }: { profil: Profil }) {
   );
 }
 
+/** Le conseil de boxe du jour (sur quoi, combien de temps) et de quoi la lancer, en gardant le choix. */
+function BlocBoxe({ profil, conseil, estAujourdhui, onLancerLibre }: { profil: Profil; conseil: ConseilBoxe; estAujourdhui: boolean; onLancerLibre: Props['onLancerLibre'] }) {
+  const autre: SupportBoxe = conseil.support === 'socle' ? 'mural' : 'socle';
+  const lancer = (support: SupportBoxe) =>
+    onLancerLibre('box', support === 'mural' ? { support, dureeConseilleeMin: conseil.dureeMin ?? DUREE_MURAL_MIN } : { support });
+  const detail = (support: SupportBoxe) =>
+    support === 'mural' ? `${libelleSupport('mural')} · ${conseil.support === 'mural' && conseil.dureeMin ? conseil.dureeMin : DUREE_MURAL_MIN} min à ton rythme` : `${libelleSupport('socle')} · série guidée`;
+  return (
+    <div style="margin-top:12px">
+      <p><b>Conseil : {detail(conseil.support)}.</b> {conseil.raison}</p>
+      {conseil.support === 'socle' && <ApercuBoxe profil={profil} />}
+      {estAujourdhui && (
+        <div class="pile">
+          <button class="btn btn-principal" onClick={() => lancer(conseil.support)}>Démarrer : {detail(conseil.support)}</button>
+          <button class="btn btn-contour" onClick={() => lancer(autre)}>Plutôt : {detail(autre)}</button>
+        </div>
+      )}
+      {!estAujourdhui && <p style="margin-top:8px;font-size:13px">Tu pourras choisir l'autre au moment de lancer.</p>}
+    </div>
+  );
+}
+
 export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLancerLibre, onAjouter, onProfil }: Props) {
   const estAujourdhui = jour.jour === aujourdhui;
   const { profil, seances } = donnees;
@@ -63,6 +85,7 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
   const preselection = genrePourType(type);
   const faitsAujourdhui = seances.filter((s) => jourDe(s.date) === jour.jour);
   const titre = libelleJour(jour.jour, aujourdhui);
+  const conseilBoxe = conseilBoxeDuJour(donnees, estAujourdhui);
 
   const ouvrirForm = (kind: GenreSeance) => {
     setFormulaire({ kind, dureeMin: DUREES[kind] });
@@ -93,10 +116,7 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
           <div class="carte">
             <h3>Partie 2 : la boxe</h3>
             <p>{descriptionType('boxe')} À la fin de ta force, je te propose de l'enchaîner d'un geste.</p>
-            <ApercuBoxe profil={profil} />
-            {estAujourdhui && (
-              <div class="pile"><button class="btn btn-contour" onClick={() => onLancerLibre('box')}>Démarrer la boxe guidée seule</button></div>
-            )}
+            <BlocBoxe profil={profil} conseil={conseilBoxe} estAujourdhui={estAujourdhui} onLancerLibre={onLancerLibre} />
           </div>
         </>
       ) : (
@@ -112,7 +132,7 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
           )}
           {prevu && <p style="margin-top:8px;font-size:13px">{modele.nom}. Les charges sont recalculées au moment où tu démarres, selon ta forme.</p>}
 
-          {type === 'boxe' && <ApercuBoxe profil={profil} />}
+          {type === 'boxe' && <BlocBoxe profil={profil} conseil={conseilBoxe} estAujourdhui={estAujourdhui} onLancerLibre={onLancerLibre} />}
 
           {faitsAujourdhui.length > 0 && type === 'deja-fait' && (
             <ul class="signaux">
@@ -125,7 +145,9 @@ export function FicheJour({ jour, aujourdhui, donnees, onRetour, onLancer, onLan
           )}
           {estAujourdhui && preselection && !formulaire && (
             <div class="pile">
-              <button class="btn btn-principal" onClick={() => onLancerLibre(preselection.kind as GenreLibre)}>{preselection.kind === 'box' ? 'Démarrer la boxe guidée' : `Démarrer : ${libelleGenre(preselection.kind).toLowerCase()}`}</button>
+              {preselection.kind !== 'box' && (
+                <button class="btn btn-principal" onClick={() => onLancerLibre(preselection.kind as GenreLibre)}>Démarrer : {libelleGenre(preselection.kind).toLowerCase()}</button>
+              )}
               <button class="btn btn-contour" onClick={() => ouvrirForm(preselection.kind)}>Je l'ai déjà faite</button>
             </div>
           )}

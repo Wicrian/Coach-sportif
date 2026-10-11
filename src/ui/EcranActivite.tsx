@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { SUPPORTS, libelleSupport, type SupportBoxe } from '../donnees/boxe';
 import { EXERCICES } from '../donnees/exercices';
 import type { GenreSeance, Seance } from '../donnees/types';
 import { jourDe } from '../moteur/utilitaires';
@@ -22,6 +23,7 @@ export function FormulaireExterne({ onAjouter, onFerme, preselection }: { onAjou
   const [jour, setJour] = useState(jourLocal(new Date()));
   const [duree, setDuree] = useState(preselection?.dureeMin ?? 30);
   const [source, setSource] = useState('');
+  const [support, setSupport] = useState<SupportBoxe | undefined>(undefined);
   const [feel, setFeel] = useState<number | undefined>(undefined);
   const [details, setDetails] = useState<Details>({});
 
@@ -36,6 +38,15 @@ export function FormulaireExterne({ onAjouter, onFerme, preselection }: { onAjou
           {GENRES.map((g) => <button key={g} class={`puce ${kind === g ? 'active' : ''}`} aria-pressed={kind === g} onClick={() => setKind(g)}>{libelleGenre(g)}</button>)}
         </div>
       </div>
+
+      {kind === 'box' && (
+        <div class="groupe">
+          <span class="etiquette">Sur quoi (facultatif)</span>
+          <div class="ligne-puces">
+            {SUPPORTS.map((x) => <button key={x.id} class={`puce ${support === x.id ? 'active' : ''}`} aria-pressed={support === x.id} onClick={() => setSupport(support === x.id ? undefined : x.id)}>{x.nom}</button>)}
+          </div>
+        </div>
+      )}
 
       <div class="groupe">
         <label class="etiquette" for="jour-ext">Jour</label>
@@ -69,7 +80,7 @@ export function FormulaireExterne({ onAjouter, onFerme, preselection }: { onAjou
 
       <div class="grille2" style="margin-top:18px">
         <button class="btn btn-contour" onClick={onFerme}>Annuler</button>
-        <button class="btn btn-principal" onClick={async () => { await onAjouter(appliquerDetails(creerSeanceExterne({ jour, kind, durationMin: duree, feel, source: source.trim() || undefined }, new Date()), details)); onFerme(); }}>Enregistrer</button>
+        <button class="btn btn-principal" onClick={async () => { await onAjouter(appliquerDetails(creerSeanceExterne({ jour, kind, durationMin: duree, feel, source: source.trim() || undefined, support }, new Date()), details)); onFerme(); }}>Enregistrer</button>
       </div>
     </div>
   );
@@ -112,7 +123,7 @@ export function Activite({ seances, onAjouter, onSupprimer, onBilan }: Props) {
             return (
               <div class="seance" key={s.id}>
                 <div class="corps">
-                  <b>{libelleGenre(s.kind)}{s.source ? ` · ${s.source}` : ''}</b>
+                  <b>{libelleGenre(s.kind)}{s.support ? ` · ${libelleSupport(s.support)}` : ''}{s.source ? ` · ${s.source}` : ''}</b>
                   <span class="sous">{details || 'Séance enregistrée'}</span>
                 </div>
                 <button class="mini neutre" aria-label={`Voir le bilan de la séance ${libelleGenre(s.kind)} du ${titre(g.jour)}`} onClick={() => onBilan(s.id)}>Bilan</button>

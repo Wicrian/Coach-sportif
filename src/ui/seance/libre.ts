@@ -1,3 +1,4 @@
+import type { SupportBoxe } from '../../donnees/boxe';
 import type { GenreSeance, Seance } from '../../donnees/types';
 import { appliquerDetails, type Details } from '../details';
 
@@ -8,10 +9,22 @@ export interface BrouillonLibre {
   kind: GenreLibre;
   /** Début, date ISO. */
   debut: string;
+  /** Boxe : sur quoi (sac sur socle ou reflex bag mural), s'il est connu. */
+  support?: SupportBoxe;
+  /** Durée conseillée par le plan, en minutes (reflex bag). */
+  dureeConseilleeMin?: number;
 }
 
-export function demarrerLibre(kind: GenreLibre, maintenant: Date): BrouillonLibre {
-  return { kind, debut: maintenant.toISOString() };
+export interface OptionsLibre {
+  support?: SupportBoxe;
+  dureeConseilleeMin?: number;
+}
+
+export function demarrerLibre(kind: GenreLibre, maintenant: Date, options: OptionsLibre = {}): BrouillonLibre {
+  const b: BrouillonLibre = { kind, debut: maintenant.toISOString() };
+  if (options.support) b.support = options.support;
+  if (options.dureeConseilleeMin) b.dureeConseilleeMin = options.dureeConseilleeMin;
+  return b;
 }
 
 export function terminerLibre(b: BrouillonLibre, feel: number | undefined, maintenant: Date, details: Details = {}): Seance {
@@ -24,5 +37,6 @@ export function terminerLibre(b: BrouillonLibre, feel: number | undefined, maint
     exercises: [],
   };
   if (feel !== undefined) seance.feel = feel;
+  if (b.support) seance.support = b.support;
   return appliquerDetails(seance, details);
 }
