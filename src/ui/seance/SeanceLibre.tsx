@@ -25,11 +25,13 @@ interface Props {
   onFinAffichee: () => void;
   onTerminer: (feel: number | undefined, details: Details) => void;
   onAbandon: () => void;
+  /** Ouvre directement l'écran de fin (séance guidée déjà terminée). */
+  debutParFin?: boolean;
 }
 
 /** Séance sans exercices à saisir : un chronomètre, ta musique, et le bilan à la fin. */
-export function SeanceLibre({ b, playlists, onFinAffichee, onTerminer, onAbandon }: Props) {
-  const [fin, setFin] = useState(false);
+export function SeanceLibre({ b, playlists, onFinAffichee, onTerminer, onAbandon, debutParFin = false }: Props) {
+  const [fin, setFin] = useState(debutParFin);
   const [feel, setFeel] = useState<number | undefined>(undefined);
   const [details, setDetails] = useState<Details>({});
   const [, setTic] = useState(0);
@@ -37,6 +39,10 @@ export function SeanceLibre({ b, playlists, onFinAffichee, onTerminer, onAbandon
   useEffect(() => {
     const t = setInterval(() => setTic((n) => n + 1), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (debutParFin) onFinAffichee();
   }, []);
 
   // Garde l'écran allumé pendant la séance.

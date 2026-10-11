@@ -21,6 +21,7 @@ import { demarrer, terminer, type Brouillon } from './seance/deroulement';
 import { preparerSeance } from './seance/preparer';
 import { demarrerLibre, terminerLibre, type BrouillonLibre, type GenreLibre } from './seance/libre';
 import { SeanceActive } from './seance/SeanceActive';
+import { SeanceBoxe } from './seance/SeanceBoxe';
 import { SeanceLibre } from './seance/SeanceLibre';
 
 export function App() {
@@ -161,6 +162,34 @@ export function App() {
           setBoxeApresBilan(brouillon.enchainerBoxe === true);
           setBilanId(terminee.id);
         }}
+      />
+    );
+  }
+
+  if (enLibre && libre && libre.kind === 'box') {
+    const finDeLibre = async (feel: number | undefined, details: Parameters<typeof terminerLibre>[3]) => {
+      arreterSon();
+      const terminee = terminerLibre(libre, feel, new Date(), details);
+      await sauverSeance(base, terminee);
+      await quitterLibre();
+      await recharger();
+      setBilanId(terminee.id);
+    };
+    return (
+      <SeanceBoxe
+        b={libre}
+        profil={donnees.profil}
+        playlists={playlistsPour(donnees.profil.playlists, 'box')}
+        son={sonPour(donnees.profil, 'finRepos')}
+        onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
+        onDebutGuide={() => {
+          const b = { ...libre, debut: new Date().toISOString() };
+          setLibre(b);
+          void sauverBrouillon(base, b, 'libre');
+        }}
+        onFinAffichee={() => jouer('finSeance')}
+        onTerminer={finDeLibre}
+        onAbandon={quitterLibre}
       />
     );
   }

@@ -202,3 +202,20 @@ Choix faits lors du codage de `src/moteur/ordre-seance.ts` :
   - **Périmètre** : les séances de la semaine (lundi au dimanche) jusqu'à la séance du bilan incluse ; les séances postérieures ne comptent pas, pour que le bilan reste le même quand on le rouvre.
   - **Muscles** : ceux de la fiche de l'exercice (muscle principal). Un exercice qui travaille deux muscles compte pour les deux.
 - **Séance « force et boxe »** : la fiche montre deux parties. « Démarrer la force, puis la boxe » marque la séance de force (`enchainerBoxe`) ; son bilan propose alors « Démarrer la boxe » (séance libre, avec le son de lancement de boxe). La boxe peut aussi être démarrée seule. Les deux parties sont enregistrées comme **deux séances** (force, puis boxe), ce qui est plus clair dans l'Activité.
+
+## 20. Boxe guidée par la voix (rythme des annonces)
+
+Module : `src/moteur/boxe.ts` (rythme), `src/donnees/boxe.ts` (coups, séries). **Toutes les valeurs ci-dessous sont des hypothèses à valider à l'usage.**
+
+- **Principe (voulu par l'utilisateur)** : la voix dicte chaque coup, et il le frappe au moment où elle le dit. Le rythme doit rester jouable (pas de 36 jabs à la seconde) et réglable.
+- **Découpage d'une ronde** : parts égales, une par combo. Chaque combo se répète pendant sa part. Le dernier combo (option « enchaîné ») reprend tous les précédents bout à bout. Exemple : ronde de 3 min, 2 combos + enchaîné → 1 min chacun.
+- **Répétitions entières** : un combo ne démarre une répétition que si elle tient en entier avant la fin de sa part. Le temps restant est silencieux.
+- **Annonce du combo** : « Combo n » est dit au début de chaque part et occupe un temps (un coup).
+- **Rythme** (secondes entre deux coups) : défaut **1,6 s**, borné **1,0 à 3,0 s**, pas de 0,2 s. *Hypothèse* : 1,0 s est à peu près la durée d'un nom de coup dit par la voix ; en dessous, les annonces se chevauchent.
+- **Durée d'une ronde** : défaut **180 s** (3 min, usage de la boxe), bornée **30 à 600 s**, pas de 30 s.
+- **Repos** : défaut **25 s** (valeur vue sur l'écran de référence de l'utilisateur), borné 10 à 120 s, pas de 5 s. Un repos précède chaque ronde (c'est aussi la préparation avant la première), pas de repos après la dernière.
+- **Vitesse de la voix** : 1,0 normalement, 1,2 quand le rythme est ≤ 1,2 s par coup (hypothèse).
+- **Retard** : après un long silence (écran verrouillé), on repart de l'instant présent, sans rafale d'annonces.
+- **Garde** : défaut « gaucher » (déclaré par l'utilisateur pour le kickboxing). Les combos sont écrits en « avant / arrière » ; en garde gaucher la main (et la jambe) avant est la droite.
+- **Séries de départ** : la ronde 1 vient de la séance de référence de l'utilisateur ; les rondes 2 et 3 ont été dictées de vive voix, à vérifier. Les rondes 4 à 8 restent à saisir.
+- **Séance enregistrée** : comme une séance libre de type « boxe » (durée depuis le lancement guidé).

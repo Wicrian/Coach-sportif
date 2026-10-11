@@ -4,6 +4,8 @@
  * sont ceux de l'export du prototype : ne pas les renommer sans migration.
  */
 
+import type { ProfilBoxe } from './boxe';
+
 /** Jour au format 'AAAA-MM-JJ'. */
 export type Jour = string;
 
@@ -93,6 +95,8 @@ export interface Profil {
   why?: string;
   /** Photo de profil, réduite et recadrée en carré (adresse de données « data: »). Reste sur l'appareil. */
   avatar?: string;
+  /** Boxe guidée : séries composées et réglages (rythme, voix, garde). */
+  boxe?: ProfilBoxe;
   /** Sons par moment de l'application. */
   sons?: Partial<Record<EvenementSon, SonChoisi>>;
   /** Ancien réglage (son de fin de repos), lu s'il n'y a pas de `sons`. */

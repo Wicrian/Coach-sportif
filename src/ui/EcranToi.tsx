@@ -3,6 +3,8 @@ import type { Donnees, GenreSeance, Playlist, Profil } from '../donnees/types';
 import { chargesDisponibles } from '../moteur/materiel';
 import { jourDe } from '../moteur/utilitaires';
 import { libelleGenre } from './activite';
+import { avecProgrammes, avecReglages, programmesDe, reglagesDe } from './boxe';
+import { EditeurBoxe } from './EditeurBoxe';
 import { Avatar } from './BulleProfil';
 import { reduirePhoto } from './avatar';
 import type { SaisieCheckin } from './checkin';
@@ -138,6 +140,31 @@ function SonsCard({ profil, onProfil }: { profil: Profil; onProfil: Props['onPro
       })}
       <Message m={message} />
       <p style="margin-top:12px;font-size:13px">Les sons se jouent quand l'écran est allumé. Si ton iPhone est en mode silencieux, tu risques de ne rien entendre.</p>
+    </div>
+  );
+}
+
+function BoxeCard({ profil, onProfil }: { profil: Profil; onProfil: Props['onProfil'] }) {
+  const [ouvert, setOuvert] = useState(false);
+  const reglages = reglagesDe(profil);
+  return (
+    <div class="carte">
+      <h3>Ma boxe guidée</h3>
+      <p>Compose tes séries de combos : la voix te les dicte pendant la séance de boxe.</p>
+      <div class="groupe">
+        <span class="etiquette">Ta garde</span>
+        <div class="ligne-puces" style="margin-top:6px">
+          {([['gaucher', 'Gaucher'], ['orthodoxe', 'Orthodoxe']] as const).map(([id, nom]) => (
+            <button key={id} class={`puce ${reglages.garde === id ? 'active' : ''}`} aria-pressed={reglages.garde === id} onClick={() => onProfil(avecReglages(profil, { garde: id }))}>{nom}</button>
+          ))}
+        </div>
+        <p style="margin-top:6px;font-size:13px">Les combos disent « avant » et « arrière » : en garde gaucher, la main avant est la droite.</p>
+      </div>
+      {ouvert ? (
+        <EditeurBoxe programmes={programmesDe(profil)} garde={reglages.garde} onChanger={(liste) => void onProfil(avecProgrammes(profil, liste))} onFermer={() => setOuvert(false)} />
+      ) : (
+        <div class="pile"><button class="btn btn-contour" onClick={() => setOuvert(true)}>Composer mes séries</button></div>
+      )}
     </div>
   );
 }
@@ -305,6 +332,7 @@ export function EcranToi({ donnees, onProfil, onMesure, onAllerCreneaux }: Props
 
       <Musique profil={profil} onProfil={onProfil} />
       <SonsCard profil={profil} onProfil={onProfil} />
+      <BoxeCard profil={profil} onProfil={onProfil} />
 
       <div class="carte">
         <h3>Tes créneaux</h3>

@@ -112,3 +112,11 @@ Sur iPhone, l'audio n'est débloqué qu'à la **fin** d'un toucher (le doigt se 
 - Le déblocage et le son d'ouverture se font maintenant au **premier toucher terminé** (`touchend`, `click` ou une touche du clavier).
 - **Le dernier son demandé gagne** : une demande de son annule celles qui attendent encore. Si le premier toucher lance une séance, seul le son de séance se joue (le son d'ouverture attend 150 ms pour lui laisser la priorité).
 - Les sons personnels sont **décodés à l'avance** (au démarrage et après un import) pour partir sans attendre.
+
+## Boxe guidée par la voix (10 octobre)
+
+- Nouvel écran **Boxe guidée** (lancé par « Démarrer la boxe seule » / « Démarrer la boxe ») : choix de la série, durée de ronde, repos, rythme, voix ; puis la voix dicte les combos. Chaque combo se répète pendant sa part de la ronde ; le dernier enchaîne les précédents.
+- Séries composables dans **Profil › Ma boxe guidée** (rondes, combos, coups) ; copie, duplication, suppression. Une série de départ (rondes 1 à 3) est fournie.
+- Voix : celle de l'iPhone (synthèse vocale du navigateur), hors ligne, rien n'est envoyé. Choix de la voix dans l'écran de préparation.
+- Limites connues : la voix ne parle qu'écran allumé ; une séance guidée interrompue (app fermée) n'est pas reprise là où elle s'était arrêtée ; pas encore d'images par coup ni de voix enregistrée par l'utilisateur.
+- Le dossier `boxe/` (captures d'écran d'autres applications) est ignoré par Git.
