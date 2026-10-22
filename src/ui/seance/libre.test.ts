@@ -30,4 +30,12 @@ describe('séance libre (boxe, marche, mobilité, cardio léger)', () => {
     expect(b).toEqual({ kind: 'box', debut: T0.toISOString(), support: 'mural', dureeConseilleeMin: 15 });
     expect(terminerLibre(b, 4, new Date('2026-10-10T12:16:00Z')).support).toBe('mural');
   });
+
+  it('garde le format intensif sur la séance enregistrée', () => {
+    const b = demarrerLibre('box', T0, { support: 'socle', format: 'intensif' });
+    expect(b.format).toBe('intensif');
+    expect(terminerLibre(b, 4, new Date('2026-10-10T12:12:00Z'))).toMatchObject({ support: 'socle', intensif: true });
+    expect(terminerLibre(demarrerLibre('box', T0), 4, new Date('2026-10-10T12:12:00Z')).intensif).toBeUndefined();
+  });
 });
+

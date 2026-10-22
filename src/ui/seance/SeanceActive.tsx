@@ -123,7 +123,7 @@ function EcranSerie({ b, inventaire, playlists, onChange, onAbandon }: Props) {
         <h2>{ex.nom}</h2>
         <div style="margin-top:10px">
           <span class="badge sur-sombre">{ex.muscle}</span>{' '}
-          <span class="badge sur-sombre">{ex.series.length} séries · {prevue.reps} reps</span>
+          <span class="badge sur-sombre">{ex.series.length} série{ex.series.length > 1 ? 's' : ''} · {prevue.reps} reps</span>
         </div>
 
         <div>

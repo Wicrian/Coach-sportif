@@ -136,3 +136,24 @@ describe('R-51 : ressenti « pénible » ou « bof » → séance suivante allé
     expect(preparerSeance({ modele, seances: [avecRessenti(1)], profil: PROFIL }).exercices[0]!.series).toHaveLength(2);
   });
 });
+
+describe('preparerSeance : version minimale (R-81, dose de maintien)', () => {
+  it('une seule série par exercice, avec les mêmes charges et répétitions que la version normale', () => {
+    const normale = preparerSeance({ modele: FB, seances: [seanceAvec('2026-10-01', 'goblet', 3.8, [12, 12, 12])], profil: PROFIL });
+    const minimale = preparerSeance({ modele: FB, seances: [seanceAvec('2026-10-01', 'goblet', 3.8, [12, 12, 12])], profil: PROFIL, minimale: true });
+    expect(minimale.minimale).toBe(true);
+    expect(minimale.exercices.every((e) => e.series.length === 1)).toBe(true);
+    expect(minimale.exercices.map((e) => e.key).sort()).toEqual(normale.exercices.map((e) => e.key).sort());
+    expect(exo(minimale, 'goblet').series[0]).toEqual(exo(normale, 'goblet').series[0]);
+    expect(minimale.regles).toContain('R-81');
+  });
+
+  it('garde tous les exercices du modèle', () => {
+    expect(preparerSeance({ modele: FB, seances: [], profil: PROFIL, minimale: true }).exercices).toHaveLength(FB.exercices.length);
+  });
+
+  it('la version normale n\'est pas minimale', () => {
+    expect(preparerSeance({ modele: FB, seances: [], profil: PROFIL }).minimale).toBe(false);
+  });
+});
+

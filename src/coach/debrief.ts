@@ -5,6 +5,7 @@
 import type { Seance } from '../donnees/types';
 import type { FaitsSeance } from '../moteur/debrief';
 import type { ReperesSemaine } from '../moteur/reperes';
+import { retourIntensif } from './point-semaine';
 
 export interface EntreeBilan {
   seance: Seance;
@@ -101,6 +102,8 @@ export function redigerBilan(e: EntreeBilan): Bilan {
   if (fc?.zones && fc.zones.some((z) => z > 0)) {
     polar.push(`Temps par zone : ${fc.zones.map((z, i) => `zone ${i + 1} ${z} min`).filter((_, i) => fc.zones![i]! > 0).join(', ')}.`);
   }
+
+  if (seance.intensif) polar.push(...retourIntensif(fc));
 
   // --- La semaine, comparée aux repères (jamais « l'effet » d'une séance seule)
   const semaine: string[] = [];

@@ -39,6 +39,8 @@ export interface PlanSeance {
   changements: number;
   /** R-51 : séance allégée d'un cran parce que la précédente du même type a été pénible ou bof. */
   allegee: boolean;
+  /** Version minimale (dose de maintien) : une série par exercice. */
+  minimale: boolean;
   regles: string[];
 }
 
@@ -86,14 +88,15 @@ export function compterLissage(seances: Seance[], key: string, cibleReps: number
   return Math.max(0, n - 1);
 }
 
-export function preparerSeance(entree: { modele: ModeleSeance; seances: Seance[]; profil: Profil }): PlanSeance {
-  const { modele, seances, profil } = entree;
+export function preparerSeance(entree: { modele: ModeleSeance; seances: Seance[]; profil: Profil; minimale?: boolean }): PlanSeance {
+  const { modele, seances, profil, minimale = false } = entree;
   const charges = chargesDuProfil(profil);
 
   // R-51 : ressenti « pénible » (1) ou « bof » (2) à la dernière séance du même type → une série de moins.
   const precedenteMemeType = recentesD(seances).find((x) => x.tplId === modele.id);
   const allegee = precedenteMemeType?.feel !== undefined && precedenteMemeType.feel <= 2;
-  const nombreSeries = allegee ? Math.max(2, modele.series - 1) : modele.series;
+  // R-81 : version minimale (dose de maintien) : une seule série de travail par exercice, mêmes charges.
+  const nombreSeries = minimale ? 1 : allegee ? Math.max(2, modele.series - 1) : modele.series;
 
   const exercices: ExercicePlan[] = modele.exercices.map((key) => {
     const e = EXERCICES[key]!;
@@ -132,6 +135,7 @@ export function preparerSeance(entree: { modele: ModeleSeance; seances: Seance[]
     exercices: ordre.exercices.map((o) => parCle.get(o.key)!),
     changements: ordre.changements,
     allegee,
-    regles: allegee ? [...ordre.regles, 'R-51'] : ordre.regles,
+    minimale,
+    regles: minimale ? [...ordre.regles, 'R-81'] : allegee ? [...ordre.regles, 'R-51'] : ordre.regles,
   };
 }

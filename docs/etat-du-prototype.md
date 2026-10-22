@@ -120,3 +120,10 @@ Sur iPhone, l'audio n'est débloqué qu'à la **fin** d'un toucher (le doigt se 
 - Voix : celle de l'iPhone (synthèse vocale du navigateur), hors ligne, rien n'est envoyé. Choix de la voix dans l'écran de préparation.
 - Limites connues : la voix ne parle qu'écran allumé ; une séance guidée interrompue (app fermée) n'est pas reprise là où elle s'était arrêtée ; pas encore d'images par coup ni de voix enregistrée par l'utilisateur.
 - Le dossier `boxe/` (captures d'écran d'autres applications) est ignoré par Git.
+
+## Le point de la semaine (22 octobre)
+
+- **Accueil** : une carte « Le point sur ta semaine » (ou « N jours sans séance » à partir de 8 jours) ouvre un écran dédié.
+- **Écran « Le point sur ta semaine »** : cette semaine ou la semaine dernière (séances, minutes, séries par muscle) ; « ce que ça donne » (effets estimés, honnêtes) ; « depuis ta dernière séance » avec ce que ça change et ce qui changerait en continuant ; trois façons de faire moins quand on n'a pas le temps, avec ce qu'elles font et ne font pas.
+- **Version minimale de la séance de force** : une série par exercice, mêmes charges (R-81).
+- **Limites** : estimations tirées d'études ; pas de notification ; l'objectif de l'utilisateur règle les phrases mais pas encore le plan.

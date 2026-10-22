@@ -240,16 +240,20 @@ export function reglagesIntervallesValides(brut: Partial<ReglagesIntervalles> | 
 }
 
 export interface PhaseIntervalle {
-  genre: 'effort' | 'repos' | 'pause';
+  genre: 'chauffe' | 'effort' | 'repos' | 'pause';
   duree: number;
   /** Numéro du bloc et de la répétition, à partir de 1. */
   bloc: number;
   repetition: number;
 }
 
-/** Efforts et repos à la suite ; une pause entre les blocs ; pas de repos après le tout dernier effort. */
-export function phasesIntervalles(c: ReglagesIntervalles): PhaseIntervalle[] {
+/**
+ * Efforts et repos à la suite ; une pause entre les blocs ; pas de repos après le tout dernier effort.
+ * Avec `echauffementSec`, une phase d'échauffement ouvre la séance.
+ */
+export function phasesIntervalles(c: ReglagesIntervalles, echauffementSec = 0): PhaseIntervalle[] {
   const phases: PhaseIntervalle[] = [];
+  if (echauffementSec > 0) phases.push({ genre: 'chauffe', duree: echauffementSec, bloc: 1, repetition: 0 });
   for (let bloc = 1; bloc <= c.blocs; bloc++) {
     for (let rep = 1; rep <= c.repetitions; rep++) {
       phases.push({ genre: 'effort', duree: c.effortSec, bloc, repetition: rep });
@@ -261,3 +265,27 @@ export function phasesIntervalles(c: ReglagesIntervalles): PhaseIntervalle[] {
 }
 
 export const dureeIntervalles = (phases: PhaseIntervalle[]): number => phases.reduce((s, p) => s + p.duree, 0);
+
+// ---- Intensif court au sac sur socle ----
+
+/**
+ * R-82 (hypothèse §26) : un bloc court et intense, pour les jours où l'on manque de temps ou d'envie.
+ * 8 efforts de 30 s pour 15 s de repos (bornes hautes de la fiche de Capello : 20-30 s d'effort, 10-15 s de repos),
+ * un seul bloc : environ 6 minutes. Raison : pour garder son endurance avec moins de temps, il faut garder
+ * l'intensité (Spiering, 2021).
+ */
+export const INTENSIF: ReglagesIntervalles = { effortSec: 30, reposSec: 15, repetitions: 8, blocs: 1 };
+/** Échauffement avant l'intensif : 5 minutes au moins (Capello). */
+export const ECHAUFFEMENT_INTENSIF_SEC = 300;
+/**
+ * Cible (hypothèse) : au moins 2 minutes dans les zones 4 et 5 de la ceinture (80 à 100 % de la FC max, zones
+ * standard de Polar), soit la moitié des 4 minutes d'effort. La FC met du temps à monter : on ne vise pas 100 %.
+ */
+export const MIN_ZONES_4_5_CIBLE = 2;
+
+/** Minutes passées dans les zones 4 et 5, ou `null` si les zones n'ont pas été saisies. */
+export function minutesEnZones45(fc: { moy?: number; max?: number; zones?: number[] } | undefined): number | null {
+  const z = fc?.zones;
+  if (!z || z.length < 5) return null;
+  return (z[3] ?? 0) + (z[4] ?? 0);
+}

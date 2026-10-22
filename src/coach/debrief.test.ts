@@ -151,3 +151,30 @@ describe('« où tu en es cette semaine » : des repères, pas un effet promis',
     expect(avec(null).semaine).toEqual([]);
   });
 });
+
+describe('bilan d\'un intensif court au sac sur socle', () => {
+  const intensif = (fc?: Seance['fc']) => redigerBilan({
+    seance: seance({ kind: 'box', durationMin: 12, support: 'socle', intensif: true, ...(fc ? { fc } : {}) }),
+    typeSeance: 'Boxe',
+    faits: { exercices: [], series: 0, volume: 0, volumePrecedent: null, tendanceVolume: null },
+    noms: {}, suite: [], prochaineAllegee: false, reperes: null,
+  });
+
+  it('invite à saisir les zones Polar quand elles manquent', () => {
+    expect(intensif().polar.join(' ')).toMatch(/zones Polar/);
+  });
+
+  it('dit si la zone visée est atteinte, avec les zones saisies', () => {
+    expect(intensif({ zones: [3, 3, 2, 3, 1] }).polar.join(' ')).toMatch(/atteinte/);
+  });
+
+  it('une boxe ordinaire n\'ajoute rien de plus', () => {
+    const b = redigerBilan({
+      seance: seance({ kind: 'box', durationMin: 35, support: 'socle' }),
+      typeSeance: 'Boxe',
+      faits: { exercices: [], series: 0, volume: 0, volumePrecedent: null, tendanceVolume: null },
+      noms: {}, suite: [], prochaineAllegee: false, reperes: null,
+    });
+    expect(b.polar).toEqual([]);
+  });
+});

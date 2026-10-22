@@ -53,6 +53,8 @@ export interface Seance {
   durationMin?: number;
   /** Pour la boxe : le sac sur socle ou le reflex bag mural. */
   support?: SupportBoxe;
+  /** Bloc court et intense au sac sur socle (R-82). */
+  intensif?: boolean;
   /** Application ou lieu d'une séance faite ailleurs (ex. « Boxa »). */
   source?: string;
   /** Effort ressenti pendant la séance, de 1 (très facile) à 10 (maximal). Enregistré, pas encore utilisé par le moteur. */

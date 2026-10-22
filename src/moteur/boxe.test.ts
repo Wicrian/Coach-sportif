@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { COUPS, PROGRAMMES_DEPART, membreDuCoup, coupDe, type RondeBoxe } from '../donnees/boxe';
 import {
   DUREE_MURAL_ALLEGEE_MIN, DUREE_MURAL_MIN, DUREE_RONDE, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, PREPARATION_SEC, REPOS, TEMPO, avancer, combosJoues, conseillerBoxe, coupsParMinute, dernierSupport, etatDepart, REPERES_COUPS_PAR_MIN,
-  dureeIntervalles, phasesIntervalles, reglagesIntervallesValides, tempoDeLaRonde,
+  dureeIntervalles, phasesIntervalles, reglagesIntervallesValides, tempoDeLaRonde, INTENSIF, ECHAUFFEMENT_INTENSIF_SEC, MIN_ZONES_4_5_CIBLE, minutesEnZones45,
   reglagesValides, repetitionsPossibles,
   resumeRonde, segmentsDeRonde, type Annonce, type EtatRonde,
 } from './boxe';
@@ -307,5 +307,45 @@ describe('boxe — intervalles au reflex bag (hypothèses §24)', () => {
     expect(r.reposSec).toBe(INTERVALLES.repos.max);
     expect(r.repetitions).toBe(INTERVALLES.repetitions.max);
     expect(r.blocs).toBe(INTERVALLES.blocs.min);
+  });
+});
+
+
+describe('boxe — intensif court au sac sur socle (R-82, hypothèses §26)', () => {
+  it('les efforts sont dans les plages de la fiche de Capello : 20 à 30 s d\'effort, 10 à 15 s de repos', () => {
+    expect(INTENSIF.effortSec).toBeGreaterThanOrEqual(20);
+    expect(INTENSIF.effortSec).toBeLessThanOrEqual(30);
+    expect(INTENSIF.reposSec).toBeGreaterThanOrEqual(10);
+    expect(INTENSIF.reposSec).toBeLessThanOrEqual(15);
+  });
+
+  it('le bloc dure environ 6 minutes, échauffement non compris', () => {
+    const d = dureeIntervalles(phasesIntervalles(INTENSIF));
+    expect(d).toBe(INTENSIF.repetitions * INTENSIF.effortSec + (INTENSIF.repetitions - 1) * INTENSIF.reposSec);
+    expect(d).toBeLessThanOrEqual(7 * 60);
+  });
+
+  it('commence par un échauffement d\'au moins 5 minutes (Capello)', () => {
+    expect(ECHAUFFEMENT_INTENSIF_SEC).toBeGreaterThanOrEqual(5 * 60);
+    const phases = phasesIntervalles(INTENSIF, ECHAUFFEMENT_INTENSIF_SEC);
+    expect(phases[0]).toMatchObject({ genre: 'chauffe', duree: ECHAUFFEMENT_INTENSIF_SEC });
+    expect(phases[1]!.genre).toBe('effort');
+    expect(dureeIntervalles(phases)).toBe(dureeIntervalles(phasesIntervalles(INTENSIF)) + ECHAUFFEMENT_INTENSIF_SEC);
+  });
+
+  it('sans échauffement demandé, les phases sont inchangées', () => {
+    expect(phasesIntervalles(INTENSIF)[0]!.genre).toBe('effort');
+  });
+
+  it('additionne les minutes passées dans les zones 4 et 5 de la ceinture', () => {
+    expect(minutesEnZones45({ zones: [5, 3, 2, 3, 1] })).toBe(4);
+    expect(minutesEnZones45({ zones: [5, 3, 2] })).toBeNull(); // zones incomplètes : on ne devine pas
+    expect(minutesEnZones45(undefined)).toBeNull();
+    expect(minutesEnZones45({ moy: 140 })).toBeNull();
+  });
+
+  it('la cible est de quelques minutes en zones 4 et 5, moins que la durée totale des efforts', () => {
+    expect(MIN_ZONES_4_5_CIBLE).toBeGreaterThan(0);
+    expect(MIN_ZONES_4_5_CIBLE * 60).toBeLessThan(INTENSIF.repetitions * INTENSIF.effortSec);
   });
 });

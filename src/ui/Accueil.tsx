@@ -12,6 +12,10 @@ import { CheckIn } from './FormulaireCheckIn';
 import type { SaisieCheckin } from './checkin';
 import { calculerPreparation } from './preparation';
 import { PreparationDuJour } from './PreparationDuJour';
+import { EcranPoint } from './EcranPoint';
+import { phraseArret } from '../coach/point-semaine';
+import { joursSansSeance, palierArret } from '../moteur/point-semaine';
+import type { GenreLibre, OptionsLibre } from './seance/libre';
 
 interface Props {
   donnees: Donnees;
@@ -21,6 +25,8 @@ interface Props {
   onReprendreLibre: () => void;
   onAbandonnerLibre: () => void;
   onLancer: (modeleId: string) => void;
+  onLancerMinimale: () => void;
+  onLancerLibre: (kind: GenreLibre, options?: OptionsLibre) => void;
   onReprendre: () => void;
   onAbandonnerEnCours: () => void;
   onCheckin: (saisie: SaisieCheckin) => Promise<void>;
@@ -39,6 +45,7 @@ const ENERGIES: { choix: 'safe' | 'push' | null; nom: string }[] = [
 export function Accueil(p: Props) {
   const { donnees } = p;
   const [message, setMessage] = useState<{ texte: string; erreur: boolean } | null>(null);
+  const [point, setPoint] = useState(false);
 
   const aujourdhui = jourLocal(new Date());
   const habitude = evaluerHabitude(donnees.seances, aujourdhui);
@@ -67,6 +74,13 @@ export function Accueil(p: Props) {
     input.value = '';
   };
 
+  const jours = joursSansSeance(donnees.seances, aujourdhui);
+  const arret = jours !== null ? phraseArret(palierArret(jours), donnees.profil.objectif) : null;
+
+  if (point) {
+    return <EcranPoint donnees={donnees} onRetour={() => { setPoint(false); window.scrollTo(0, 0); }} onLancerMinimale={p.onLancerMinimale} onLancerLibre={p.onLancerLibre} />;
+  }
+
   return (
     <div class="ecran fond-clair avec-nav">
       <div class="en-tete">
@@ -81,6 +95,18 @@ export function Accueil(p: Props) {
         <div class="n">{habitude.cetteSemaine}</div>
         <div class="l">séance{habitude.cetteSemaine > 1 ? 's' : ''} cette semaine</div>
         <div style="font-size:14px;margin-top:10px;opacity:.95">{habitude.raison}</div>
+      </div>
+
+      <div class="carte">
+        <h3>{jours !== null && jours >= 8 ? `${jours} jours sans séance` : 'Le point sur ta semaine'}</h3>
+        <p>
+          {arret && jours !== null && jours >= 8
+            ? `${arret.titre}. Rien d'alarmant : voici ce que ça change vraiment, et ce que tu peux faire même sans avoir le temps.`
+            : jours === null
+              ? 'Ce que ta semaine a donné, ce que ça change, et quoi faire quand tu n\'as pas le temps.'
+              : `Dernière séance il y a ${jours} jour${jours > 1 ? 's' : ''}. Ce que ta semaine a donné, ce que ça change, et quoi faire quand tu n'as pas le temps.`}
+        </p>
+        <div class="pile"><button class="btn btn-contour" onClick={() => { setPoint(true); window.scrollTo(0, 0); }}>Faire le point</button></div>
       </div>
 
       <CheckIn key={aujourdhui} mesure={mesureDuJour} onSauver={p.onCheckin} />

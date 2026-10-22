@@ -33,10 +33,19 @@ export function reperesDeLaSemaine(
   muscleDe: (cleExercice: string) => string[],
 ): ReperesSemaine {
   const lundi = lundiDeLaSemaine(jourDe(courante.date));
+  return reperesDuLundi(seances.filter((s) => s.date <= courante.date), lundi, muscleDe);
+}
+
+/** Les repères d'une semaine entière (du lundi au dimanche), pour le point de la semaine. */
+export function reperesDuLundi(
+  seances: Seance[],
+  lundi: string,
+  muscleDe: (cleExercice: string) => string[],
+): ReperesSemaine {
   const dimanche = ajouterJours(lundi, 6);
   const semaine = seances.filter((s) => {
     const j = jourDe(s.date);
-    return j >= lundi && j <= dimanche && s.date <= courante.date;
+    return j >= lundi && j <= dimanche;
   });
 
   const parMuscle = new Map<string, { series: number; seances: Set<string> }>();

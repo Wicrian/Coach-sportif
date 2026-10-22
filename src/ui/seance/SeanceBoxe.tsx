@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { SUPPORTS, libelleCoup, type ProgrammeBoxe, type ReglagesBoxe, type SupportBoxe } from '../../donnees/boxe';
 import type { Playlist, Profil } from '../../donnees/types';
-import { DUREE_MURAL_MIN, DUREE_RONDE, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, REPERES_COUPS_PAR_MIN, REPOS, TEMPO, avancer, combosJoues, coupsParMinute, dureeIntervalles, etatDepart, phasesIntervalles, resumeRonde, tempoDeLaRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
+import { DUREE_MURAL_MIN, DUREE_RONDE, ECHAUFFEMENT_INTENSIF_SEC, INTENSIF, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, REPERES_COUPS_PAR_MIN, REPOS, TEMPO, avancer, combosJoues, coupsParMinute, dureeIntervalles, etatDepart, phasesIntervalles, resumeRonde, tempoDeLaRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
 import { avecIntervalles, avecProgrammes, avecReglages, dureeTotale, intervallesDe, momentAnnonceCombo, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from '../boxe';
 import type { Details } from '../details';
 import { EditeurBoxe } from '../EditeurBoxe';
 import { Musique } from '../Musique';
 import type { ChoixSon } from '../../donnees/types';
 import { debloquerAudio, jouerSon } from '../son';
+import { CIBLE_INTENSITE } from '../../coach/point-semaine';
 import { arreterVoix, debloquerVoix, direPhrase, surVoixChangees, voixDisponible, voixFrancaises } from '../voix';
 import { phraseCombo, phraseCompte, phraseCoup, phraseDepart, phraseFin, phrasePresentation, phraseRepos, type Phrase } from '../phrases-boxe';
 import { prechargerSons } from '../son';
@@ -32,14 +33,14 @@ interface Props {
   onProfil: (profil: Profil) => Promise<void>;
   /** Conseil du jour (sac sur socle ou reflex bag), affiché en haut de la préparation. */
   conseil: ConseilBoxe;
-  /** La séance démarre : l'horloge repart de zéro et on retient sur quoi on frappe. */
-  onDebutGuide: (support: SupportBoxe) => void;
+  /** La séance démarre : l'horloge repart de zéro et on retient sur quoi on frappe (et le format intensif, s'il y en a un). */
+  onDebutGuide: (support: SupportBoxe, format?: 'intensif') => void;
   onFinAffichee: () => void;
   onTerminer: (feel: number | undefined, details: Details) => void;
   onAbandon: () => void;
 }
 
-type Mode = 'prepa' | 'editeur' | 'guide' | 'fin' | 'libre' | 'intervalles';
+type Mode = 'prepa' | 'editeur' | 'guide' | 'fin' | 'libre' | 'intervalles' | 'intensif';
 
 function Reglage({ nom, valeur, onMoins, onPlus, moinsOff, plusOff }: { nom: string; valeur: string; onMoins: () => void; onPlus: () => void; moinsOff?: boolean; plusOff?: boolean }) {
   return (
@@ -62,6 +63,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
   const [support, setSupport] = useState<SupportBoxe>(b.support ?? conseil.support);
   const [dureeLibre, setDureeLibre] = useState<number | undefined>(undefined);
   const [formatMural, setFormatMural] = useState<'libre' | 'intervalles'>('libre');
+  const [formatSocle, setFormatSocle] = useState<'rondes' | 'intensif'>(b.format === 'intensif' ? 'intensif' : 'rondes');
 
   useEffect(() => surVoixChangees(() => setVoix(voixFrancaises())), []);
 
@@ -87,6 +89,9 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
   }
   if (mode === 'intervalles') {
     return <SeanceIntervalles config={intervallesDe(profil)} son={son} playlists={playlists} onFin={() => setMode('fin')} onAbandon={onAbandon} />;
+  }
+  if (mode === 'intensif') {
+    return <SeanceIntervalles config={INTENSIF} echauffementSec={ECHAUFFEMENT_INTENSIF_SEC} intensif son={son} playlists={playlists} onFin={() => setMode('fin')} onAbandon={onAbandon} />;
   }
   if (mode === 'guide' && lance) {
     return (
@@ -136,6 +141,10 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
   };
 
   const intervalles = intervallesDe(profil);
+  const lancerIntensif = () => {
+    onDebutGuide('socle', 'intensif');
+    setMode('intensif');
+  };
   const lancerIntervalles = () => {
     onDebutGuide('mural');
     setMode('intervalles');
@@ -219,6 +228,47 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
     );
   }
 
+  const choixFormat = (
+    <div class="carte">
+      <h3>Quel format ?</h3>
+      <div class="ligne-puces" style="margin-top:10px">
+        <button class={`puce ${formatSocle === 'rondes' ? 'active' : ''}`} aria-pressed={formatSocle === 'rondes'} onClick={() => setFormatSocle('rondes')}>Série guidée · conseillé</button>
+        <button class={`puce ${formatSocle === 'intensif' ? 'active' : ''}`} aria-pressed={formatSocle === 'intensif'} onClick={() => setFormatSocle('intensif')}>Intensif court</button>
+      </div>
+      <p style="margin-top:10px;font-size:13px">L'intensif court est pour les jours où tu manques de temps ou d'envie : environ 12 minutes, mais à fond.</p>
+    </div>
+  );
+
+  if (formatSocle === 'intensif') {
+    return (
+      <div class="pleine-largeur fond-clair">
+        <div class="ecran fond-clair">
+          <span class="legende" style="color:var(--plum)">BOXE · INTENSIF COURT</span>
+          <h1 style="margin-top:8px">Court, mais intense</h1>
+          <p style="color:var(--plum);margin-top:8px">Faire peu, mais fort, vaut mieux que rien : pour garder son cardio avec peu de temps, il faut garder l'intensité.</p>
+          {choixSupport}
+          {choixFormat}
+          <div class="carte">
+            <h3>Le déroulé</h3>
+            <p><b>{ECHAUFFEMENT_INTENSIF_SEC / 60} min</b> d'échauffement, puis <b>{INTENSIF.repetitions} efforts de {INTENSIF.effortSec} s</b> à fond, avec {INTENSIF.reposSec} s de repos. Environ {minutes(ECHAUFFEMENT_INTENSIF_SEC + dureeIntervalles(phasesIntervalles(INTENSIF)))} en tout. Un son net marque chaque effort et chaque repos.</p>
+          </div>
+          <div class="carte">
+            <h3>L'intensité visée</h3>
+            <p style="margin-top:6px">{CIBLE_INTENSITE.effort}</p>
+            <p style="margin-top:6px">{CIBLE_INTENSITE.polar}</p>
+            <p style="margin-top:6px">{CIBLE_INTENSITE.prudence}</p>
+            <p style="margin-top:10px;font-size:13px">Après la séance, tu pourras saisir tes données Polar : l'application te dira si tu as atteint les zones 4 et 5.</p>
+          </div>
+          <div class="espace" />
+          <div class="pile">
+            <button class="btn btn-principal" onClick={lancerIntensif}>Lancer l'échauffement</button>
+            <button class="btn btn-contour" onClick={() => { if (confirm("Abandonner cette séance sans l'enregistrer ?")) onAbandon(); }}>Abandonner</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div class="pleine-largeur fond-clair">
       <div class="ecran fond-clair">
@@ -226,6 +276,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
         <h1 style="margin-top:8px">Prépare ta séance</h1>
         <p style="color:var(--plum);margin-top:8px">La voix te dicte chaque coup : tu frappes quand elle le dit.</p>
         {choixSupport}
+        {choixFormat}
 
         <div class="carte">
           <h3>Ta série</h3>

@@ -14,7 +14,7 @@ import { EcranToi } from './EcranToi';
 import { EcranBilan } from './EcranBilan';
 import { Nav, type Onglet } from './Nav';
 import { preparerBilan } from './seance/bilan';
-import { playlistsPour } from './plan';
+import { modeleConseille, playlistsPour } from './plan';
 import { arreterSon, debloquerAudio, jouerSon, numeroDemande, prechargerSons, sonPour } from './son';
 import { calculerPreparation } from './preparation';
 import { jourLocal } from './jour';
@@ -118,10 +118,10 @@ export function App() {
     setLibre(null);
     setEnLibre(false);
   };
-  const lancer = (modeleId: string, enchainerBoxe = false) => {
+  const lancer = (modeleId: string, enchainerBoxe = false, minimale = false) => {
     jouer('debutSeance');
     const modele = MODELES.find((m) => m.id === modeleId)!;
-    const nouvelle = demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil }), new Date());
+    const nouvelle = demarrer(preparerSeance({ modele, seances: donnees.seances, profil: donnees.profil, minimale }), new Date());
     changer(enchainerBoxe ? { ...nouvelle, enchainerBoxe: true } : nouvelle);
     setEnSeance(true);
   };
@@ -184,8 +184,9 @@ export function App() {
         son={sonPour(donnees.profil, 'finRepos')}
         onProfil={async (profil) => { await sauverProfil(base, profil); await recharger(); }}
         conseil={conseilBoxeDuJour(donnees)}
-        onDebutGuide={(support) => {
-          const b = { ...libre, debut: new Date().toISOString(), support };
+        onDebutGuide={(support, format) => {
+          const { format: _ancien, ...sansFormat } = libre;
+          const b: BrouillonLibre = { ...sansFormat, debut: new Date().toISOString(), support, ...(format ? { format } : {}) };
           setLibre(b);
           void sauverBrouillon(base, b, 'libre');
         }}
@@ -274,6 +275,8 @@ export function App() {
       donnees={donnees}
       seanceEnCours={brouillon !== null}
       onLancer={lancer}
+      onLancerMinimale={() => lancer(modeleConseille(donnees.seances), false, true)}
+      onLancerLibre={lancerLibre}
       onCheckin={enregistrerMesure}
       onAllerToi={() => setOnglet('toi')}
       libreEnCours={libre?.kind ?? null}

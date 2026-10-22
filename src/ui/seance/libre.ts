@@ -13,17 +13,21 @@ export interface BrouillonLibre {
   support?: SupportBoxe;
   /** Durée conseillée par le plan, en minutes (reflex bag). */
   dureeConseilleeMin?: number;
+  /** Boxe : bloc court et intense au sac sur socle. */
+  format?: 'intensif';
 }
 
 export interface OptionsLibre {
   support?: SupportBoxe;
   dureeConseilleeMin?: number;
+  format?: 'intensif';
 }
 
 export function demarrerLibre(kind: GenreLibre, maintenant: Date, options: OptionsLibre = {}): BrouillonLibre {
   const b: BrouillonLibre = { kind, debut: maintenant.toISOString() };
   if (options.support) b.support = options.support;
   if (options.dureeConseilleeMin) b.dureeConseilleeMin = options.dureeConseilleeMin;
+  if (options.format) b.format = options.format;
   return b;
 }
 
@@ -38,5 +42,6 @@ export function terminerLibre(b: BrouillonLibre, feel: number | undefined, maint
   };
   if (feel !== undefined) seance.feel = feel;
   if (b.support) seance.support = b.support;
+  if (b.format === 'intensif') seance.intensif = true;
   return appliquerDetails(seance, details);
 }
