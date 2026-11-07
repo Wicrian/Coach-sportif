@@ -48,3 +48,25 @@ describe('appliquerDetails', () => {
     expect(appliquerDetails(seance, {})).toEqual(seance);
   });
 });
+
+describe('zones Polar en minutes et secondes', () => {
+  it('additionne les minutes et les secondes saisies', () => {
+    const d = lireDetails({ ...vide, zones: ['5', '', '', '', ''], zonesSec: ['51', '', '', '', ''] });
+    expect(d.fc?.zones?.[0]).toBeCloseTo(5 + 51 / 60, 5);
+  });
+
+  it('accepte des secondes seules, sans minutes', () => {
+    const d = lireDetails({ ...vide, zones: ['', '', '', '', ''], zonesSec: ['', '', '', '45', ''] });
+    expect(d.fc?.zones?.[3]).toBeCloseTo(0.75, 5);
+  });
+
+  it('ignore des secondes impossibles (60 ou plus)', () => {
+    const d = lireDetails({ ...vide, zones: ['2', '', '', '', ''], zonesSec: ['75', '', '', '', ''] });
+    expect(d.fc?.zones?.[0]).toBe(2);
+  });
+
+  it('reste compatible avec la saisie en minutes entières seulement', () => {
+    expect(lireDetails({ ...vide, zones: ['3', '12', '10', '5', '0'] }).fc?.zones).toEqual([3, 12, 10, 5, 0]);
+  });
+});
+

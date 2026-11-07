@@ -127,3 +127,9 @@ Sur iPhone, l'audio n'est débloqué qu'à la **fin** d'un toucher (le doigt se 
 - **Écran « Le point sur ta semaine »** : cette semaine ou la semaine dernière (séances, minutes, séries par muscle) ; « ce que ça donne » (effets estimés, honnêtes) ; « depuis ta dernière séance » avec ce que ça change et ce qui changerait en continuant ; trois façons de faire moins quand on n'a pas le temps, avec ce qu'elles font et ne font pas.
 - **Version minimale de la séance de force** : une série par exercice, mêmes charges (R-81).
 - **Limites** : estimations tirées d'études ; pas de notification ; l'objectif de l'utilisateur règle les phrases mais pas encore le plan.
+
+## Rappels, voix, zones, coups (7 novembre)
+
+- **Plan › Mes rappels** : fichiers de calendrier (créneaux chaque semaine ; plan sur 14 jours) avec alertes 30 et 10 minutes avant ; heure de début réglable par créneau.
+- **Boxe guidée** : volume de la voix réglable (préparation et séance, boutons « Voix − / + ») ; « Revoir les coups » (rappels du geste et images ajoutées par l'utilisateur), aussi pendant le repos.
+- **Fin de séance** : zones Polar en minutes et secondes.

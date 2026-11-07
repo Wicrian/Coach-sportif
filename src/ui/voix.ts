@@ -32,13 +32,14 @@ export function arreterVoix(): void {
 }
 
 /** Dit un texte, en coupant ce qui était en cours : une annonce en retard ne doit pas s'empiler. */
-export function parler(texte: string, voixId?: string, vitesse = 1): void {
+export function parler(texte: string, voixId?: string, vitesse = 1, volume = 1): void {
   const s = synthese();
   if (!s || !texte) return;
   s.cancel();
   const message = new SpeechSynthesisUtterance(texte);
   message.lang = 'fr-FR';
   message.rate = vitesse;
+  message.volume = Math.min(1, Math.max(0, volume)); // la voix de l'iPhone ne dépasse pas 1
   const voix = voixId ? s.getVoices().find((v) => v.voiceURI === voixId) : undefined;
   if (voix) message.voice = voix;
   s.speak(message);
@@ -59,6 +60,8 @@ export interface OptionsPhrase {
   /** Voix de l'iPhone choisie (voiceURI). */
   voixId?: string;
   vitesse?: number;
+  /** Volume de la voix par rapport à la musique (1 = normal). */
+  volume?: number;
 }
 
 /**
@@ -66,14 +69,14 @@ export interface OptionsPhrase {
  * Une phrase en remplace toujours une autre : une annonce en retard ne doit pas s'empiler.
  */
 export function direPhrase(phrase: Phrase, options: OptionsPhrase = {}): void {
-  const { clips, voixId, vitesse = 1 } = options;
+  const { clips, voixId, vitesse = 1, volume = 1 } = options;
   if (clips && clipsManquants(phrase, clips).length === 0) {
     synthese()?.cancel();
-    void jouerEnchainement(phrase.morceaux.map((m) => clips[m.clip]!), { vitesse }).then((ok) => {
-      if (!ok) parler(phrase.texte, voixId, vitesse);
+    void jouerEnchainement(phrase.morceaux.map((m) => clips[m.clip]!), { vitesse, volume }).then((ok) => {
+      if (!ok) parler(phrase.texte, voixId, vitesse, volume);
     });
     return;
   }
   arreterEnchainement();
-  parler(phrase.texte, voixId, vitesse);
+  parler(phrase.texte, voixId, vitesse, volume);
 }

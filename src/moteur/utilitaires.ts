@@ -42,3 +42,13 @@ export function jourDe(date: string): Jour {
   const p = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
+
+/** Minutes (décimales) écrites en minutes et secondes : 5,85 → « 5 min 51 s ». */
+export function minutesEnTexte(minutes: number): string {
+  const total = Math.round(Math.max(0, minutes) * 60);
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
+  if (sec === 0) return `${m} min`;
+  return m === 0 ? `${sec} s` : `${m} min ${sec} s`;
+}
+

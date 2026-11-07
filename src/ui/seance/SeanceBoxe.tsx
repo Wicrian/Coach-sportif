@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { SUPPORTS, libelleCoup, type ProgrammeBoxe, type ReglagesBoxe, type SupportBoxe } from '../../donnees/boxe';
+import { SUPPORTS, coupDe, libelleCoup, type ProgrammeBoxe, type ReglagesBoxe, type SupportBoxe } from '../../donnees/boxe';
 import type { Playlist, Profil } from '../../donnees/types';
-import { DUREE_MURAL_MIN, DUREE_RONDE, ECHAUFFEMENT_INTENSIF_SEC, INTENSIF, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, REPERES_COUPS_PAR_MIN, REPOS, TEMPO, avancer, combosJoues, coupsParMinute, dureeIntervalles, etatDepart, phasesIntervalles, resumeRonde, tempoDeLaRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
+import { DUREE_MURAL_MIN, DUREE_RONDE, ECHAUFFEMENT_INTENSIF_SEC, INTENSIF, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, REPERES_COUPS_PAR_MIN, REPOS, TEMPO, VOLUME_VOIX, avancer, combosJoues, coupsParMinute, dureeIntervalles, etatDepart, phasesIntervalles, resumeRonde, tempoDeLaRonde, type ConseilBoxe, type EtatRonde } from '../../moteur/boxe';
 import { avecIntervalles, avecProgrammes, avecReglages, dureeTotale, intervallesDe, momentAnnonceCombo, phasesDeSeance, programmeChoisi, programmesDe, reglagesDe, vitesseVoix } from '../boxe';
 import type { Details } from '../details';
 import { EditeurBoxe } from '../EditeurBoxe';
+import { GuideCoups } from '../GuideCoups';
 import { Musique } from '../Musique';
 import type { ChoixSon } from '../../donnees/types';
 import { debloquerAudio, jouerSon } from '../son';
@@ -101,7 +102,9 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
         son={son}
         playlists={playlists}
         clips={clipsEnUsage}
+        images={profil.boxe?.imagesCoups}
         onTempo={(tempoSec) => void modifier({ tempoSec })}
+        onVolume={(volumeVoix) => void modifier({ volumeVoix })}
         onFin={() => setMode('fin')}
         onAbandon={onAbandon}
       />
@@ -339,6 +342,11 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
           <p style="margin-top:8px"><b>Effort.</b> Vise « assez dur » au plus (12 à 14 sur 20) : tu dois pouvoir dire quelques mots. Sinon, ralentis le rythme.</p>
         </details>
 
+        <details class="carte">
+          <summary style="font-weight:700;cursor:pointer">Revoir les coups : rappels et images</summary>
+          <GuideCoups profil={profil} onProfil={onProfil} />
+        </details>
+
         {phases.length > 0 && (
           <div class="carte">
             <h3>Ce que tu vas faire</h3>
@@ -363,6 +371,13 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
 
         <div class="carte">
           <h3>La voix</h3>
+          <Reglage
+            nom="Volume de la voix" valeur={`${Math.round(reglages.volumeVoix * 100)} %`}
+            moinsOff={reglages.volumeVoix <= VOLUME_VOIX.min} plusOff={reglages.volumeVoix >= VOLUME_VOIX.max}
+            onMoins={() => void modifier({ volumeVoix: Math.round((reglages.volumeVoix - VOLUME_VOIX.pas) * 100) / 100 })}
+            onPlus={() => void modifier({ volumeVoix: Math.round((reglages.volumeVoix + VOLUME_VOIX.pas) * 100) / 100 })}
+          />
+          <p style="font-size:13px;margin-bottom:6px">Ta musique est dans une autre application : son volume se règle avec les boutons de l'iPhone. Ici, tu règles la voix par rapport à elle. Pour entendre mieux la voix sans monter la musique, monte la voix.</p>
           {aVoixEnregistree && (
             <div class="groupe">
               <span class="etiquette">Quelle voix ?</span>
@@ -370,7 +385,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
                 <button class={`puce ${reglages.sourceVoix === 'enregistree' ? 'active' : ''}`} aria-pressed={reglages.sourceVoix === 'enregistree'} onClick={() => void modifier({ sourceVoix: 'enregistree' })}>{profil.boxe?.voixNom ?? 'Voix enregistrée'}</button>
                 <button class={`puce ${reglages.sourceVoix === 'iphone' ? 'active' : ''}`} aria-pressed={reglages.sourceVoix === 'iphone'} onClick={() => void modifier({ sourceVoix: 'iphone' })}>Voix de l'iPhone</button>
               </div>
-              <button class="mini neutre" style="margin-top:10px" onClick={() => { debloquerAudio(); debloquerVoix(); direPhrase(phrasePresentation(1, ['jab', 'low-kick-arriere', 'direct']), { clips: clipsEnUsage, voixId: reglages.voix }); }}>Écouter la voix</button>
+              <button class="mini neutre" style="margin-top:10px" onClick={() => { debloquerAudio(); debloquerVoix(); direPhrase(phrasePresentation(1, ['jab', 'low-kick-arriere', 'direct']), { clips: clipsEnUsage, voixId: reglages.voix, volume: reglages.volumeVoix }); }}>Écouter la voix</button>
             </div>
           )}
           {aVoixEnregistree && reglages.sourceVoix === 'enregistree' ? null : !voixDisponible() ? (
@@ -384,7 +399,7 @@ export function SeanceBoxe({ b, profil, playlists, son, onProfil, conseil, onDeb
                   {voix.map((v) => <option key={v.voiceURI} value={v.voiceURI}>{v.name}</option>)}
                 </select>
               </div>
-              <button class="mini neutre" style="margin-top:10px" onClick={() => { debloquerVoix(); direPhrase(phrasePresentation(1, ['jab', 'low-kick-arriere', 'direct', 'low-kick-avant']), { voixId: reglages.voix }); }}>Écouter la voix</button>
+              <button class="mini neutre" style="margin-top:10px" onClick={() => { debloquerVoix(); direPhrase(phrasePresentation(1, ['jab', 'low-kick-arriere', 'direct', 'low-kick-avant']), { voixId: reglages.voix, volume: reglages.volumeVoix }); }}>Écouter la voix</button>
               <p style="margin-top:10px;font-size:13px">
                 Sur iPhone, tu peux télécharger une voix plus naturelle : Réglages › Accessibilité › Contenu énoncé › Voix › Français, puis une voix « Améliorée » ou « Premium ». Elle apparaîtra ici après avoir rouvert l'application.
               </p>
@@ -410,13 +425,16 @@ interface GuideProps {
   playlists: Playlist[];
   /** Voix enregistrée à utiliser, ou rien pour la voix de l'iPhone. */
   clips?: Record<string, string>;
+  /** Images des coups ajoutées par l'utilisateur. */
+  images?: Record<string, string>;
   onTempo: (tempoSec: number) => void;
+  onVolume: (volumeVoix: number) => void;
   onFin: () => void;
   onAbandon: () => void;
 }
 
 /** La séance en cours : un repos, une ronde, un repos, une ronde… la voix annonce tout. */
-function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onAbandon }: GuideProps) {
+function Guide({ programme, reglages, son, playlists, clips, images, onTempo, onVolume, onFin, onAbandon }: GuideProps) {
   useVerrouEcran();
   const phases = useRef(phasesDeSeance(programme, reglages)).current;
   const nbRondes = phases.filter((p) => p.genre === 'ronde').length;
@@ -424,6 +442,7 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
   const [index, setIndex] = useState(0);
   const [tempo, setTempo] = useState(reglages.tempoSec);
   const [muet, setMuet] = useState(false);
+  const [volume, setVolume] = useState(reglages.volumeVoix);
   const [enPause, setEnPause] = useState(false);
   const [parle, setParle] = useState<{ segment: number; position: number }>({ segment: -1, position: -1 });
   const [, setTic] = useState(0);
@@ -437,6 +456,7 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
     comboAnnonce: false,
     tempo: reglages.tempoSec,
     tempoEff: reglages.tempoSec,
+    volume: reglages.volumeVoix,
     muet: false,
     fini: false,
   });
@@ -444,7 +464,7 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
   /** `coup` : seuls les coups suivent le rythme ; le reste est dit à vitesse normale. */
   const dire = (phrase: Phrase, coup = false) => {
     if (s.current.muet) return;
-    direPhrase(phrase, { clips, voixId: reglages.voix, vitesse: vitesseVoix(s.current.tempoEff, coup) });
+    direPhrase(phrase, { clips, voixId: reglages.voix, vitesse: vitesseVoix(s.current.tempoEff, coup), volume: s.current.volume });
   };
 
   /** Rythme réel d'une phase : celui choisi, avec la montée en intensité sur les premières rondes. */
@@ -482,7 +502,7 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
     if (c.fini) return;
     c.fini = true;
     arreterVoix();
-    if (!c.muet) direPhrase(phraseFin(), { clips, voixId: reglages.voix });
+    if (!c.muet) direPhrase(phraseFin(), { clips, voixId: reglages.voix, volume: c.volume });
     onFin();
   };
 
@@ -540,6 +560,12 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
     setTempo(s.current.tempoEff);
     onTempo(base);
   };
+  const changerVolume = (delta: number) => {
+    const v = Math.round(Math.min(VOLUME_VOIX.max, Math.max(VOLUME_VOIX.min, s.current.volume + delta)) * 100) / 100;
+    s.current.volume = v;
+    setVolume(v);
+    onVolume(v);
+  };
   const basculerPause = () => {
     const c = s.current;
     if (c.pause === null) {
@@ -578,6 +604,11 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
       </div>
       <p class="discret" style="text-align:center;margin-top:6px">Un coup toutes les {nombre(tempo)} s{tempo !== s.current.tempo ? ' · montée en intensité' : ''}</p>
       <div class="grille2" style="margin-top:10px">
+        <button class="btn btn-voile" onClick={() => changerVolume(-VOLUME_VOIX.pas)} disabled={volume <= VOLUME_VOIX.min} aria-label="Voix moins forte">Voix −</button>
+        <button class="btn btn-voile" onClick={() => changerVolume(VOLUME_VOIX.pas)} disabled={volume >= VOLUME_VOIX.max} aria-label="Voix plus forte">Voix +</button>
+      </div>
+      <p class="discret" style="text-align:center;margin-top:6px">Voix à {Math.round(volume * 100)} % · la musique se règle avec les boutons de l'iPhone</p>
+      <div class="grille2" style="margin-top:10px">
         <button class="btn btn-voile" onClick={basculerPause}>{enPause ? 'Reprendre' : 'Pause'}</button>
         <button class="btn btn-voile" aria-pressed={muet} onClick={basculerVoix}>{muet ? 'Voix : coupée' : 'Voix : active'}</button>
       </div>
@@ -612,6 +643,16 @@ function Guide({ programme, reglages, son, playlists, clips, onTempo, onFin, onA
             {combos.map((c, j) => (
               <div key={j} style="margin-top:6px"><b style="font-size:16px">Combo {j + 1}</b> {c.map(libelleCoup).join(' · ')}</div>
             ))}
+            <details style="margin-top:10px">
+              <summary style="cursor:pointer;font-weight:700">Revoir les coups de la ronde</summary>
+              {[...new Set(combos.flat())].map((id) => (
+                <div key={id} style="margin-top:10px">
+                  <b>{libelleCoup(id)}</b>
+                  <p style="font-size:13px;margin-top:2px">{coupDe(id)?.rappel}</p>
+                  {images?.[id] && <img src={images[id]} alt={`Image du coup : ${libelleCoup(id)}`} style="display:block;max-width:100%;max-height:220px;margin-top:6px;border-radius:12px" />}
+                </div>
+              ))}
+            </details>
           </div>
         ) : (
           <div class="carte-sombre" aria-live="off">

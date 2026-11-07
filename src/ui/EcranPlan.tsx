@@ -5,7 +5,9 @@ import { ajouterJours, lundiDeLaSemaine } from '../moteur/utilitaires';
 import { FicheJour } from './FicheJour';
 import type { GenreLibre, OptionsLibre } from './seance/libre';
 import { jourLocal } from './jour';
-import { MOMENTS, NOMS_JOURS, creneauDuJour, creneauxDuProfil, definirCreneau, libelleJour, libelleType } from './plan';
+import { MOMENTS, NOMS_JOURS, creneauDuJour, creneauxDuProfil, definirCreneau, definirHeure, heureDuCreneau, libelleJour, libelleType } from './plan';
+import { evenementsICS, rappelsHebdoICS } from '../stockage/calendrier';
+import { partagerFichier } from './partage';
 import { calculerPreparation } from './preparation';
 
 interface Props {
@@ -45,6 +47,26 @@ export function EcranPlan({ donnees, onProfil, onLancer, onLancerLibre, onAjoute
   const indispos = new Set(profil.joursIndisponibles ?? []);
 
   const enregistrer = (changement: Partial<Profil>) => onProfil({ ...profil, ...changement });
+  const [messageRappels, setMessageRappels] = useState<string | null>(null);
+
+  const lienApp = `${location.origin}${import.meta.env.BASE_URL}`;
+  const optionsICS = { maintenant: new Date(), lien: lienApp, alertesMin: [30, 10] };
+  const donnerRappels = async (genre: 'hebdo' | 'plan') => {
+    const contenu = genre === 'hebdo'
+      ? rappelsHebdoICS(creneaux.map((c) => ({ jour: c.jour, heure: heureDuCreneau(c), dureeMin: c.dureeMaxMin })), optionsICS)
+      : evenementsICS(
+          plan.jours
+            .filter((j) => j.moment && j.type !== 'repos' && j.type !== 'deja-fait')
+            .map((j) => {
+              const jourSemaine = new Date(`${j.jour}T12:00:00`).getDay() || 7;
+              const c = creneaux.find((x) => x.jour === jourSemaine);
+              return { jour: j.jour, heure: c ? heureDuCreneau(c) : '10:00', dureeMin: j.dureeMin ?? 30, titre: libelleType(j.type), description: j.raison };
+            }),
+          optionsICS,
+        );
+    const resultat = await partagerFichier(genre === 'hebdo' ? 'bouge-de-la-rappels-hebdo.ics' : 'bouge-de-la-rappels-plan.ics', contenu, 'text/calendar');
+    setMessageRappels(resultat === 'annule' ? null : resultat === 'partage' ? "Choisis « Calendrier » (ou ton application d'agenda) dans la feuille qui s'est ouverte." : 'Le fichier est téléchargé : ouvre-le pour l\'ajouter à ton agenda.');
+  };
 
   const carte = (j: JourPlanifie) => (
     <button key={j.jour} class="jour-plan" onClick={() => { setFicheOuverte(j.jour); window.scrollTo(0, 0); }} aria-label={`${libelleJour(j.jour, aujourdhui)} : ${libelleType(j.type)}. Ouvrir la fiche.`}>
@@ -108,10 +130,27 @@ export function EcranPlan({ donnees, onProfil, onLancer, onLancerLibre, onAjoute
                   <button key={m.moment} class={`puce ${actuel === m.moment ? 'active' : ''}`} aria-pressed={actuel === m.moment} onClick={() => enregistrer({ creneaux: definirCreneau(creneaux, i + 1, m.moment as Moment) })}>{m.nom}</button>
                 ))}
               </div>
+              {actuel !== null && (
+                <label class="discret" style="display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px">
+                  Heure de début
+                  <input type="time" class="champ" style="width:auto;padding:8px 10px" value={heureDuCreneau(creneauDuJour(creneaux, i + 1)!)} onChange={(e) => enregistrer({ creneaux: definirHeure(creneaux, i + 1, (e.currentTarget as HTMLInputElement).value) })} />
+                </label>
+              )}
             </div>
           );
         })}
       </details>
+
+      <div class="carte">
+        <h3>Mes rappels</h3>
+        <p>Une alerte 30 minutes puis 10 minutes avant chaque créneau, dans ton agenda : même si tu n'ouvres pas l'application. Le fichier se fabrique sur cet appareil, rien n'est envoyé nulle part.</p>
+        <div class="pile">
+          <button class="btn btn-principal" onClick={() => void donnerRappels('hebdo')}>Mes créneaux, chaque semaine</button>
+          <button class="btn btn-contour" onClick={() => void donnerRappels('plan')}>Le plan des 14 prochains jours</button>
+        </div>
+        {messageRappels && <div class="message" role="status">{messageRappels}</div>}
+        <p style="margin-top:10px;font-size:13px">Les créneaux chaque semaine se mettent en place une fois : pas besoin d'y revenir. Le plan, lui, change selon ta forme : refais le fichier si tu veux le mettre à jour (réimporter remplace les événements au lieu de les doubler). Si ton agenda n'applique pas les alertes, règle les notifications par défaut de ce calendrier à 30 et 10 minutes.</p>
+      </div>
     </div>
   );
 }

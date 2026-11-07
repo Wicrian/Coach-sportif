@@ -22,6 +22,13 @@ export const REPOS: Plage = { min: 10, max: 120, defaut: 60, pas: 5 };
 /** Préparation avant la toute première ronde, en secondes (plus courte que le repos entre rondes). */
 export const PREPARATION_SEC = 30;
 
+/**
+ * Volume de la voix, en multiple du volume normal (hypothèse). Défaut 1,15 : demande de l'utilisateur de la faire
+ * ressortir « un poil plus » que la musique. Maximum 1,4 : les clips sont normalisés à 0,7, donc pas de saturation.
+ * Sert à régler la voix par rapport à la musique (Apple Music, dans une autre application, ne se règle pas d'ici).
+ */
+export const VOLUME_VOIX: Plage = { min: 0.6, max: 1.4, defaut: 1.15, pas: 0.1 };
+
 const EPSILON = 1e-6;
 
 function borner(valeur: unknown, plage: Plage): number {
@@ -39,6 +46,7 @@ export function reglagesValides(brut: Partial<ReglagesBoxe> | undefined): Reglag
     garde,
     sourceVoix: brut?.sourceVoix === 'iphone' ? 'iphone' : 'enregistree',
     progressif: brut?.progressif !== false,
+    volumeVoix: Math.round(borner(brut?.volumeVoix, VOLUME_VOIX) * 20) / 20,
   };
   if (brut?.voix) r.voix = brut.voix;
   if (brut?.programmeId) r.programmeId = brut.programmeId;
@@ -73,16 +81,49 @@ export function repetitionsPossibles(nbCoups: number, dureeSegmentSec: number, t
   return Math.max(0, Math.floor((dureeSegmentSec - tempo) / (nbCoups * tempo) + EPSILON));
 }
 
+/**
+ * R-83 (hypothèse §28) : le rythme d'un combo peut s'écarter d'au plus 15 % de celui choisi pour que ses
+ * répétitions remplissent exactement le temps qui reste, au lieu de laisser un long silence à la fin. C'est ce
+ * qui permet de finir la série.
+ */
+export const ADAPTATION_MAX = 0.15;
+
+/**
+ * Combien de répétitions entières, et à quel rythme, pour remplir exactement `reste` secondes avec un combo de
+ * `nbCoups`. On regarde le nombre de répétitions qui tient au rythme choisi et celui juste au-dessus, et on garde
+ * celui dont le rythme est le plus proche de `tempoPrecedent`, à condition de rester dans l'écart permis et dans
+ * les bornes du rythme. `null` si aucun ne convient.
+ */
+export function adapterRepetitions(nbCoups: number, tempo: number, reste: number, tempoPrecedent = tempo): { repetitions: number; tempo: number } | null {
+  if (nbCoups <= 0 || reste <= 0) return null;
+  const bas = Math.max(TEMPO.min, tempo * (1 - ADAPTATION_MAX));
+  const haut = Math.min(TEMPO.max, tempo * (1 + ADAPTATION_MAX));
+  const k0 = Math.floor(reste / (nbCoups * tempo) + EPSILON);
+  let meilleur: { repetitions: number; tempo: number } | null = null;
+  for (const k of [k0, k0 + 1]) {
+    if (k < 1) continue;
+    const t = reste / (k * nbCoups);
+    if (t < bas - EPSILON || t > haut + EPSILON) continue;
+    if (!meilleur || Math.abs(t - tempoPrecedent) < Math.abs(meilleur.tempo - tempoPrecedent)) meilleur = { repetitions: k, tempo: t };
+  }
+  return meilleur;
+}
+
 export interface ResumeCombo {
   coups: Combo;
   repetitions: number;
+  /** Rythme réel du combo une fois adapté (secondes entre deux coups). */
+  tempo: number;
 }
 
 export function resumeRonde(ronde: RondeBoxe, dureeSec: number, tempo: number): ResumeCombo[] {
-  return segmentsDeRonde(ronde, dureeSec).map((s) => ({
-    coups: s.coups,
-    repetitions: repetitionsPossibles(s.coups.length, s.fin - s.debut, tempo),
-  }));
+  return segmentsDeRonde(ronde, dureeSec).map((s) => {
+    const duree = s.fin - s.debut;
+    const adapte = adapterRepetitions(s.coups.length, tempo, duree - tempo);
+    return adapte
+      ? { coups: s.coups, repetitions: adapte.repetitions, tempo: adapte.tempo }
+      : { coups: s.coups, repetitions: repetitionsPossibles(s.coups.length, duree, tempo), tempo };
+  });
 }
 
 export type Annonce =
@@ -94,9 +135,11 @@ export interface EtatRonde {
   segment: number;
   coup: number;
   prochain: number;
+  /** Écart du rythme de la répétition en cours par rapport au rythme choisi (1 = aucun). */
+  facteur: number;
 }
 
-export const etatDepart: EtatRonde = { segment: -1, coup: 0, prochain: 0 };
+export const etatDepart: EtatRonde = { segment: -1, coup: 0, prochain: 0, facteur: 1 };
 
 /**
  * À appeler à chaque tic avec `t` = secondes écoulées depuis le début de la ronde. Renvoie au plus une
@@ -117,7 +160,7 @@ export function avancer(
 
   if (indice !== etat.segment) {
     return {
-      etat: { segment: indice, coup: 0, prochain: t + tempo },
+      etat: { segment: indice, coup: 0, prochain: t + tempo, facteur: 1 },
       annonce: { genre: 'combo', numero: indice + 1, total: segments.length },
     };
   }
@@ -128,13 +171,18 @@ export function avancer(
   const quand = t - etat.prochain > tempo ? t : etat.prochain;
   const n = segment.coups.length;
 
-  // Une nouvelle répétition ne démarre que si elle tient en entier avant la fin du segment.
-  if (etat.coup === 0 && segment.fin - quand + EPSILON < n * tempo) {
-    return { etat: { ...etat, prochain: Infinity }, annonce: null };
+  // À chaque début de répétition, on ajuste le rythme pour que le combo finisse avec le temps de sa part.
+  let facteur = etat.facteur;
+  if (etat.coup === 0) {
+    const reste = segment.fin - quand;
+    const adapte = adapterRepetitions(n, tempo, reste, tempo * etat.facteur);
+    if (adapte) facteur = adapte.tempo / tempo;
+    else if (reste + EPSILON >= n * tempo) facteur = 1; // pas d'ajustement possible : rythme choisi, un silence à la fin
+    else return { etat: { ...etat, prochain: Infinity }, annonce: null }; // plus aucune répétition entière ne tient
   }
 
   return {
-    etat: { segment: indice, coup: (etat.coup + 1) % n, prochain: quand + tempo },
+    etat: { segment: indice, coup: (etat.coup + 1) % n, prochain: quand + tempo * facteur, facteur },
     annonce: { genre: 'coup', coup: segment.coups[etat.coup]! },
   };
 }

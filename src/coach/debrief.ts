@@ -5,6 +5,7 @@
 import type { Seance } from '../donnees/types';
 import type { FaitsSeance } from '../moteur/debrief';
 import type { ReperesSemaine } from '../moteur/reperes';
+import { minutesEnTexte } from '../moteur/utilitaires';
 import { retourIntensif } from './point-semaine';
 
 export interface EntreeBilan {
@@ -100,7 +101,7 @@ export function redigerBilan(e: EntreeBilan): Bilan {
     polar.push(`${parties.join(', ')}.`);
   }
   if (fc?.zones && fc.zones.some((z) => z > 0)) {
-    polar.push(`Temps par zone : ${fc.zones.map((z, i) => `zone ${i + 1} ${z} min`).filter((_, i) => fc.zones![i]! > 0).join(', ')}.`);
+    polar.push(`Temps par zone : ${fc.zones.map((z, i) => `zone ${i + 1} ${minutesEnTexte(z)}`).filter((_, i) => fc.zones![i]! > 0).join(', ')}.`);
   }
 
   if (seance.intensif) polar.push(...retourIntensif(fc));

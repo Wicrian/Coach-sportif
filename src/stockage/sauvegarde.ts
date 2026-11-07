@@ -174,6 +174,10 @@ export function fusionner(existant: Donnees, importees: Donnees): { donnees: Don
       if (boxeFichier.voixNom) boxe.voixNom = boxeFichier.voixNom;
       ajoute = true;
     }
+    if (boxeFichier.imagesCoups && Object.keys(boxeFichier.imagesCoups).length > 0) {
+      boxe.imagesCoups = { ...(boxe.imagesCoups ?? {}), ...boxeFichier.imagesCoups };
+      ajoute = true;
+    }
     if (ajoute) {
       profil.boxe = boxe;
       profilCompleteChamps.push('boxe');

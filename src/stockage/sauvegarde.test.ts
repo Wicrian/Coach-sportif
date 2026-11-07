@@ -233,6 +233,13 @@ describe('fusion de la boxe (séries, réglages, voix enregistrée)', () => {
     expect(donnees.profil.boxe?.reglages).toEqual({ dureeRondeSec: 120 });
   });
 
+  it('reprend les images de coups du fichier : elles remplacent celles de même nom et complètent les autres', () => {
+    const appareil = avecBoxe({ imagesCoups: { jab: 'ancienne', direct: 'directe' } });
+    const fichier = avecBoxe({ imagesCoups: { jab: 'nouvelle', 'crochet-avant': 'crochet' } });
+    const { donnees } = fusionner(appareil, fichier);
+    expect(donnees.profil.boxe?.imagesCoups).toEqual({ jab: 'nouvelle', direct: 'directe', 'crochet-avant': 'crochet' });
+  });
+
   it('ne change rien quand le fichier n\'a pas de boxe', () => {
     const { donnees, rapport } = fusionner(avecBoxe({ reglages: { tempoSec: 1.4 } }), sansBoxe);
     expect(donnees.profil.boxe).toEqual({ reglages: { tempoSec: 1.4 } });

@@ -11,6 +11,8 @@ export interface SaisieDetails {
   fcMax: string;
   /** Minutes passées dans les zones 1 à 5 de Polar. */
   zones: string[];
+  /** Secondes qui complètent les minutes de chaque zone (facultatif). */
+  zonesSec?: string[];
   note: string;
 }
 
@@ -31,7 +33,12 @@ export function lireDetails(s: SaisieDetails): Details {
   const max = lireNombre(s.fcMax);
   if (moy !== undefined) fc.moy = moy;
   if (max !== undefined) fc.max = max;
-  const minutes = s.zones.map((z) => (z.trim() === '' ? undefined : lireNombre(z) ?? (z.trim() === '0' ? 0 : undefined)));
+  const minutes = s.zones.map((z, i) => {
+    const min = z.trim() === '' ? undefined : lireNombre(z) ?? (z.trim() === '0' ? 0 : undefined);
+    const sec = lireNombre(s.zonesSec?.[i] ?? '');
+    const secValides = sec !== undefined && sec < 60 ? sec : undefined;
+    return min === undefined && secValides === undefined ? undefined : (min ?? 0) + (secValides ?? 0) / 60;
+  });
   if (minutes.some((m) => m !== undefined)) fc.zones = minutes.map((m) => m ?? 0);
   if (Object.keys(fc).length) d.fc = fc;
 

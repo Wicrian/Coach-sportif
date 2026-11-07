@@ -199,7 +199,7 @@ export function arreterEnchainement(): void {
  * Joue des clips à la suite (adresses de données). Remplace la phrase précédente.
  * Renvoie `false` si un clip est illisible : l'appelant peut alors se rabattre sur la voix de l'iPhone.
  */
-export async function jouerEnchainement(adresses: string[], options: { vitesse?: number; pauseSec?: number } = {}): Promise<boolean> {
+export async function jouerEnchainement(adresses: string[], options: { vitesse?: number; pauseSec?: number; volume?: number } = {}): Promise<boolean> {
   arreterEnchainement();
   const moi = demandeVoix;
   const ctx = obtenirContexte();
@@ -221,12 +221,15 @@ export async function jouerEnchainement(adresses: string[], options: { vitesse?:
   }
   const vitesse = options.vitesse ?? 1;
   const pause = options.pauseSec ?? 0.06;
+  const gain = ctx.createGain();
+  gain.gain.value = options.volume ?? 1;
+  gain.connect(ctx.destination);
   let debut = ctx.currentTime + 0.02;
   for (const tampon of morceaux) {
     const source = ctx.createBufferSource();
     source.buffer = tampon;
     source.playbackRate.value = vitesse;
-    source.connect(ctx.destination);
+    source.connect(gain);
     source.start(debut);
     voixEnCours.push(source);
     debut += tampon.duration / vitesse + pause;

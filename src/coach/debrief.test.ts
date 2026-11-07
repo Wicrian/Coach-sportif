@@ -178,3 +178,17 @@ describe('bilan d\'un intensif court au sac sur socle', () => {
     expect(b.polar).toEqual([]);
   });
 });
+
+describe('bilan : temps par zone Polar précis', () => {
+  it('écrit les zones en minutes et secondes', () => {
+    const b = redigerBilan({
+      seance: seance({ kind: 'box', fc: { zones: [5 + 51 / 60, 3, 0, 0, 0] } }),
+      typeSeance: 'Boxe',
+      faits: { exercices: [], series: 0, volume: 0, volumePrecedent: null, tendanceVolume: null },
+      noms: {}, suite: [], prochaineAllegee: false, reperes: null,
+    });
+    expect(b.polar.join(' ')).toMatch(/zone 1 5 min 51 s/);
+    expect(b.polar.join(' ')).toMatch(/zone 2 3 min/);
+  });
+});
+

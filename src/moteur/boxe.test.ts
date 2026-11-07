@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { COUPS, PROGRAMMES_DEPART, membreDuCoup, coupDe, type RondeBoxe } from '../donnees/boxe';
 import {
   DUREE_MURAL_ALLEGEE_MIN, DUREE_MURAL_MIN, DUREE_RONDE, INTERVALLES, PAUSE_ENTRE_BLOCS_SEC, PREPARATION_SEC, REPOS, TEMPO, avancer, combosJoues, conseillerBoxe, coupsParMinute, dernierSupport, etatDepart, REPERES_COUPS_PAR_MIN,
-  dureeIntervalles, phasesIntervalles, reglagesIntervallesValides, tempoDeLaRonde, INTENSIF, ECHAUFFEMENT_INTENSIF_SEC, MIN_ZONES_4_5_CIBLE, minutesEnZones45,
+  dureeIntervalles, phasesIntervalles, reglagesIntervallesValides, tempoDeLaRonde, INTENSIF, VOLUME_VOIX, ADAPTATION_MAX, adapterRepetitions, ECHAUFFEMENT_INTENSIF_SEC, MIN_ZONES_4_5_CIBLE, minutesEnZones45,
   reglagesValides, repetitionsPossibles,
   resumeRonde, segmentsDeRonde, type Annonce, type EtatRonde,
 } from './boxe';
@@ -94,9 +94,10 @@ describe('boxe — rythme des annonces', () => {
     expect(dansLeTroisieme).toEqual(['jab', 'low-kick-arriere', 'direct', 'low-kick-avant']);
   });
 
-  it('ne va jamais plus vite que le rythme choisi', () => {
+  it('ne s\'écarte jamais de plus de 15 % du rythme choisi, ni sous le rythme minimal', () => {
     for (let i = 1; i < annonces.length; i++) {
-      expect(annonces[i]!.t - annonces[i - 1]!.t).toBeGreaterThanOrEqual(1.6 - 0.06);
+      expect(annonces[i]!.t - annonces[i - 1]!.t).toBeGreaterThanOrEqual(1.6 * (1 - ADAPTATION_MAX) - 0.06);
+      expect(annonces[i]!.t - annonces[i - 1]!.t).toBeGreaterThanOrEqual(TEMPO.min - 0.06);
     }
   });
 
@@ -126,7 +127,7 @@ describe('boxe — rythme des annonces', () => {
       if (r.annonce?.genre === 'coup') instants.push(t);
     }
     const apres = instants.filter((t) => t > 12);
-    for (let i = 1; i < apres.length; i++) expect(apres[i]! - apres[i - 1]!).toBeGreaterThanOrEqual(2.4 - 0.06);
+    for (let i = 1; i < apres.length; i++) expect(apres[i]! - apres[i - 1]!).toBeGreaterThanOrEqual(2.4 * (1 - ADAPTATION_MAX) - 0.06);
   });
 
   it('ne fait pas de rafale après un long silence (écran verrouillé, onglet en veille)', () => {
@@ -137,8 +138,14 @@ describe('boxe — rythme des annonces', () => {
     expect(suite.annonce).toBeNull();
   });
 
+  it('accélère un peu plutôt que de renoncer quand un combo long tient presque dans son temps', () => {
+    const presque: RondeBoxe = { combos: [Array(20).fill('jab')], enchainer: false };
+    const coups = simuler(presque, 30, 1.6).filter((x) => x.annonce.genre === 'coup');
+    expect(coups).toHaveLength(20);
+  });
+
   it("n'annonce que le combo quand il ne tient pas une seule fois dans son temps", () => {
-    const longue: RondeBoxe = { combos: [Array(20).fill('jab')], enchainer: false };
+    const longue: RondeBoxe = { combos: [Array(30).fill('jab')], enchainer: false };
     const a = simuler(longue, 30, 1.6);
     expect(a.map((x) => x.annonce.genre)).toEqual(['combo']);
   });
@@ -347,5 +354,100 @@ describe('boxe — intensif court au sac sur socle (R-82, hypothèses §26)', ()
   it('la cible est de quelques minutes en zones 4 et 5, moins que la durée totale des efforts', () => {
     expect(MIN_ZONES_4_5_CIBLE).toBeGreaterThan(0);
     expect(MIN_ZONES_4_5_CIBLE * 60).toBeLessThan(INTENSIF.repetitions * INTENSIF.effortSec);
+  });
+});
+
+
+describe('boxe — volume de la voix', () => {
+  it('la voix est un peu plus forte par défaut (demande de l\'utilisateur : « un poil plus »)', () => {
+    expect(reglagesValides({}).volumeVoix).toBe(1.15);
+  });
+
+  it('reste dans une plage sûre : assez haut pour couvrir la musique, sans saturer', () => {
+    expect(reglagesValides({ volumeVoix: 5 }).volumeVoix).toBe(VOLUME_VOIX.max);
+    expect(reglagesValides({ volumeVoix: 0 }).volumeVoix).toBe(VOLUME_VOIX.min);
+    expect(VOLUME_VOIX.max * 0.7).toBeLessThanOrEqual(1); // clips normalisés à 0,7 : pas de saturation
+    expect(reglagesValides({ volumeVoix: Number.NaN }).volumeVoix).toBe(1.15);
+  });
+
+  it('arrondit à 0,05 près pour éviter des valeurs bizarres', () => {
+    expect(reglagesValides({ volumeVoix: 1.2000001 }).volumeVoix).toBe(1.2);
+  });
+});
+
+describe('boxe — rappels du geste', () => {
+  it('chaque coup a un rappel utile', () => {
+    for (const c of COUPS) expect(c.rappel.length).toBeGreaterThan(40);
+  });
+
+  it('le rappel dit bien de quel côté on frappe', () => {
+    for (const c of COUPS.filter((x) => x.cote === 'avant')) expect(c.rappel).toMatch(/avant/);
+    for (const c of COUPS.filter((x) => x.cote === 'arriere')) expect(c.rappel).toMatch(/arrière/);
+  });
+
+  it('rappelle de garder la garde ou les mains hautes', () => {
+    for (const c of COUPS) expect(c.rappel).toMatch(/garde|mains hautes|menton|équilibre|protège/i);
+  });
+});
+
+
+
+describe('boxe — le combo finit avec son temps (adaptation du rythme, R-83, hypothèse §28)', () => {
+  it('garde le rythme choisi, à quelques pour cent près, quand les répétitions tombent presque juste', () => {
+    const a = adapterRepetitions(2, 1.6, 58.4)!;
+    expect(a.repetitions).toBe(18);
+    expect(a.tempo).toBeCloseTo(58.4 / 36, 5);
+    expect(Math.abs(a.tempo - 1.6) / 1.6).toBeLessThan(0.05);
+  });
+
+  it('accélère un peu pour finir une répétition de plus quand ça tient mieux ainsi', () => {
+    // 8 coups : 4 répétitions à 1,6 s laisseraient 7 s de silence ; 5 répétitions à 1,46 s remplissent le temps
+    const a = adapterRepetitions(8, 1.6, 58.4)!;
+    expect(a.repetitions).toBe(5);
+    expect(a.tempo).toBeCloseTo(58.4 / 40, 5);
+  });
+
+  it('ne dépasse jamais l\'écart maximal ni les bornes du rythme', () => {
+    for (const n of [1, 2, 3, 4, 5, 6, 8, 10]) {
+      for (const reste of [10, 20, 35, 48, 58.4, 100]) {
+        for (const t of [1.0, 1.2, 1.6, 2.0, 3.0]) {
+          const a = adapterRepetitions(n, t, reste);
+          if (!a) continue;
+          expect(a.tempo).toBeGreaterThanOrEqual(Math.max(TEMPO.min, t * (1 - ADAPTATION_MAX)) - 1e-9);
+          expect(a.tempo).toBeLessThanOrEqual(Math.min(TEMPO.max, t * (1 + ADAPTATION_MAX)) + 1e-9);
+          expect(a.repetitions * n * a.tempo).toBeCloseTo(reste, 6); // les répétitions remplissent exactement le temps
+        }
+      }
+    }
+  });
+
+  it('ne propose rien quand aucune répétition entière ne tient dans la plage', () => {
+    expect(adapterRepetitions(8, 1.6, 10)).toBeNull();
+    expect(adapterRepetitions(20, 1.6, 8.4)).toBeNull();
+  });
+
+  const fin = (ronde: RondeBoxe, duree: number, tempo: number) => {
+    const a = simuler(ronde, duree, tempo, 0.02);
+    const segments = segmentsDeRonde(ronde, duree);
+    return segments.map((seg) => {
+      const dans = a.filter((x) => x.annonce.genre === 'coup' && x.t >= seg.debut && x.t < seg.fin);
+      return { dernier: dans[dans.length - 1]?.t ?? 0, fin: seg.fin, coups: dans.length };
+    });
+  };
+
+  it('chaque combo se termine presque pile à la fin de sa part : plus de long silence final', () => {
+    const R3: RondeBoxe = { combos: [['jab', 'direct', 'crochet-avant', 'low-kick-arriere'], ['direct', 'crochet-avant', 'direct', 'low-kick-avant']], enchainer: true };
+    for (const ronde of [RONDE_1, R3]) {
+      for (const f of fin(ronde, 180, 1.6)) {
+        // le dernier coup est dit un rythme avant la fin de la part (le temps de l\'exécuter) : au plus ~1,2 coup de silence
+        expect(f.fin - f.dernier).toBeLessThanOrEqual(1.6 * 1.15 + 0.1);
+      }
+    }
+  });
+
+  it('ne coupe toujours pas un combo en deux', () => {
+    const R3: RondeBoxe = { combos: [['jab', 'direct', 'crochet-avant', 'low-kick-arriere'], ['direct', 'crochet-avant', 'direct', 'low-kick-avant']], enchainer: true };
+    const f = fin(R3, 180, 1.6);
+    expect(f.map((x) => x.coups % (x === f[2] ? 8 : 4))).toEqual([0, 0, 0]);
   });
 });

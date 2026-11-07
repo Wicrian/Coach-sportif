@@ -5,6 +5,7 @@
  * docs/recherche/arret-et-dose-minimale.md), pas des mesures sur l'utilisateur.
  */
 import { MIN_ZONES_4_5_CIBLE, minutesEnZones45 } from '../moteur/boxe';
+import { minutesEnTexte } from '../moteur/utilitaires';
 import { palierArret, type OptionSecours, type Objectif, type PalierArret, type PointSemaine, type Projection } from '../moteur/point-semaine';
 
 export interface PhraseArret {
@@ -172,9 +173,9 @@ export const CIBLE_INTENSITE = {
 export function retourIntensif(fc: { moy?: number; max?: number; zones?: number[] } | undefined): string[] {
   const minutes = minutesEnZones45(fc);
   if (minutes === null) return ["Tu peux saisir tes zones Polar (étape « données de la ceinture ») : l'application te dira si tu as atteint les zones 4 et 5."];
-  if (minutes >= MIN_ZONES_4_5_CIBLE) return [`Tu as passé ${minutes} min dans les zones 4 et 5 : la zone visée est atteinte. C'est exactement ce qui garde le cardio avec peu de temps.`];
+  if (minutes >= MIN_ZONES_4_5_CIBLE) return [`Tu as passé ${minutesEnTexte(minutes)} dans les zones 4 et 5 : la zone visée est atteinte. C'est exactement ce qui garde le cardio avec peu de temps.`];
   return [
-    `Tu as passé ${minutes} min dans les zones 4 et 5 (le repère : ${MIN_ZONES_4_5_CIBLE} min ou plus).`,
+    `Tu as passé ${minutesEnTexte(minutes)} dans les zones 4 et 5 (le repère : ${MIN_ZONES_4_5_CIBLE} min ou plus).`,
     "À la prochaine, tu peux frapper plus fort ou plus vite pendant les efforts, en gardant la technique. La fréquence cardiaque met aussi du temps à monter : ce n'est pas un échec.",
   ];
 }

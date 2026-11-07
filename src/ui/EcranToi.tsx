@@ -5,6 +5,7 @@ import { jourDe } from '../moteur/utilitaires';
 import { libelleGenre } from './activite';
 import { avecProgrammes, avecReglages, programmesDe, reglagesDe } from './boxe';
 import { EditeurBoxe } from './EditeurBoxe';
+import { GuideCoups } from './GuideCoups';
 import { Avatar } from './BulleProfil';
 import { reduirePhoto } from './avatar';
 import type { SaisieCheckin } from './checkin';
@@ -187,6 +188,10 @@ function BoxeCard({ profil, onProfil, onImporter }: { profil: Profil; onProfil: 
         </div>
         <p style="margin-top:6px;font-size:13px">Les combos disent « avant » et « arrière » : en garde gaucher, la main avant est la droite.</p>
       </div>
+      <details style="margin-top:14px">
+        <summary style="font-weight:700;cursor:pointer">Revoir les coups : rappels et images</summary>
+        <GuideCoups profil={profil} onProfil={onProfil} />
+      </details>
       {ouvert ? (
         <EditeurBoxe programmes={programmesDe(profil)} garde={reglages.garde} onChanger={(liste) => void onProfil(avecProgrammes(profil, liste))} onFermer={() => setOuvert(false)} />
       ) : (

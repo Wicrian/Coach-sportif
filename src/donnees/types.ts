@@ -137,6 +137,8 @@ export interface Creneau {
   moment: Moment;
   /** Temps disponible dans ce créneau, en minutes. */
   dureeMaxMin: number;
+  /** Heure de début choisie, 'HH:MM' (sert aux rappels). Sans elle : l'heure habituelle du moment. */
+  heure?: string;
 }
 
 /** Sons disponibles : trois sons synthétisés, un son choisi par l'utilisateur, ou aucun. */

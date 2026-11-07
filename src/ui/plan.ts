@@ -18,6 +18,18 @@ const CRENEAUX_PAR_DEFAUT: Creneau[] = [
   { jour: 7, moment: 'journee', dureeMaxMin: 90 },
 ];
 
+/** Heure de début par défaut de chaque moment, pour les rappels (hypothèses, réglables jour par jour). */
+export const HEURE_PAR_MOMENT: Record<Moment, string> = { matin: '07:30', midi: '12:00', soir: '18:30', journee: '10:00' };
+
+export const heureValide = (h: string): boolean => /^([01]\d|2[0-3]):[0-5]\d$/.test(h);
+export const heureDuCreneau = (c: Creneau): string => (c.heure && heureValide(c.heure) ? c.heure : HEURE_PAR_MOMENT[c.moment]);
+
+/** Change l'heure de début du créneau d'un jour. Une heure invalide est ignorée. */
+export function definirHeure(creneaux: Creneau[], jour: number, heure: string): Creneau[] {
+  if (!heureValide(heure)) return creneaux;
+  return creneaux.map((c) => (c.jour === jour ? { ...c, heure } : c));
+}
+
 export const creneauxDuProfil = (profil: Profil): Creneau[] => profil.creneaux ?? CRENEAUX_PAR_DEFAUT;
 
 export const creneauDuJour = (creneaux: Creneau[], jour: number): Creneau | undefined => creneaux.find((c) => c.jour === jour);

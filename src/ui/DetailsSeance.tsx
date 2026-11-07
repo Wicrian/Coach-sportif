@@ -7,7 +7,7 @@ const NIVEAUX_RESERVE: { id: NonNullable<SaisieDetails['reserve']>; nom: string 
   { id: '3-plus', nom: '3 ou plus' },
 ];
 
-const VIDE: SaisieDetails = { zoneGene: '', fcMoy: '', fcMax: '', zones: ['', '', '', '', ''], note: '' };
+const VIDE: SaisieDetails = { zoneGene: '', fcMoy: '', fcMax: '', zones: ['', '', '', '', ''], zonesSec: ['', '', '', '', ''], note: '' };
 
 interface Props {
   /** Appelé à chaque modification, avec les détails déjà convertis. */
@@ -73,12 +73,13 @@ export function DetailsSeance({ onChange, force = true }: Props) {
           {champ('fc-moy', 'FC moyenne (bpm)', s.fcMoy, '128', (v) => maj({ fcMoy: v }))}
           {champ('fc-max', 'FC max (bpm)', s.fcMax, '171', (v) => maj({ fcMax: v }))}
         </div>
-        <p style="margin:12px 0 6px;font-size:13px;font-weight:700;color:var(--plum)">Minutes dans chaque zone</p>
+        <p style="margin:12px 0 6px;font-size:13px;font-weight:700;color:var(--plum)">Temps dans chaque zone (minutes et secondes)</p>
         <div class="zones">
           {s.zones.map((z, i) => (
             <div key={i}>
               <label for={`zone-${i + 1}`}>Zone {i + 1}</label>
-              <input id={`zone-${i + 1}`} class="champ" inputMode="numeric" placeholder="0" value={z} onInput={(e) => { const v = (e.currentTarget as HTMLInputElement).value; setS((avant) => ({ ...avant, zones: avant.zones.map((x, k) => (k === i ? v : x)) })); }} />
+              <input id={`zone-${i + 1}`} class="champ" inputMode="numeric" placeholder="min" aria-label={`Zone ${i + 1}, minutes`} value={z} onInput={(e) => { const v = (e.currentTarget as HTMLInputElement).value; setS((avant) => ({ ...avant, zones: avant.zones.map((x, k) => (k === i ? v : x)) })); }} />
+              <input class="champ" style="margin-top:4px" inputMode="numeric" placeholder="s" aria-label={`Zone ${i + 1}, secondes`} value={s.zonesSec?.[i] ?? ''} onInput={(e) => { const v = (e.currentTarget as HTMLInputElement).value; setS((avant) => ({ ...avant, zonesSec: (avant.zonesSec ?? ['', '', '', '', '']).map((x, k) => (k === i ? v : x)) })); }} />
             </div>
           ))}
         </div>

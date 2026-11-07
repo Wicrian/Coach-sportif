@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { Profil, Seance } from '../donnees/types';
+import type { Creneau, Profil, Seance } from '../donnees/types';
 import type { PlanSeance } from './seance/preparer';
-import { MOMENTS, actionPourType, descriptionType, lignesPrevues, basculerIndisponible, creneauDuJour, creneauxDuProfil, definirCreneau, genrePourType, libelleJour, libelleType, modeleConseille, playlistsPour } from './plan';
+import { HEURE_PAR_MOMENT, MOMENTS, actionPourType, definirHeure, descriptionType, heureDuCreneau, lignesPrevues, basculerIndisponible, creneauDuJour, creneauxDuProfil, definirCreneau, genrePourType, libelleJour, libelleType, modeleConseille, playlistsPour } from './plan';
 
 const profil = (extra: Partial<Profil> = {}): Profil => ({ gear: [], dumbbells: [], ...extra });
 const force = (tplId: string, jour: string): Seance => ({ id: jour, date: `${jour}T18:00:00`, kind: 'strength', tplId, exercises: [] });
@@ -133,3 +133,33 @@ describe('fiche d\'une séance du plan', () => {
     ]);
   });
 });
+
+describe('heure des créneaux (pour les rappels)', () => {
+  const creneaux: Creneau[] = [{ jour: 6, moment: 'matin', dureeMaxMin: 40 }, { jour: 7, moment: 'journee', dureeMaxMin: 90 }];
+
+  it('prend l\'heure habituelle du moment tant que rien n\'est choisi', () => {
+    expect(heureDuCreneau(creneaux[0]!)).toBe(HEURE_PAR_MOMENT.matin);
+    expect(heureDuCreneau(creneaux[1]!)).toBe(HEURE_PAR_MOMENT.journee);
+  });
+
+  it('garde l\'heure choisie pour un jour, sans toucher aux autres', () => {
+    const c = definirHeure(creneaux, 6, '08:45');
+    expect(heureDuCreneau(c[0]!)).toBe('08:45');
+    expect(heureDuCreneau(c[1]!)).toBe(HEURE_PAR_MOMENT.journee);
+  });
+
+  it('ignore une heure invalide', () => {
+    expect(definirHeure(creneaux, 6, '25:99')).toEqual(creneaux);
+    expect(definirHeure(creneaux, 6, '')).toEqual(creneaux);
+  });
+
+  it('une heure choisie qui devient invalide retombe sur l\'heure habituelle', () => {
+    expect(heureDuCreneau({ jour: 1, moment: 'soir', dureeMaxMin: 60, heure: 'abc' })).toBe(HEURE_PAR_MOMENT.soir);
+  });
+
+  it('changer de moment efface l\'heure choisie (elle ne correspondrait plus)', () => {
+    const c = definirCreneau(definirHeure(creneaux, 6, '08:45'), 6, 'soir');
+    expect(c.find((x) => x.jour === 6)!.heure).toBeUndefined();
+  });
+});
+

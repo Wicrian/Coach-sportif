@@ -9,6 +9,8 @@
  *   sauvegarde-avec-voix.json   à importer depuis l'accueil de l'app (« Importer une sauvegarde »)
  *
  * Usage :  node outils/generer-voix.mjs [options]
+ *   --moteur piper|mac     piper (défaut) ou une voix de ton Mac (Siri « naturelle », Premium…)
+ *   --voix-id identifiant  avec --moteur mac : identifiant de la voix (voir `swift outils/rendre-voix-mac.swift --liste fr`)
  *   --modele chemin.onnx   voix Piper (défaut : celle de ton projet jarvis-assistant-vocal)
  *   --piper chemin/piper   programme Piper
  *   --nom "Nom affiché"    nom de la voix dans l'app
@@ -33,7 +35,8 @@ const args = Object.fromEntries(
 );
 const piper = args.piper ?? join(homedir(), 'jarvis-assistant-vocal/.venv/bin/piper');
 const modele = args.modele ?? join(homedir(), 'jarvis-assistant-vocal/voix/fr_FR-siwis-medium.onnx');
-const nom = args.nom ?? 'Siwis (Piper)';
+const moteur = args.moteur === 'mac' ? 'mac' : 'piper';
+const nom = args.nom ?? (moteur === 'mac' ? 'Voix du Mac' : 'Siwis (Piper)');
 const longueur = args.vitesse ? String(1 / Number(args.vitesse)) : '1.0'; // longueur de phonème : plus petit = plus rapide
 const presenceDb = args.presence !== undefined ? Number(args.presence) : 0;
 const motsCourts = args['mots-courts'] !== undefined ? Number(args['mots-courts']) : 1;
@@ -43,7 +46,7 @@ const optionsVoix = [
   ...(args.douceur !== undefined ? ['--noise_scale', String(args.douceur), '--noise_w', String(Math.min(0.8, Number(args.douceur) + 0.1))] : []),
 ];
 
-for (const [label, chemin] of [['Piper', piper], ['la voix', modele]]) {
+for (const [label, chemin] of moteur === 'piper' ? [['Piper', piper], ['la voix', modele]] : []) {
   if (!existsSync(chemin)) {
     console.error(`Je ne trouve pas ${label} : ${chemin}\nIndique-le avec --piper ou --modele.`);
     process.exit(1);
@@ -150,6 +153,14 @@ rmSync(dossierClips, { recursive: true, force: true });
 mkdirSync(dossierClips, { recursive: true });
 mkdirSync(temp, { recursive: true });
 
+// Moteur « mac » : une seule passe pour toutes les voix, puis conversion en WAV.
+if (moteur === 'mac') {
+  if (!args['voix-id']) { console.error('Avec --moteur mac, indique la voix avec --voix-id (voir --liste).'); process.exit(1); }
+  const liste = join(temp, 'clips.json');
+  writeFileSync(liste, JSON.stringify(clips.map((c) => ({ id: c.id, texte: c.texte }))));
+  execFileSync('swift', [join(racine, 'outils/rendre-voix-mac.swift'), args['voix-id'], temp, liste], { stdio: ['ignore', 'ignore', 'inherit'] });
+}
+
 const voixClips = {};
 const sons = {};
 for (const clip of clips) {
@@ -161,9 +172,13 @@ for (const clip of clips) {
   const court = clip.dire.replace(/[^\p{L}]/gu, '').length <= 6;
   const longueurClip = String(Number(longueur) * (court ? motsCourts : 1));
   const texteDit = /[.!?]$/.test(clip.dire) ? clip.dire : `${clip.dire}.`;
-  execFileSync(piper, ['--model', modele, ...optionsVoix, '--output_file', wav, '--length_scale', longueurClip, '--sentence_silence', '0'], {
-    input: texteDit, stdio: ['pipe', 'ignore', 'ignore'],
-  });
+  if (moteur === 'piper') {
+    execFileSync(piper, ['--model', modele, ...optionsVoix, '--output_file', wav, '--length_scale', longueurClip, '--sentence_silence', '0'], {
+      input: texteDit, stdio: ['pipe', 'ignore', 'ignore'],
+    });
+  } else {
+    execFileSync('afconvert', [join(temp, `${base}.caf`), wav, '-f', 'WAVE', '-d', 'LEI16@22050', '-c', '1']);
+  }
   const { freq, x } = traiter(readFileSync(wav));
   sons[clip.id] = { freq, x };
   writeFileSync(traite, ecrireWav(x, freq));
