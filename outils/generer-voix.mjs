@@ -9,7 +9,10 @@
  *   sauvegarde-avec-voix.json   à importer depuis l'accueil de l'app (« Importer une sauvegarde »)
  *
  * Usage :  node outils/generer-voix.mjs [options]
- *   --moteur piper|mac     piper (défaut) ou une voix de ton Mac (Siri « naturelle », Premium…)
+ *   --moteur piper|mac|dossier  piper (défaut), une voix de ton Mac (Siri « naturelle », Premium…), ou des
+ *                          fichiers audio que tu as fabriqués toi-même avec une autre application (voir --dossier)
+ *   --dossier chemin       avec --moteur dossier : dossier de fichiers audio nommés comme la liste (ex. coup-jab.mp3)
+ *   --ecrire-liste fichier écrit la liste des 36 textes à enregistrer (nom de fichier et texte), puis s'arrête
  *   --voix-id identifiant  avec --moteur mac : identifiant de la voix (voir `swift outils/rendre-voix-mac.swift --liste fr`)
  *   --modele chemin.onnx   voix Piper (défaut : celle de ton projet jarvis-assistant-vocal)
  *   --piper chemin/piper   programme Piper
@@ -35,8 +38,8 @@ const args = Object.fromEntries(
 );
 const piper = args.piper ?? join(homedir(), 'jarvis-assistant-vocal/.venv/bin/piper');
 const modele = args.modele ?? join(homedir(), 'jarvis-assistant-vocal/voix/fr_FR-siwis-medium.onnx');
-const moteur = args.moteur === 'mac' ? 'mac' : 'piper';
-const nom = args.nom ?? (moteur === 'mac' ? 'Voix du Mac' : 'Siwis (Piper)');
+const moteur = args.moteur === 'mac' ? 'mac' : args.moteur === 'dossier' ? 'dossier' : 'piper';
+const nom = args.nom ?? (moteur === 'mac' ? 'Voix du Mac' : moteur === 'dossier' ? 'Ma voix' : 'Siwis (Piper)');
 const longueur = args.vitesse ? String(1 / Number(args.vitesse)) : '1.0'; // longueur de phonème : plus petit = plus rapide
 const presenceDb = args.presence !== undefined ? Number(args.presence) : 0;
 const motsCourts = args['mots-courts'] !== undefined ? Number(args['mots-courts']) : 1;
@@ -146,6 +149,15 @@ function traiter(octets) {
 // ---- Fabrication ----
 
 const clips = JSON.parse(readFileSync(join(racine, 'src/donnees/clips-voix.json'), 'utf8'));
+
+if (args['ecrire-liste']) {
+  const lignes = clips.map((c) => `${c.id.replace(':', '-')}\t${c.texte}`);
+  const chemin = resolve(args['ecrire-liste']);
+  mkdirSync(dirname(chemin), { recursive: true });
+  writeFileSync(chemin, `Nom du fichier (sans l'extension)\tTexte à dire\n${lignes.join('\n')}\n`);
+  console.log(`Liste écrite : ${chemin} (${clips.length} lignes)`);
+  process.exit(0);
+}
 const sortie = join(racine, args.sortie ?? 'donnees-perso/voix');
 const dossierClips = join(sortie, 'clips');
 const temp = join(sortie, 'temp');
@@ -159,6 +171,24 @@ if (moteur === 'mac') {
   const liste = join(temp, 'clips.json');
   writeFileSync(liste, JSON.stringify(clips.map((c) => ({ id: c.id, texte: c.texte }))));
   execFileSync('swift', [join(racine, 'outils/rendre-voix-mac.swift'), args['voix-id'], temp, liste], { stdio: ['ignore', 'ignore', 'inherit'] });
+}
+
+const EXTENSIONS = ['wav', 'mp3', 'm4a', 'aiff', 'aif', 'caf', 'flac'];
+const fichierDuClip = (base) => {
+  const dossierSource = resolve(args.dossier ?? '.');
+  for (const e of EXTENSIONS) {
+    const f = join(dossierSource, `${base}.${e}`);
+    if (existsSync(f)) return f;
+  }
+  return null;
+};
+if (moteur === 'dossier') {
+  if (!args.dossier) { console.error('Avec --moteur dossier, indique le dossier avec --dossier.'); process.exit(1); }
+  const manquants = clips.filter((c) => !fichierDuClip(c.id.replace(':', '-'))).map((c) => c.id.replace(':', '-'));
+  if (manquants.length) {
+    console.error(`Il manque ${manquants.length} fichier(s) dans ${resolve(args.dossier)} :\n  ${manquants.join('\n  ')}\n(nom du fichier = nom indiqué dans la liste, extension wav, mp3, m4a, aiff, caf ou flac)`);
+    process.exit(1);
+  }
 }
 
 const voixClips = {};
@@ -176,8 +206,10 @@ for (const clip of clips) {
     execFileSync(piper, ['--model', modele, ...optionsVoix, '--output_file', wav, '--length_scale', longueurClip, '--sentence_silence', '0'], {
       input: texteDit, stdio: ['pipe', 'ignore', 'ignore'],
     });
-  } else {
+  } else if (moteur === 'mac') {
     execFileSync('afconvert', [join(temp, `${base}.caf`), wav, '-f', 'WAVE', '-d', 'LEI16@22050', '-c', '1']);
+  } else {
+    execFileSync('afconvert', [fichierDuClip(base), wav, '-f', 'WAVE', '-d', 'LEI16@32000', '-c', '1']);
   }
   const { freq, x } = traiter(readFileSync(wav));
   sons[clip.id] = { freq, x };
