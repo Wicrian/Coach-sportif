@@ -315,3 +315,16 @@ Demande de l'utilisateur : pouvoir **finir la série**, ce que son ancienne appl
 - La préparation affiche les répétitions avec l'ajustement.
 
 Outils de voix : `outils/rendre-voix-mac.swift` fabrique des clips avec une voix du Mac, y compris les voix « naturelles » de Siri téléchargées ; `outils/generer-voix.mjs --moteur mac --voix-id …` s'en sert. Ces voix sont à usage personnel : les clips restent dans `donnees-perso/` et ne sont jamais versionnés.
+
+## 29. La voix retenue : VoiceStudio (7 novembre)
+
+La voix de la boxe guidée est fabriquée avec **VoiceStudio** (application libre, sur le Mac de l'utilisateur ; API locale 127.0.0.1:3900, serveur MCP `voicestudio` ajouté à la configuration de Claude Code, portée utilisateur). Voix d'homme jeune, grave et douce.
+
+- **Pourquoi pas Piper / Siri** : Tom (Piper) articulait bien mais restait robotique ; Sophie (voix Siri naturelle) était très agréable mais féminine. VoiceStudio donne le naturel d'une voix récente avec une voix masculine.
+- **Constance de la voix** : générer chaque phrase séparément avec une simple consigne de style donne un timbre qui varie d'un clip à l'autre (mesuré : dispersion 4,45 dB). On génère donc **toutes les phrases avec une même voix de référence** (une phrase propre de 4 s, voix grave, générée par l'application) : timbre plus homogène (3,26 dB) et clips plus courts (« Low kick arrière » 0,94 s au lieu de 1,4 s). Essais écartés : référence faite de plusieurs clips collés (clips jusqu'à 3 s, hauteur instable) ; génération d'un seul bloc puis découpage (pauses trop courtes pour découper).
+- **Refaire la voix à l'identique** (l'application doit être ouverte ; la référence est dans `donnees-perso/voix-douce/reference/reference.wav`, jamais versionnée) :
+  1. `node outils/generer-voix.mjs --ecrire-liste donnees-perso/voix-a-enregistrer/liste.txt`
+  2. `node outils/voicestudio-lot.mjs --liste donnees-perso/voix-a-enregistrer/liste.txt --sortie donnees-perso/voix-brut --langue fr --graine 7 --vitesse 1.1 --ref-audio donnees-perso/voix-douce/reference/reference.wav --ref-texte "Prépare-toi. Combo un : jab, low kick arrière, direct, crochet avant."`
+  3. `node outils/generer-voix.mjs --moteur dossier --dossier donnees-perso/voix-brut --nom "Voix douce (VoiceStudio)" --sortie donnees-perso/voix-douce`
+  4. Importer `donnees-perso/voix-douce/sauvegarde-avec-voix.json` dans l'application.
+- **Licence** : à vérifier pour le moteur choisi dans VoiceStudio (OmniVoice par défaut) avant tout usage public ; les clips ne sont jamais versionnés.
